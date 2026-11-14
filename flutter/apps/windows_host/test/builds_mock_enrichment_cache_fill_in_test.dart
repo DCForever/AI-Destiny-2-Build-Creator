@@ -171,11 +171,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 80));
 
       // Detail under the dialog must show the filled pick (not stale cache).
+      // Chip row removed — Armor/Weapons tables + filled tag cover status.
       expect(
         find.byKey(const Key('builds_mock_filled_tag_cache_fill')),
         findsOneWidget,
       );
-      expect(find.text('Filled in · Qua Nilus II'), findsWidgets);
+      expect(find.textContaining('Filled in ·'), findsNothing);
       expect(find.text('Qua Nilus II'), findsWidgets);
 
       await tester.tap(find.byKey(const Key('fill_in_undo')));
@@ -186,13 +187,16 @@ void main() {
         find.byKey(const Key('builds_mock_not_filled_cache_fill')),
         findsOneWidget,
       );
-      expect(find.text('Filled in · Qua Nilus II'), findsNothing);
 
       // Re-Apply in the same dialog, then close and check the grid card.
       await tester.tap(find.byKey(const Key('fill_in_apply_to_build')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 80));
-      expect(find.text('Filled in · Qua Nilus II'), findsWidgets);
+      expect(
+        find.byKey(const Key('builds_mock_filled_tag_cache_fill')),
+        findsOneWidget,
+      );
+      expect(find.text('Qua Nilus II'), findsWidgets);
 
       await tester.tap(find.byKey(const Key('fill_in_close')));
       await tester.pumpAndSettle();

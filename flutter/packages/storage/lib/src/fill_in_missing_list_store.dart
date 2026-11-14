@@ -420,13 +420,9 @@ class FillInMissingListStore {
   Future<Map<String, FillInSavedBuildPlan>> _readAll() async {
     final file = File(storePath);
     if (!await file.exists()) return const <String, FillInSavedBuildPlan>{};
-    try {
-      return (await _parseFile(file)).builds;
-    } on FillInMissingListStoreException {
-      rethrow;
-    } catch (_) {
-      return const <String, FillInSavedBuildPlan>{};
-    }
+    // Corrupt / oversized files throw — never silently empty (would invite
+    // callers to overwrite the corrupt payload on the next save).
+    return (await _parseFile(file)).builds;
   }
 
   Future<_ParsedMissingList> _parseFile(File file) async {
@@ -439,7 +435,14 @@ class FillInMissingListStore {
         preservedRawBuilds: <String, dynamic>{},
       );
     }
-    final decoded = jsonDecode(text);
+    late final Object? decoded;
+    try {
+      decoded = jsonDecode(text);
+    } catch (e) {
+      throw FillInMissingListStoreException(
+        'missing_by_build corrupt JSON: $e',
+      );
+    }
     if (decoded is! Map<String, dynamic>) {
       throw FillInMissingListStoreException(
         'fill_in missing list root must be an object',

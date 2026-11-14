@@ -82,7 +82,9 @@ List<BuildsMockArmorRow> buildsMockArmorRows({
   for (final entry in order) {
     final slot = byWire[entry.$1];
     final name = slot?.pieceName.trim() ?? '';
-    if (name.isEmpty && slot == null) continue;
+    final mods = modsBySlot[entry.$1] ?? const <String>[];
+    // Always emit a row when mods land on this slot (no Unplaced group).
+    if (name.isEmpty && slot == null && mods.isEmpty) continue;
     final display = name.isEmpty ? 'Missing' : name;
     rows.add(
       BuildsMockArmorRow(
@@ -98,7 +100,7 @@ List<BuildsMockArmorRow> buildsMockArmorRows({
           assignment: slot,
           plan: plan,
         ),
-        mods: modsBySlot[entry.$1] ?? const [],
+        mods: mods,
       ),
     );
   }
@@ -139,11 +141,34 @@ List<BuildsMockWeaponRow> buildsMockWeaponRows({
   ];
 }
 
-/// Place flat DIM mods under armor slots when the mod name mentions the slot
-/// or a known armor piece; otherwise collect as unplaced.
+/// Slot wire for a [ModSlotCategory]-style catalog key (manifest JSON).
+String? armorSlotWireFromModSlotCategory(String? categoryJson) {
+  switch ((categoryJson ?? '').trim()) {
+    case 'helmet':
+      return 'helmet';
+    case 'arms':
+      return 'arms';
+    case 'chest':
+      return 'chest';
+    case 'legs':
+      return 'legs';
+    case 'classItem':
+      return 'class_item';
+    default:
+      return null;
+  }
+}
+
+/// Place DIM loadout mods under armor slots.
+///
+/// Prefers offline catalog [slotCategoryByModHash] (manifest ModRecord
+/// `plugCategoryIdentifier` → helmet/arms/chest/legs/class item). General /
+/// tuning / unknown mods go on the most likely slot with a small
+/// `slot guessed` note — never an Unplaced group.
 ({Map<String, List<String>> bySlot, List<String> unplaced}) placeDimMods({
   required List<CachedDimNamedHash> mods,
   required MockBuild build,
+  Map<int, String> slotCategoryByModHash = const {},
 }) {
   final bySlot = <String, List<String>>{
     'helmet': <String>[],
@@ -152,7 +177,6 @@ List<BuildsMockWeaponRow> buildsMockWeaponRows({
     'legs': <String>[],
     'class_item': <String>[],
   };
-  final unplaced = <String>[];
   final pieceBySlot = <String, String>{
     for (final s in build.slots)
       if (s.pieceName.trim().isNotEmpty) s.slot: s.pieceName.trim().toLowerCase(),
@@ -160,35 +184,59 @@ List<BuildsMockWeaponRow> buildsMockWeaponRows({
   for (final mod in mods) {
     final name = mod.name.trim();
     if (name.isEmpty) continue;
-    final lower = name.toLowerCase();
-    String? slot;
-    if (lower.contains('helmet') || lower.contains('head')) {
-      slot = 'helmet';
-    } else if (lower.contains('gauntlet') ||
-        lower.contains('arms') ||
-        lower.contains('gloves')) {
-      slot = 'arms';
-    } else if (lower.contains('chest') || lower.contains('plate')) {
-      slot = 'chest';
-    } else if (lower.contains('leg') || lower.contains('boot')) {
-      slot = 'legs';
-    } else if (lower.contains('class item') || lower.contains('bond')) {
-      slot = 'class_item';
-    } else {
-      for (final entry in pieceBySlot.entries) {
-        if (lower.contains(entry.value)) {
-          slot = entry.key;
-          break;
-        }
-      }
-    }
-    if (slot != null) {
-      bySlot[slot]!.add(name);
-    } else {
-      unplaced.add(name);
-    }
+    final placed = _placeOneMod(
+      name: name,
+      hash: mod.hash,
+      slotCategoryByModHash: slotCategoryByModHash,
+      pieceBySlot: pieceBySlot,
+    );
+    bySlot[placed.slot]!.add(placed.label);
   }
-  return (bySlot: bySlot, unplaced: unplaced);
+  // Always empty — kept for call-site compatibility; never populate Unplaced.
+  return (bySlot: bySlot, unplaced: const <String>[]);
+}
+
+({String slot, String label}) _placeOneMod({
+  required String name,
+  required int hash,
+  required Map<int, String> slotCategoryByModHash,
+  required Map<String, String> pieceBySlot,
+}) {
+  final category = slotCategoryByModHash[hash]?.trim();
+  final fromCatalog = armorSlotWireFromModSlotCategory(category);
+  if (fromCatalog != null) {
+    return (slot: fromCatalog, label: name);
+  }
+
+  // General / tuning / unknown: most likely slot + small note (never Unplaced).
+  final guessed =
+      _guessArmorSlotFromModName(name.toLowerCase(), pieceBySlot) ??
+          'class_item';
+  return (slot: guessed, label: '$name (slot guessed)');
+}
+
+String? _guessArmorSlotFromModName(
+  String lower,
+  Map<String, String> pieceBySlot,
+) {
+  if (lower.contains('helmet') || lower.contains('head')) return 'helmet';
+  if (lower.contains('gauntlet') ||
+      lower.contains('arms') ||
+      lower.contains('gloves')) {
+    return 'arms';
+  }
+  if (lower.contains('chest') || lower.contains('plate')) return 'chest';
+  if (lower.contains('leg') || lower.contains('boot')) return 'legs';
+  if (lower.contains('class item') ||
+      lower.contains('bond') ||
+      lower.contains('mark') ||
+      lower.contains('cloak')) {
+    return 'class_item';
+  }
+  for (final entry in pieceBySlot.entries) {
+    if (lower.contains(entry.value)) return entry.key;
+  }
+  return null;
 }
 
 /// Lazy enrichment cache keyed by build id + loadout shareId.

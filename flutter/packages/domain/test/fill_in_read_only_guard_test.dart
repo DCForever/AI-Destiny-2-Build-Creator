@@ -37,7 +37,10 @@ const int kDomainFillInSourceFileCount = 13;
 /// Was 5 → 6 when Optimize Fill In added `fill_in_weapon_apply.dart`
 /// (headless weapon substitutes after armor auto-apply; still no IO /
 /// no Bungie writes — caller persists the merged plan).
-const int kWindowsHostFillInSourceFileCount = 6;
+/// Was 6 → 7 when `fill_in_plan_stabilize.dart` was extracted (shared
+/// saved-plan weapon pin stabilize for dialog + Optimize weapon pass;
+/// still no IO / no Bungie writes).
+const int kWindowsHostFillInSourceFileCount = 7;
 
 void main() {
   test('Fill In sources never import write/transfer/equip/io/http', () {

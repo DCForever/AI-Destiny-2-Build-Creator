@@ -235,16 +235,26 @@ class BuildsMockWeaponTable extends StatelessWidget {
 }
 
 class BuildsMockStatsRow extends StatelessWidget {
-  const BuildsMockStatsRow({super.key, required this.stats});
+  const BuildsMockStatsRow({
+    super.key,
+    required this.stats,
+    this.unavailableReason,
+  });
 
   final List<MockStatTotal> stats;
+
+  /// Specific reason when [stats] is empty (never a blank).
+  final String? unavailableReason;
 
   @override
   Widget build(BuildContext context) {
     final palette = FlapPalette.of(context);
     if (stats.isEmpty) {
+      final reason = (unavailableReason ?? '').trim().isNotEmpty
+          ? unavailableReason!.trim()
+          : 'Stats unavailable — no armor totals for this build.';
       return Text(
-        'Stats unavailable',
+        reason,
         key: const Key('builds_mock_stats_unavailable'),
         style: neonMono(color: palette.muted, fontSize: 11),
       );

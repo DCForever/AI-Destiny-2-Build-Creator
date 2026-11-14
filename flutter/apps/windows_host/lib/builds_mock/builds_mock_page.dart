@@ -27,6 +27,7 @@ import 'builds_mock_loadout_card.dart';
 import 'builds_mock_matrix_loader.dart';
 import 'builds_mock_models.dart';
 import 'builds_mock_presentation.dart';
+import 'builds_mock_stats_from_armor.dart';
 part 'builds_mock_page_rail.dart';
 part 'builds_mock_page_detail.dart';
 part 'builds_mock_page_build_detail.dart';
@@ -101,9 +102,13 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   String? _applyDisabledReason;
   /// Visible when optimize_by_build.json is corrupt (never overwritten).
   String? _optimizeStoreError;
+  /// Visible when missing_by_build.json is corrupt (never overwritten).
+  String? _fillInStoreError;
   int _matrixLoadGeneration = 0;
   List<CatalogItem> _catalogItems = const [];
   Map<String, String> _setIconByLowerName = const {};
+  /// Mod hash → ModSlotCategory.json (from offline entity store).
+  Map<int, String> _modSlotCategoryByHash = const {};
   String _detailTab = 'detail';
 
   @override
@@ -141,6 +146,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     _optimize.refreshArmorCsv();
     _refreshApplyTarget();
     _ensureCatalogIcons();
+    _ensureModSlotCategories();
   }
 
   Future<List<FillInInventoryItem>?> _defaultArmorCsvLoader() async {
@@ -149,6 +155,33 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     final result = await DimArmorCsvImporter(root: root).loadCache();
     if (!result.isOk) return null;
     return result.items;
+  }
+
+  /// Load ModRecord.slotCategory by item hash for Builds mod placement.
+  ///
+  /// Data source: offline entity store `mods` (manifest plugCategoryIdentifier
+  /// → helmet/arms/chest/legs/classItem/general/tuning). No Bungie network.
+  Future<void> _ensureModSlotCategories() async {
+    final services = widget.services;
+    if (services == null) return;
+    try {
+      final refresh = services.manifestRefresh;
+      if (refresh is! WindowsManifestRefresh) return;
+      final version = await refresh.service.readCurrentVersion();
+      if (version == null || version.isEmpty) return;
+      final cache = FileEntityCache(
+        storageRoot: services.storageRoot,
+        version: version,
+      );
+      final rows = await cache.getStore<ModRecord>(MvpStoreName.mods);
+      if (!mounted || rows.isEmpty) return;
+      final map = <int, String>{
+        for (final r in rows) r.hash: r.slotCategory.json,
+      };
+      setState(() => _modSlotCategoryByHash = map);
+    } catch (_) {
+      // Best-effort — placeDimMods falls back to name / class_item guess.
+    }
   }
 
   /// OfflineCatalog rows already carry `displayProperties.icon` — reuse for
@@ -228,14 +261,30 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     try {
       final plans = await FillInMissingListStore(root: root).loadAll();
       if (!mounted) return;
-      setState(() => _savedFillInPlans = plans);
+      setState(() {
+        _fillInStoreError = null;
+        _savedFillInPlans = plans;
+      });
       _controller.adoptFillInPlans(plans);
-    } on FillInMissingListStoreException {
-      // Oversized / unsafe store: fail closed (no plans), never rewrite.
+    } on FillInMissingListStoreException catch (e) {
+      // Corrupt / oversized: fail closed, never rewrite the file.
       if (!mounted) return;
-      setState(() => _savedFillInPlans = const <String, FillInSavedBuildPlan>{});
-      _controller.adoptFillInPlans(const <String, FillInSavedBuildPlan>{});
+      _reportFillInStoreError(e.message);
     }
+  }
+
+  void _clearFillInStoreError() {
+    if (!mounted || _fillInStoreError == null) return;
+    setState(() => _fillInStoreError = null);
+  }
+
+  void _reportFillInStoreError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _fillInStoreError = message;
+      _savedFillInPlans = const <String, FillInSavedBuildPlan>{};
+    });
+    _controller.adoptFillInPlans(const <String, FillInSavedBuildPlan>{});
   }
 
   Future<void> _loadOptimizeOverlays(StorageRoot root) async {
