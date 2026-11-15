@@ -56,3 +56,29 @@ const String kInActivityEquipMessage =
 
 /// Clear message when the target character bucket is full (no auto make-room).
 const String kNoRoomOnCharacterMessage = 'No room on character';
+
+/// Vault cannot accept another transfer (no auto make-room).
+const String kNoRoomInVaultMessage = 'No room in vault';
+
+/// To-vault hop succeeded but vault→character failed.
+const String kMovedToVaultStuckMessage =
+    'Moved to vault; could not move to character';
+
+/// Pin itemHash does not match the live instance.
+const String kItemHashMismatchMessage =
+    'Pinned item does not match inventory';
+
+/// Generic apply failure — never surface Exception.toString() / tokens.
+const String kGenericApplyFailureMessage = 'Apply failed';
+
+/// Fixed HTTP failure text for apply rows (auth-style; no body/snippet).
+String bungieHttpFailureMessage(int statusCode) =>
+    'Bungie request failed (HTTP $statusCode)';
+
+/// Destiny inventory tierType / gearTier value for Exotic.
+const int kDestinyExoticTier = 6;
+
+/// True when gearTier or definition tierType marks the item exotic.
+bool isExoticTier({int? gearTier, int? tierType}) {
+  return gearTier == kDestinyExoticTier || tierType == kDestinyExoticTier;
+}

@@ -24,6 +24,13 @@ const List<String> kBannedApplyPatterns = <String>[
   'pullFromPostmaster',
   '/Destiny2/Actions/Items/PullFromPostmaster',
   '/Destiny2/Actions/Items/InsertSocketPlug',
+  'SetLockState',
+  'setLockState',
+  '/Destiny2/Actions/Items/SetLockState',
+  'SetTrackedState',
+  'setTrackedState',
+  '/Destiny2/Actions/Items/SetTrackedItem',
+  '/Destiny2/Actions/Items/SetTrackedState',
 ];
 
 /// Exact apply-path sources (posix-ish relative to packages/app).
@@ -97,6 +104,9 @@ void main() {
     expect(text.contains('InsertPlug'), isFalse);
     expect(text.contains('PullFromPostmaster'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/PullFromPostmaster'), isFalse);
+    expect(text.contains('SetLockState'), isFalse);
+    expect(text.contains('SetTrackedState'), isFalse);
+    expect(text.contains('/Destiny2/Actions/Items/SetLockState'), isFalse);
   });
 }
 

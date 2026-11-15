@@ -120,17 +120,13 @@ typedef ApplyDelay = Future<void> Function(Duration delay);
 /// Character inventory capacity per equipment bucket (equipped + inventory).
 const int kApplyCharacterBucketCapacity = 10;
 
+/// Vault capacity (all vault items). No auto make-room.
+const int kApplyVaultCapacity = 600;
+
 /// Builds a DIM-style move + equip plan and executes it.
 ///
 /// Apply itself is the confirmation — plans and runs immediately with inline
 /// per-item progress (no separate dry-run dialog).
-///
-/// - Locates each pin (target / vault / other / equipped-on-other).
-/// - Full bucket → refuse that item with [kNoRoomOnCharacterMessage].
-/// - Transfers sequential (other → vault → target); equipped-on-other dequips
-///   first via a non-exotic replacement EquipItem on that character.
-/// - One bulk [BungieWriteClient.equipItems], exotics last.
-/// - Stops further equips on in-activity / unequippable errors.
 Future<ApplyToCharacterProgress> applyToCharacter({
   required BungieWriteClient writeClient,
   required WriteClientContext ctx,
@@ -183,6 +179,8 @@ Future<ApplyToCharacterProgress> applyToCharacter({
     for (final row in inventory) row.instanceId: row,
   };
   final plannedIds = {for (final item in items) item.instanceId};
+  final characterReserved = <int, int>{};
+  var vaultReserved = 0;
 
   final plan = <_ApplyItemPlan>[
     for (var i = 0; i < items.length; i++)
@@ -193,6 +191,9 @@ Future<ApplyToCharacterProgress> applyToCharacter({
         byInstance: byInstance,
         inventory: inventory,
         plannedIds: plannedIds,
+        characterReserved: characterReserved,
+        vaultReserved: () => vaultReserved,
+        reserveVault: () => vaultReserved += 1,
       ),
   ];
 
@@ -226,6 +227,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
     );
     emit(index: index, running: true);
 
+    var reachedVault = false;
     try {
       for (final dequip in p.dequipSteps) {
         await runWriteWithThrottleBackoff(
@@ -238,17 +240,23 @@ Future<ApplyToCharacterProgress> applyToCharacter({
           () => writeClient.transferItem(ctx, step),
           delay: sleeper,
         );
+        if (step.transferToVault) {
+          reachedVault = true;
+        }
       }
     } catch (error) {
       final mapped = _mapWriteError(error);
-      final reason =
-          mapped.isInActivity ? kInActivityEquipMessage : mapped.statusText;
+      final reason = reachedVault
+          ? kMovedToVaultStuckMessage
+          : (mapped.isInActivity
+              ? kInActivityEquipMessage
+              : mapped.statusText);
       rows[index] = rows[index].copyWith(
         state: ApplyItemState.failed,
         reason: reason,
       );
       emit(index: index, running: true);
-      if (mapped.stopFurtherEquips) {
+      if (!reachedVault && mapped.stopFurtherEquips) {
         stopEquips = true;
         stopReason = reason;
         _failRemainingWaiting(rows, fromIndex: index + 1, reason: stopReason);
@@ -406,6 +414,9 @@ _ApplyItemPlan _planItem({
   required Map<String, ApplyInventoryItem> byInstance,
   required List<ApplyInventoryItem> inventory,
   required Set<String> plannedIds,
+  required Map<int, int> characterReserved,
+  required int Function() vaultReserved,
+  required void Function() reserveVault,
 }) {
   final live = byInstance[item.instanceId];
   if (live == null) {
@@ -416,6 +427,17 @@ _ApplyItemPlan _planItem({
       dequipSteps: const [],
       transferSteps: const [],
       refusalReason: errorStatusName(kDestinyItemNotFound),
+    );
+  }
+
+  if (live.itemHash != item.itemHash) {
+    return _ApplyItemPlan(
+      rowIndex: rowIndex,
+      instanceId: item.instanceId,
+      isExotic: live.isExotic,
+      dequipSteps: const [],
+      transferSteps: const [],
+      refusalReason: kItemHashMismatchMessage,
     );
   }
 
@@ -437,15 +459,34 @@ _ApplyItemPlan _planItem({
     );
   }
 
-  if (_bucketIsFull(inventory, characterId, live.bucketHash)) {
-    return _ApplyItemPlan(
-      rowIndex: rowIndex,
-      instanceId: item.instanceId,
-      isExotic: live.isExotic,
-      dequipSteps: const [],
-      transferSteps: const [],
-      refusalReason: kNoRoomOnCharacterMessage,
-    );
+  final needsCharacterSlot = onOther || inVault;
+  if (needsCharacterSlot) {
+    final occupied = _bucketCount(inventory, characterId, live.bucketHash) +
+        (characterReserved[live.bucketHash] ?? 0);
+    if (occupied >= kApplyCharacterBucketCapacity) {
+      return _ApplyItemPlan(
+        rowIndex: rowIndex,
+        instanceId: item.instanceId,
+        isExotic: live.isExotic,
+        dequipSteps: const [],
+        transferSteps: const [],
+        refusalReason: kNoRoomOnCharacterMessage,
+      );
+    }
+  }
+
+  if (onOther) {
+    final vaultOccupied = _vaultCount(inventory) + vaultReserved();
+    if (vaultOccupied >= kApplyVaultCapacity) {
+      return _ApplyItemPlan(
+        rowIndex: rowIndex,
+        instanceId: item.instanceId,
+        isExotic: live.isExotic,
+        dequipSteps: const [],
+        transferSteps: const [],
+        refusalReason: kNoRoomInVaultMessage,
+      );
+    }
   }
 
   final dequips = <EquipItemArgs>[];
@@ -480,7 +521,7 @@ _ApplyItemPlan _planItem({
   if (onOther) {
     transfers.add(
       TransferItemArgs(
-        itemHash: item.itemHash,
+        itemHash: live.itemHash,
         instanceId: item.instanceId,
         characterId: live.characterId!,
         transferToVault: true,
@@ -488,21 +529,26 @@ _ApplyItemPlan _planItem({
     );
     transfers.add(
       TransferItemArgs(
-        itemHash: item.itemHash,
+        itemHash: live.itemHash,
         instanceId: item.instanceId,
         characterId: characterId,
         transferToVault: false,
       ),
     );
+    reserveVault();
+    characterReserved[live.bucketHash] =
+        (characterReserved[live.bucketHash] ?? 0) + 1;
   } else if (inVault) {
     transfers.add(
       TransferItemArgs(
-        itemHash: item.itemHash,
+        itemHash: live.itemHash,
         instanceId: item.instanceId,
         characterId: characterId,
         transferToVault: false,
       ),
     );
+    characterReserved[live.bucketHash] =
+        (characterReserved[live.bucketHash] ?? 0) + 1;
   } else {
     return _ApplyItemPlan(
       rowIndex: rowIndex,
@@ -523,7 +569,7 @@ _ApplyItemPlan _planItem({
   );
 }
 
-bool _bucketIsFull(
+int _bucketCount(
   List<ApplyInventoryItem> inventory,
   String characterId,
   int bucketHash,
@@ -536,7 +582,15 @@ bool _bucketIsFull(
       count += 1;
     }
   }
-  return count >= kApplyCharacterBucketCapacity;
+  return count;
+}
+
+int _vaultCount(List<ApplyInventoryItem> inventory) {
+  var count = 0;
+  for (final row in inventory) {
+    if (row.location == 'vault') count += 1;
+  }
+  return count;
 }
 
 ApplyInventoryItem? _findDequipReplacement({
@@ -582,15 +636,14 @@ _MappedWriteError _mapWriteError(Object error) {
   }
   if (error is BungieHttpException) {
     return _MappedWriteError(
-      statusText: 'HTTP ${error.statusCode}',
+      statusText: bungieHttpFailureMessage(error.statusCode),
       stopFurtherEquips: false,
       isInActivity: false,
     );
   }
-  final raw =
-      error.toString().replaceFirst(RegExp(r'^(Exception|Bad state): '), '');
-  return _MappedWriteError(
-    statusText: raw.isEmpty ? 'failed' : raw,
+  // Never surface Exception.toString() / tokens on Apply rows.
+  return const _MappedWriteError(
+    statusText: kGenericApplyFailureMessage,
     stopFurtherEquips: false,
     isInActivity: false,
   );

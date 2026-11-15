@@ -30,10 +30,15 @@ const Map<int, String> kWeaponStatHashToName = {
 };
 
 /// Parse GetProfile Response into raw inventory items + diagnostics.
+///
+/// [tierTypeByItemHash] supplies DestinyInventoryItemDefinition
+/// `inventory.tierType` (Exotic == 6) so weapons get a reliable exotic signal
+/// (instance `gearTier` is armor-oriented).
 FullInventoryParseResult parseFullInventoryResponse(
   Object? response,
-  DestinyMembership membership,
-) {
+  DestinyMembership membership, {
+  Map<int, int>? tierTypeByItemHash,
+}) {
   if (response is! Map) {
     throw const FormatException('Unexpected inventory response shape');
   }
@@ -66,6 +71,7 @@ FullInventoryParseResult parseFullInventoryResponse(
         instancesMap,
         statsMap,
         reusablePlugsMap,
+        tierTypeByItemHash,
       ),
       diagnostics,
       items,
@@ -86,6 +92,7 @@ FullInventoryParseResult parseFullInventoryResponse(
           instancesMap,
           statsMap,
           reusablePlugsMap,
+          tierTypeByItemHash,
         ),
         diagnostics,
         items,
@@ -107,6 +114,7 @@ FullInventoryParseResult parseFullInventoryResponse(
           instancesMap,
           statsMap,
           reusablePlugsMap,
+          tierTypeByItemHash,
         ),
         diagnostics,
         items,
@@ -248,6 +256,7 @@ _ParseAttempt _parseItemAttempt(
   Map<String, Map<String, Object?>> instancesMap,
   Map<String, List<_StatEntry>> statsMap,
   Map<String, Map<int, List<int>>> reusablePlugsMap,
+  Map<int, int>? tierTypeByItemHash,
 ) {
   if (raw is! Map) {
     return const _ParseAttempt(item: null, dropReason: 'invalid_shape');
@@ -293,8 +302,11 @@ _ParseAttempt _parseItemAttempt(
           : isTransfer
               ? _parseTransferStatValues(statEntries)
               : null;
-  final gearTier =
-      isArmor || isTransfer ? _parseGearTier(instance) : null;
+  // gearTier is armor-oriented on instances; still read when present on any
+  // equipment/transfer row. Weapons rely on definition tierType below.
+  final gearTier = _parseGearTier(instance);
+  final itemHash = _asInt(item['itemHash']) ?? 0;
+  final tierType = tierTypeByItemHash?[itemHash];
   final socketCapture = isWeapon || isTransfer
       ? _parseSocketCapture(instanceId, sockets, reusablePlugsMap)
       : null;
@@ -302,7 +314,7 @@ _ParseAttempt _parseItemAttempt(
   return _ParseAttempt(
     item: RawInventoryItem(
       instanceId: instanceId,
-      itemHash: _asInt(item['itemHash']) ?? 0,
+      itemHash: itemHash,
       bucketHash: bucketHash,
       location: location,
       characterId: characterId,
@@ -312,6 +324,7 @@ _ParseAttempt _parseItemAttempt(
       isCrafted: isCrafted,
       statValues: statValues,
       gearTier: gearTier,
+      tierType: tierType,
       socketCapture: socketCapture,
     ),
     dropReason: null,

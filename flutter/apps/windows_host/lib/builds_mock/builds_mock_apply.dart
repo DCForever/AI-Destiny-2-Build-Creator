@@ -25,12 +25,17 @@ class BuildsMockApplyPorts {
     this.writeClient,
     this.oauthSession,
     this.profileClient,
+    this.exoticItemHashes,
   });
 
   final AppServices? services;
   final BungieWriteClient? writeClient;
   final WindowsOAuthSession? oauthSession;
   final BungieProfileClient? profileClient;
+
+  /// Optional itemHash set known exotic (definition tierType / catalog).
+  /// Merged with OfflineCatalog.isExotic when [services] is present.
+  final Set<int>? exoticItemHashes;
 
   BungieWriteClient? get resolvedWriteClient =>
       writeClient ?? services?.writeClient;
@@ -318,6 +323,7 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
     for (final item in inventory)
       if (item.instanceId.isNotEmpty) item.instanceId,
   };
+  final exoticHashes = _exoticHashesForApply(ports);
   final snapshot = <ApplyInventoryItem>[
     for (final item in inventory)
       if (item.instanceId.isNotEmpty)
@@ -327,7 +333,7 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
           location: item.location,
           bucketHash: item.bucketHash,
           characterId: item.characterId,
-          isExotic: item.gearTier == 6,
+          isExotic: item.isExotic || exoticHashes.contains(item.itemHash),
         ),
   ];
   final present = <ApplyToCharacterItem>[];
@@ -429,4 +435,16 @@ List<ApplyToCharacterItem> itemsForBuildsMockApply(
           slot: slot.slotWire,
         ),
   ];
+}
+
+/// Exotic hashes from inject + OfflineCatalog (definition isExotic / tierType).
+Set<int> _exoticHashesForApply(BuildsMockApplyPorts ports) {
+  final hashes = <int>{...?ports.exoticItemHashes};
+  final catalog = ports.services?.offlineCatalog;
+  if (catalog != null) {
+    for (final item in catalog.baseItems) {
+      if (item.isExotic) hashes.add(item.hash);
+    }
+  }
+  return hashes;
 }

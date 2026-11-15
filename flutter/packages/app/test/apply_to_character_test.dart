@@ -537,6 +537,327 @@ void main() {
     expect(client.dismantleCalls, 0);
     expect(client.deleteCalls, 0);
   });
+
+  test('two pins into one free slot: second refused, first proceeds', () async {
+    var transferCalls = 0;
+    List<String>? equipOrder;
+    final client = createMockWriteClient(
+      transferItem: (c, a) async => transferCalls += 1,
+      equipItems: (c, a) async {
+        equipOrder = List<String>.from(a.itemIds);
+        return [
+          for (final id in a.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
+      },
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-a',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'vault-b',
+        itemHash: 2,
+        location: 'vault',
+        bucketHash: helmetBucket,
+      ),
+      for (var i = 0; i < 9; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 200 + i,
+          location: i == 0 ? 'equipped' : 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+        ),
+    ];
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'a',
+          label: 'A',
+          itemHash: 1,
+          instanceId: 'vault-a',
+        ),
+        ApplyToCharacterItem(
+          id: 'b',
+          label: 'B',
+          itemHash: 2,
+          instanceId: 'vault-b',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    expect(transferCalls, 1);
+    expect(equipOrder, ['vault-a']);
+    expect(result.items[0].state, ApplyItemState.done);
+    expect(result.items[1].state, ApplyItemState.failed);
+    expect(result.items[1].reason, kNoRoomOnCharacterMessage);
+  });
+
+  test('to-vault hop succeeded then from-vault fail: stranded vault message',
+      () async {
+    var hop = 0;
+    final client = createMockWriteClient(
+      transferItem: (c, a) async {
+        hop += 1;
+        if (hop == 1) {
+          expect(a.transferToVault, isTrue);
+          return;
+        }
+        throw const BungiePlatformException(
+          'Bungie API error: No room',
+          errorCode: kDestinyNoRoomInDestination,
+          errorStatus: 'DestinyNoRoomInDestination',
+        );
+      },
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'arms',
+          label: 'Arms',
+          itemHash: 2,
+          instanceId: 'other-1',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'other-1',
+          itemHash: 2,
+          location: 'character',
+          bucketHash: armsBucket,
+          characterId: 'char-other',
+        ),
+      ],
+    );
+
+    expect(hop, 2);
+    expect(result.items.single.state, ApplyItemState.failed);
+    expect(result.items.single.reason, kMovedToVaultStuckMessage);
+  });
+
+  test('hash mismatch refuses before any TransferItem', () async {
+    var transferCalls = 0;
+    var equipCalls = 0;
+    final client = createMockWriteClient(
+      transferItem: (c, a) async => transferCalls += 1,
+      equipItems: (c, a) async {
+        equipCalls += 1;
+        return const [];
+      },
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Helmet',
+          itemHash: 111,
+          instanceId: 'vault-1',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'vault-1',
+          itemHash: 999,
+          location: 'vault',
+          bucketHash: helmetBucket,
+        ),
+      ],
+    );
+
+    expect(transferCalls, 0);
+    expect(equipCalls, 0);
+    expect(result.items.single.reason, kItemHashMismatchMessage);
+  });
+
+  test('exotic weapon (isExotic) is equipped after legendary weapon', () async {
+    const kineticBucket = 1498876634;
+    List<String>? order;
+    final client = createMockWriteClient(
+      equipItems: (c, a) async {
+        order = List<String>.from(a.itemIds);
+        return [
+          for (final id in a.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
+      },
+    );
+
+    await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'exotic-gun',
+          label: 'Exotic Gun',
+          itemHash: 9001,
+          instanceId: 'exo-w',
+        ),
+        ApplyToCharacterItem(
+          id: 'leg-gun',
+          label: 'Legendary Gun',
+          itemHash: 9002,
+          instanceId: 'leg-w',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'exo-w',
+          itemHash: 9001,
+          location: 'character',
+          bucketHash: kineticBucket,
+          characterId: target,
+          isExotic: true,
+        ),
+        ApplyInventoryItem(
+          instanceId: 'leg-w',
+          itemHash: 9002,
+          location: 'character',
+          bucketHash: kineticBucket,
+          characterId: target,
+        ),
+      ],
+    );
+
+    expect(order, ['leg-w', 'exo-w']);
+  });
+
+  test('full vault refuses other-char pull with No room in vault', () async {
+    var transferCalls = 0;
+    final client = createMockWriteClient(
+      transferItem: (c, a) async => transferCalls += 1,
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'other-1',
+        itemHash: 2,
+        location: 'character',
+        bucketHash: armsBucket,
+        characterId: 'char-other',
+      ),
+      for (var i = 0; i < kApplyVaultCapacity; i++)
+        ApplyInventoryItem(
+          instanceId: 'vault-fill-$i',
+          itemHash: 300 + i,
+          location: 'vault',
+          bucketHash: helmetBucket,
+        ),
+    ];
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'arms',
+          label: 'Arms',
+          itemHash: 2,
+          instanceId: 'other-1',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    expect(transferCalls, 0);
+    expect(result.items.single.reason, kNoRoomInVaultMessage);
+  });
+
+  test('generic Exception never surfaces error.toString() on apply row',
+      () async {
+    final client = createMockWriteClient(
+      transferItem: (c, a) async {
+        throw Exception('secret-token-should-not-leak');
+      },
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Helmet',
+          itemHash: 1,
+          instanceId: 'vault-1',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'vault-1',
+          itemHash: 1,
+          location: 'vault',
+          bucketHash: helmetBucket,
+        ),
+      ],
+    );
+
+    expect(result.items.single.reason, kGenericApplyFailureMessage);
+    expect(result.items.single.reason, isNot(contains('secret-token')));
+  });
+
+  test('BungieHttpException maps to fixed HTTP failure text', () async {
+    final client = createMockWriteClient(
+      transferItem: (c, a) async {
+        throw const BungieHttpException(
+          'raw body',
+          statusCode: 503,
+          bodySnippet: 'upstream boom',
+        );
+      },
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Helmet',
+          itemHash: 1,
+          instanceId: 'vault-1',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'vault-1',
+          itemHash: 1,
+          location: 'vault',
+          bucketHash: helmetBucket,
+        ),
+      ],
+    );
+
+    expect(result.items.single.reason, bungieHttpFailureMessage(503));
+    expect(result.items.single.reason, isNot(contains('upstream')));
+  });
 }
 
 /// Fake write client that also exposes dismantle/delete counters for the
