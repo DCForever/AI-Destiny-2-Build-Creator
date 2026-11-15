@@ -20,7 +20,6 @@ import '../optimize/builds_optimize_results_panel.dart';
 import '../optimize/builds_weapon_optimize_results_panel.dart';
 import '../optimize/weapon_optimize_apply.dart';
 import '../sets/set_bonus_families.dart';
-import 'apply_move_confirm_dialog.dart';
 import 'apply_sign_in_dialog.dart';
 import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
@@ -414,16 +413,6 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       ports: ports,
       target: target,
       isMounted: () => mounted,
-      targetLabel: _applyTargetLabel,
-      confirmMoves: (moves) async {
-        if (!mounted) return false;
-        final result = await showApplyMoveConfirmDialog(
-          context: context,
-          moves: moves,
-          targetLabel: _applyTargetLabel,
-        );
-        return result == ApplyMoveConfirmResult.accepted;
-      },
       onProgress: (progress) {
         if (!mounted) return;
         setState(() => _applyProgressByBuild[build.id] = progress);

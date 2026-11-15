@@ -723,13 +723,6 @@ class _ApplyStateIcon extends StatelessWidget {
           key: const Key('apply_state_failed'),
           color: Theme.of(context).colorScheme.error,
         );
-      case ApplyItemState.cancelled:
-        return Icon(
-          Icons.remove_circle_outline,
-          size: 16,
-          key: const Key('apply_state_cancelled'),
-          color: Theme.of(context).disabledColor,
-        );
     }
   }
 }

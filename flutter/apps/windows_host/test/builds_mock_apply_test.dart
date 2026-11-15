@@ -509,7 +509,6 @@ void main() {
         character: warlockA,
       ),
       isMounted: () => true,
-      confirmMoves: (_) async => true,
       onProgress: (_) {},
     );
 

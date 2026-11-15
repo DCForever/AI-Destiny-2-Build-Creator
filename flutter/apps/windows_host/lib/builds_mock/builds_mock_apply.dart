@@ -141,8 +141,9 @@ Future<BuildsMockApplyTargetResolution> resolveBuildsMockApplyTarget(
 /// Runs DIM-style move + bulk equip for [build] using saved Fill In pins.
 ///
 /// [target] must be the same resolved character shown in the Applies-to label.
-/// [confirmMoves] is required whenever transfers are needed (dry-run). Returns
-/// a final outcome (never throws for expected sign-in / empty-plan cases).
+/// Apply itself is the confirmation — moves run immediately with inline
+/// progress. Returns a final outcome (never throws for expected sign-in /
+/// empty-plan cases).
 Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   required MockBuild build,
   required FillInSavedBuildPlan? plan,
@@ -150,8 +151,6 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   required BuildsMockApplyTarget target,
   required bool Function() isMounted,
   required void Function(ApplyToCharacterProgress progress) onProgress,
-  ApplyMovesConfirm? confirmMoves,
-  String? targetLabel,
 }) async {
   final writeClient = ports.resolvedWriteClient;
   final oauth = ports.resolvedOauth;
@@ -239,9 +238,6 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
       characterId: target.characterId,
       items: gated.items,
       inventory: gated.inventory,
-      confirmMoves: confirmMoves,
-      targetLabel: targetLabel ??
-          formatBuildsMockApplyTargetLabel(target.character),
       onProgress: (progress) {
         if (!isMounted()) return;
         onProgress(_mergeApplyProgress(rows, progress));

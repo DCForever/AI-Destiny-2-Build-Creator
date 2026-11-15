@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-/// Apply-to-character path must never reference dismantle/delete/destroy
-/// or transfer-to-delete style APIs. Equip + vault transfer for equip remain OK.
+/// Apply-to-character path must never reference dismantle/delete/destroy,
+/// insert-plug, or pull-from-postmaster APIs. Equip + vault transfer OK.
 const List<String> kBannedApplyPatterns = <String>[
   'dismantleItem',
   'DismantleItem',
@@ -17,19 +17,26 @@ const List<String> kBannedApplyPatterns = <String>[
   'TransferToDelete',
   'transfer_to_delete',
   'TransferToVaultToDelete',
+  'InsertPlug',
+  'insertPlug',
+  'InsertSocketPlug',
+  'PullFromPostmaster',
+  'pullFromPostmaster',
+  '/Destiny2/Actions/Items/PullFromPostmaster',
+  '/Destiny2/Actions/Items/InsertSocketPlug',
 ];
 
 /// Exact apply-path sources (posix-ish relative to packages/app).
 ///
 /// Includes the host Builds mock Apply wiring — the only non-package caller of
 /// a Bungie write. Exact list (not a glob) so a missing file fails loudly.
+/// Dry-run confirm dialog was removed (Apply itself confirms); list stays
+/// exact and still bans dismantle/delete/plug/postmaster.
 const List<String> kApplyPathRelativeFiles = <String>[
   'lib/src/equip/apply_to_character.dart',
   '../bungie/lib/src/write/equip_orchestrator.dart',
   '../bungie/lib/src/write/write_client.dart',
   '../../apps/windows_host/lib/builds_mock/builds_mock_apply.dart',
-  // Dry-run confirm UI — must stay free of dismantle/delete write names.
-  '../../apps/windows_host/lib/builds_mock/apply_move_confirm_dialog.dart',
 ];
 
 void main() {
@@ -87,6 +94,9 @@ void main() {
     expect(text.contains('destroyItem'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/Dismantle'), isFalse);
     expect(text.contains('transferToDelete'), isFalse);
+    expect(text.contains('InsertPlug'), isFalse);
+    expect(text.contains('PullFromPostmaster'), isFalse);
+    expect(text.contains('/Destiny2/Actions/Items/PullFromPostmaster'), isFalse);
   });
 }
 

@@ -82,7 +82,7 @@ void main() {
     expect(phases.any((p) => p.contains('helmet:applying')), isTrue);
   });
 
-  test('vault item: transfer then bulk equip after dry-run confirm', () async {
+  test('vault item: transfer then bulk equip immediately', () async {
     final transfers = <TransferItemArgs>[];
     final bulk = <List<String>>[];
     final client = createMockWriteClient(
@@ -119,12 +119,6 @@ void main() {
           bucketHash: helmetBucket,
         ),
       ],
-      confirmMoves: (moves) async {
-        expect(moves, hasLength(1));
-        expect(moves.single.fromLabel, 'Vault');
-        expect(moves.single.toLabel, 'Character');
-        return true;
-      },
     );
 
     expect(transfers, hasLength(1));
@@ -164,7 +158,6 @@ void main() {
           characterId: 'char-other',
         ),
       ],
-      confirmMoves: (_) async => true,
     );
 
     expect(transfers, hasLength(2));
@@ -211,10 +204,6 @@ void main() {
           characterId: 'char-other',
         ),
       ],
-      confirmMoves: (moves) async {
-        expect(moves.first.kind, ApplyMoveKind.dequipOnOther);
-        return true;
-      },
     );
 
     expect(equips, hasLength(1));
@@ -428,7 +417,6 @@ void main() {
         ),
       ],
       inventory: inventory,
-      confirmMoves: (_) async => true,
     );
 
     expect(transferCalls, 0);
@@ -468,21 +456,26 @@ void main() {
           bucketHash: helmetBucket,
         ),
       ],
-      confirmMoves: (_) async => true,
     );
 
     expect(result.items.single.state, ApplyItemState.failed);
     expect(result.items.single.reason, 'DestinyItemNotFound');
   });
 
-  test('Cancel on dry-run makes zero write calls', () async {
-    var writes = 0;
+  test('zero planned moves makes zero TransferItem calls', () async {
+    var transferCalls = 0;
+    var equipItemsCalls = 0;
     final client = createMockWriteClient(
-      transferItem: (c, a) async => writes += 1,
-      equipItem: (c, a) async => writes += 1,
+      transferItem: (c, a) async => transferCalls += 1,
       equipItems: (c, a) async {
-        writes += 1;
-        return const [];
+        equipItemsCalls += 1;
+        return [
+          for (final id in a.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
       },
     );
 
@@ -495,23 +488,23 @@ void main() {
           id: 'helmet',
           label: 'Helmet',
           itemHash: 1,
-          instanceId: 'vault-1',
+          instanceId: 'on-target',
         ),
       ],
       inventory: const [
         ApplyInventoryItem(
-          instanceId: 'vault-1',
+          instanceId: 'on-target',
           itemHash: 1,
-          location: 'vault',
+          location: 'character',
           bucketHash: helmetBucket,
+          characterId: target,
         ),
       ],
-      confirmMoves: (_) async => false,
     );
 
-    expect(writes, 0);
-    expect(result.summary, 'Cancelled — 0 applied');
-    expect(result.items.single.state, ApplyItemState.cancelled);
+    expect(transferCalls, 0);
+    expect(equipItemsCalls, 1);
+    expect(result.appliedCount, 1);
   });
 
   test('never invokes dismantle/delete on the write client', () async {

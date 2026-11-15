@@ -1,8 +1,8 @@
 /// DIM-style Apply-to-character: move (sequential) then bulk EquipItems.
 ///
-/// Plans transfers from vault / other characters onto the target, shows a
-/// dry-run confirm when moves are required, then one EquipItems call (exotics
-/// last). Never dismantles or auto-makes room.
+/// Pressing Apply plans transfers from vault / other characters onto the
+/// target, runs them immediately with inline per-item progress, then one
+/// EquipItems call (exotics last). Never dismantles or auto-makes room.
 library;
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
@@ -13,7 +13,6 @@ enum ApplyItemState {
   applying,
   done,
   failed,
-  cancelled,
 }
 
 /// One item row in an Apply-to-character run.
@@ -115,34 +114,6 @@ class ApplyInventoryItem {
   final bool isExotic;
 }
 
-/// One row in the pre-transfer dry-run list (item · from → to).
-class ApplyMovePreview {
-  const ApplyMovePreview({
-    required this.itemId,
-    required this.itemLabel,
-    required this.fromLabel,
-    required this.toLabel,
-    this.kind = ApplyMoveKind.transfer,
-  });
-
-  final String itemId;
-  final String itemLabel;
-  final String fromLabel;
-  final String toLabel;
-  final ApplyMoveKind kind;
-}
-
-enum ApplyMoveKind {
-  /// Equip a non-exotic replacement on another character to free a pin.
-  dequipOnOther,
-
-  /// TransferItem (to vault or from vault).
-  transfer,
-}
-
-/// Confirm callback for dry-run moves. Return false to cancel (zero writes).
-typedef ApplyMovesConfirm = Future<bool> Function(List<ApplyMovePreview> moves);
-
 /// Optional delay injector (tests record throttle sleeps).
 typedef ApplyDelay = Future<void> Function(Duration delay);
 
@@ -151,9 +122,11 @@ const int kApplyCharacterBucketCapacity = 10;
 
 /// Builds a DIM-style move + equip plan and executes it.
 ///
+/// Apply itself is the confirmation — plans and runs immediately with inline
+/// per-item progress (no separate dry-run dialog).
+///
 /// - Locates each pin (target / vault / other / equipped-on-other).
 /// - Full bucket → refuse that item with [kNoRoomOnCharacterMessage].
-/// - Dry-run via [confirmMoves] when any TransferItem is required.
 /// - Transfers sequential (other → vault → target); equipped-on-other dequips
 ///   first via a non-exotic replacement EquipItem on that character.
 /// - One bulk [BungieWriteClient.equipItems], exotics last.
@@ -164,10 +137,8 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   required String characterId,
   required List<ApplyToCharacterItem> items,
   List<ApplyInventoryItem> inventory = const [],
-  ApplyMovesConfirm? confirmMoves,
   void Function(ApplyToCharacterProgress progress)? onProgress,
   ApplyDelay? delay,
-  String targetLabel = 'Character',
 }) async {
   final rows = <ApplyItemProgress>[
     for (final item in items)
@@ -222,48 +193,8 @@ Future<ApplyToCharacterProgress> applyToCharacter({
         byInstance: byInstance,
         inventory: inventory,
         plannedIds: plannedIds,
-        targetLabel: targetLabel,
       ),
   ];
-
-  final dryRunMoves = <ApplyMovePreview>[
-    for (final p in plan)
-      if (p.refusalReason == null) ...p.moves,
-  ];
-
-  if (dryRunMoves.isNotEmpty) {
-    final confirm = confirmMoves;
-    if (confirm == null) {
-      for (final p in plan) {
-        if (p.moves.isEmpty) continue;
-        rows[p.rowIndex] = rows[p.rowIndex].copyWith(
-          state: ApplyItemState.failed,
-          reason: 'Move confirm required',
-        );
-      }
-      return _finish(rows, onProgress);
-    }
-    final accepted = await confirm(List.unmodifiable(dryRunMoves));
-    if (!accepted) {
-      for (var i = 0; i < rows.length; i++) {
-        rows[i] = rows[i].copyWith(
-          state: ApplyItemState.cancelled,
-          reason: 'Cancelled',
-        );
-      }
-      final cancelled = ApplyToCharacterProgress(
-        items: List<ApplyItemProgress>.unmodifiable(rows),
-        currentIndex: 0,
-        total: rows.length,
-        running: false,
-        appliedCount: 0,
-        failedCount: 0,
-        summary: 'Cancelled — 0 applied',
-      );
-      onProgress?.call(cancelled);
-      return cancelled;
-    }
-  }
 
   final sleeper = delay ?? defaultWriteDelay;
   var stopEquips = false;
@@ -455,7 +386,6 @@ class _ApplyItemPlan {
     required this.rowIndex,
     required this.instanceId,
     required this.isExotic,
-    required this.moves,
     required this.dequipSteps,
     required this.transferSteps,
     this.refusalReason,
@@ -464,7 +394,6 @@ class _ApplyItemPlan {
   final int rowIndex;
   final String instanceId;
   final bool isExotic;
-  final List<ApplyMovePreview> moves;
   final List<EquipItemArgs> dequipSteps;
   final List<TransferItemArgs> transferSteps;
   final String? refusalReason;
@@ -477,7 +406,6 @@ _ApplyItemPlan _planItem({
   required Map<String, ApplyInventoryItem> byInstance,
   required List<ApplyInventoryItem> inventory,
   required Set<String> plannedIds,
-  required String targetLabel,
 }) {
   final live = byInstance[item.instanceId];
   if (live == null) {
@@ -485,7 +413,6 @@ _ApplyItemPlan _planItem({
       rowIndex: rowIndex,
       instanceId: item.instanceId,
       isExotic: false,
-      moves: const [],
       dequipSteps: const [],
       transferSteps: const [],
       refusalReason: errorStatusName(kDestinyItemNotFound),
@@ -505,7 +432,6 @@ _ApplyItemPlan _planItem({
       rowIndex: rowIndex,
       instanceId: item.instanceId,
       isExotic: live.isExotic,
-      moves: const [],
       dequipSteps: const [],
       transferSteps: const [],
     );
@@ -516,14 +442,12 @@ _ApplyItemPlan _planItem({
       rowIndex: rowIndex,
       instanceId: item.instanceId,
       isExotic: live.isExotic,
-      moves: const [],
       dequipSteps: const [],
       transferSteps: const [],
       refusalReason: kNoRoomOnCharacterMessage,
     );
   }
 
-  final moves = <ApplyMovePreview>[];
   final dequips = <EquipItemArgs>[];
   final transfers = <TransferItemArgs>[];
 
@@ -539,22 +463,11 @@ _ApplyItemPlan _planItem({
         rowIndex: rowIndex,
         instanceId: item.instanceId,
         isExotic: live.isExotic,
-        moves: const [],
         dequipSteps: const [],
         transferSteps: const [],
         refusalReason: 'Cannot unequip on other character',
       );
     }
-    final otherLabel = _characterLabel(live.characterId!);
-    moves.add(
-      ApplyMovePreview(
-        itemId: item.id,
-        itemLabel: item.label,
-        fromLabel: 'Equipped on $otherLabel',
-        toLabel: '$otherLabel inventory',
-        kind: ApplyMoveKind.dequipOnOther,
-      ),
-    );
     dequips.add(
       EquipItemArgs(
         itemHash: replacement.itemHash,
@@ -565,25 +478,6 @@ _ApplyItemPlan _planItem({
   }
 
   if (onOther) {
-    final otherLabel = _characterLabel(live.characterId!);
-    moves.add(
-      ApplyMovePreview(
-        itemId: item.id,
-        itemLabel: item.label,
-        fromLabel: otherLabel,
-        toLabel: 'Vault',
-        kind: ApplyMoveKind.transfer,
-      ),
-    );
-    moves.add(
-      ApplyMovePreview(
-        itemId: item.id,
-        itemLabel: item.label,
-        fromLabel: 'Vault',
-        toLabel: targetLabel,
-        kind: ApplyMoveKind.transfer,
-      ),
-    );
     transfers.add(
       TransferItemArgs(
         itemHash: item.itemHash,
@@ -601,15 +495,6 @@ _ApplyItemPlan _planItem({
       ),
     );
   } else if (inVault) {
-    moves.add(
-      ApplyMovePreview(
-        itemId: item.id,
-        itemLabel: item.label,
-        fromLabel: 'Vault',
-        toLabel: targetLabel,
-        kind: ApplyMoveKind.transfer,
-      ),
-    );
     transfers.add(
       TransferItemArgs(
         itemHash: item.itemHash,
@@ -623,7 +508,6 @@ _ApplyItemPlan _planItem({
       rowIndex: rowIndex,
       instanceId: item.instanceId,
       isExotic: live.isExotic,
-      moves: const [],
       dequipSteps: const [],
       transferSteps: const [],
       refusalReason: errorStatusName(kDestinyItemNotFound),
@@ -634,7 +518,6 @@ _ApplyItemPlan _planItem({
     rowIndex: rowIndex,
     instanceId: item.instanceId,
     isExotic: live.isExotic,
-    moves: moves,
     dequipSteps: dequips,
     transferSteps: transfers,
   );
@@ -671,11 +554,6 @@ ApplyInventoryItem? _findDequipReplacement({
     return row;
   }
   return null;
-}
-
-String _characterLabel(String characterId) {
-  if (characterId.length <= 4) return 'Character $characterId';
-  return 'Character …${characterId.substring(characterId.length - 4)}';
 }
 
 class _MappedWriteError {
