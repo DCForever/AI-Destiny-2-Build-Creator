@@ -154,8 +154,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                         ),
                         FilledButton(
                           key: Key('builds_mock_apply_character_${build.id}'),
-                          onPressed: _applyingBuildId == build.id ||
-                                  _applyTarget == null
+                          onPressed: !_isApplyButtonEnabled
                               ? null
                               : () => _applyToCharacter(build),
                           child: Text(

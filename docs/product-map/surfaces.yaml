@@ -130,6 +130,23 @@ surfaces:
         status: done
         route: /builds
         notes: "BuildsMockPage mounted in shell rail"
+  - id: shell.nav.builds.apply-sign-in
+    title: Apply sign-in (Bungie browser)
+    kind: modal
+    area: shell
+    parent: shell.nav.builds
+    auth: signed-out
+    notes: >
+      Apply-to-character gate on BuildsMockPage. System browser Public+PKCE
+      (no embedded webview). Daniel Nov 14 2026 5:53 PM PT mockup.
+    status: active
+    rules:
+      - BR-AUTH-001
+    platforms:
+      flutter-windows:
+        status: done
+        route: /builds
+        notes: "ApplySignInDialog over build detail; skips when already signed in"
   - id: shell.nav.settings
     title: Nav → Settings
     kind: field

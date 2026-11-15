@@ -14,6 +14,12 @@ abstract class TokenStore {
   Future<BungieTokens?> read();
   Future<void> write(BungieTokens tokens);
 
+  /// Credential Locker / primary only — never migrates or deletes the sidecar.
+  ///
+  /// Use for post-write read-back verify so a failed Locker write cannot
+  /// trigger sidecar migration/deletion via [read].
+  Future<BungieTokens?> readSecureOnly();
+
   /// Clears Credential Locker / primary **and** any legacy sidecar.
   ///
   /// Use for explicit sign-out. Prefer [clearSecureOnly] when recovering from
@@ -64,6 +70,9 @@ class MemoryTokenStore implements TokenStore {
 
   @override
   Future<BungieTokens?> read() async => _tokens;
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async => _tokens;
 
   @override
   Future<void> write(BungieTokens tokens) async {
@@ -126,6 +135,9 @@ class SecureTokenStore implements TokenStore {
   }
 
   @override
+  Future<BungieTokens?> readSecureOnly() async => read();
+
+  @override
   Future<void> write(BungieTokens tokens) async {
     final encoded = encodeBungieTokens(tokens);
     final byteLength = utf8.encode(encoded).length;
@@ -173,6 +185,12 @@ class FileTokenStore implements TokenStore {
     } catch (_) {
       return null;
     }
+  }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async {
+    // File store is never the Credential Locker.
+    return null;
   }
 
   @override
@@ -240,6 +258,18 @@ class DualTokenStore implements TokenStore {
       return null;
     }
     return _migrateFromSidecarIfPresent();
+  }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async {
+    try {
+      return await _primary.readSecureOnly();
+    } on TokenStoreCorruptException {
+      rethrow;
+    } catch (_) {
+      _report('OAuth: secure-only token read failed');
+      return null;
+    }
   }
 
   /// Empty secure store + legacy sidecar → promote, verify, then delete sidecar.

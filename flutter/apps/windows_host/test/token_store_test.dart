@@ -43,6 +43,9 @@ class InMemorySecureStore implements TokenStore {
   }
 
   @override
+  Future<BungieTokens?> readSecureOnly() async => read();
+
+  @override
   Future<void> write(BungieTokens tokens) async {
     raw = encodeBungieTokens(tokens);
   }
@@ -75,6 +78,9 @@ class MismatchReadBackStore implements TokenStore {
       refresh: 'other-refresh-SECRET',
     );
   }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async => read();
 
   @override
   Future<void> write(BungieTokens tokens) async {
@@ -118,6 +124,9 @@ class ScriptedFailReadBackStore implements TokenStore {
         throw StateError('simulated secure-store I/O failure');
     }
   }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async => read();
 
   @override
   Future<void> write(BungieTokens tokens) async {
