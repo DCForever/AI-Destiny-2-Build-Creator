@@ -176,6 +176,32 @@ void main() {
           '${violations.join('\n')}',
     );
   });
+
+  test('paid socket-plug path never appears under apps/*/lib', () {
+    final appRoot = _findAppPackageRoot();
+    final appsRoot = Directory('${appRoot.path}/../../apps');
+    expect(appsRoot.existsSync(), isTrue, reason: 'apps/ must exist');
+    final violations = <String>[];
+    for (final entity in appsRoot.listSync(followLinks: false)) {
+      if (entity is! Directory) continue;
+      final libDir = Directory('${entity.path}/lib');
+      if (!libDir.existsSync()) continue;
+      for (final file in libDir.listSync(recursive: true)) {
+        if (file is! File || !file.path.endsWith('.dart')) continue;
+        final text = file.readAsStringSync();
+        if (kBannedInsertSocketPlugNotFree.hasMatch(text) ||
+            kBannedInsertSocketPlugMethodNotFree.hasMatch(text)) {
+          violations.add(file.path.replaceAll('\\', '/'));
+        }
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason: 'paid InsertSocketPlug(?!Free) must not appear in apps/*/lib:\n'
+          '${violations.join('\n')}',
+    );
+  });
 }
 
 Directory _findAppPackageRoot() {

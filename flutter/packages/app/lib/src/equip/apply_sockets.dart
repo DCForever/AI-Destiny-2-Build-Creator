@@ -155,10 +155,27 @@ Future<bool> _runPlugSteps({
   required ApplyDelay sleeper,
 }) async {
   final completedClears = <String, ApplyPlugStep>{};
+  final failedClearIds = <String>{};
 
   for (var i = 0; i < steps.length; i++) {
     final step = steps[i];
     final rowIndex = rows.length;
+
+    // A failed clear must stop its matching insert (cheap should-fix).
+    final requiredClear = step.requiresClearStepId;
+    if (requiredClear != null && failedClearIds.contains(requiredClear)) {
+      rows.add(
+        ApplyItemProgress(
+          id: step.id,
+          label: step.label,
+          state: ApplyItemState.failed,
+          reason: kApplySocketClearFailedMessage,
+        ),
+      );
+      emit(index: rowIndex, running: true);
+      continue;
+    }
+
     if (step.skipReason != null) {
       rows.add(
         ApplyItemProgress(
@@ -216,11 +233,16 @@ Future<bool> _runPlugSteps({
     } catch (error) {
       final mapped = _mapWriteError(error);
       if (mapped.isInActivity) {
+        // TODO(skeptic-yellow): in-activity after a successful clear should
+        // attempt restore of that clear before stopping remaining steps.
         rows[rowIndex] = rows[rowIndex].copyWith(
           state: ApplyItemState.failed,
           reason: kInActivityEquipMessage,
         );
         emit(index: rowIndex, running: true);
+        if (step.kind == ApplyPlugKind.armorModClear) {
+          failedClearIds.add(step.id);
+        }
         _appendFailedPlugSteps(
           rows,
           steps.sublist(i + 1),
@@ -231,7 +253,14 @@ Future<bool> _runPlugSteps({
       }
 
       // Plug failures: fixed planner text only — never e.toString() / raw Bungie.
-      var reason = kApplySocketChangeFailedMessage;
+      var reason = step.kind == ApplyPlugKind.armorModClear
+          ? kApplySocketClearFailedMessage
+          : kApplySocketChangeFailedMessage;
+      if (step.kind == ApplyPlugKind.armorModClear) {
+        failedClearIds.add(step.id);
+      }
+      // TODO(skeptic-yellow): restore is bound to requiresClearStepId (last
+      // clear linked on the insert). Multi-clear frees should restore each.
       final clearId = step.requiresClearStepId;
       final clear = clearId == null ? null : completedClears[clearId];
       final restoreHash = step.restorePlugHash;

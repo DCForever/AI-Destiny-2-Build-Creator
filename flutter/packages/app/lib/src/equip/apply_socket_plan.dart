@@ -18,12 +18,19 @@ import 'package:destiny2_bungie/destiny2_bungie.dart';
 const String kApplySubclassNotOnCharacterMessage =
     'Subclass not on character';
 const String kApplyPlugNotUnlockedPrefix = 'Not unlocked: ';
+const String kApplyPlugNotUnlockedOrUnknownPrefix = 'Not unlocked or unknown: ';
 const String kApplyPlugNotEnoughEnergyPrefix = 'Not enough armor energy: ';
 const String kApplyPlugUnresolvablePrefix = 'Could not resolve: ';
 const String kApplyPlugDoesNotFitPrefix = 'Does not fit: ';
+const String kApplyNoFragmentSocketPrefix = 'No fragment socket: ';
+const String kApplySubclassSocketsUnavailableMessage =
+    'Subclass sockets unavailable';
+const String kApplySocketDataUnavailableMessage =
+    'Socket data unavailable';
 const String kArmorModsSkippedUnavailableMessage =
     'Armor mods skipped: mod data unavailable';
 const String kApplySocketChangeFailedMessage = 'Socket change failed';
+const String kApplySocketClearFailedMessage = 'Clear mod failed';
 const String kApplySocketRestoredMessage =
     'Socket change failed; original plug restored';
 const String kApplySocketRestoreFailedMessage =
@@ -87,6 +94,9 @@ String formatApplyPlugOutcomeLabel(ApplyPlugKind kind, String plugName) {
 String notUnlockedPlugMessage(String name) =>
     '$kApplyPlugNotUnlockedPrefix${name.trim()}';
 
+String notUnlockedOrUnknownPlugMessage(String name) =>
+    '$kApplyPlugNotUnlockedOrUnknownPrefix${name.trim()}';
+
 String notEnoughArmorEnergyMessage(String name) =>
     '$kApplyPlugNotEnoughEnergyPrefix${name.trim()}';
 
@@ -95,6 +105,9 @@ String unresolvablePlugMessage(String name) =>
 
 String doesNotFitPlugMessage(String name) =>
     '$kApplyPlugDoesNotFitPrefix${name.trim()}';
+
+String noFragmentSocketMessage(String name) =>
+    '$kApplyNoFragmentSocketPrefix${name.trim()}';
 
 /// One resolved (or skipped) plug step for Apply.
 class ApplyPlugStep {
@@ -260,6 +273,9 @@ class ApplyInstanceSocketState {
     this.emptyPlugHashBySocket = const {},
     this.allowedPlugHashesBySocket = const {},
     this.armorModDataKnown = false,
+    this.subclassPlugOwnershipKnown = false,
+    this.unlockedSocketIndexes,
+    this.socketDataKnown = true,
   });
 
   final String instanceId;
@@ -278,6 +294,17 @@ class ApplyInstanceSocketState {
 
   /// When false, planner skips all armor-mod steps with fixed text (R3).
   final bool armorModDataKnown;
+
+  /// When false (or [ownedPlugHashes] empty), subclass inserts skip with
+  /// [notUnlockedOrUnknownPlugMessage] (F3). Empty owned is UNKNOWN, not open.
+  final bool subclassPlugOwnershipKnown;
+
+  /// Live unlocked/enabled socket indexes when known (fragment slot count).
+  /// Null means "use manifest category indexes as-is".
+  final Set<int>? unlockedSocketIndexes;
+
+  /// False when equipped plugs could not be keyed by socket index (no capture).
+  final bool socketDataKnown;
 }
 
 /// Manifest + name lookup ports for [planApplySockets].
@@ -372,16 +399,45 @@ ApplySocketPlan planApplySockets({
       subclassItem = subclassState.item;
       subclassAlreadyEquipped = subclassState.alreadyEquipped;
       final subclassInstance = subclassState.instance!;
-      final subclassDef = manifest.itemDef(subclassInstance.itemHash);
-      if (subclassDef != null) {
-        subclassPlugs.addAll(
-          _planSubclassPlugs(
-            plugs: build.subclassPlugs,
-            instance: subclassInstance,
-            itemDef: subclassDef,
-            manifest: manifest,
+      if (!subclassInstance.socketDataKnown) {
+        subclassPlugs.add(
+          ApplyPlugStep(
+            id: 'subclass-plugs:socket-data',
+            label: 'Subclass plugs',
+            kind: ApplyPlugKind.aspect,
+            itemInstanceId: subclassInstance.instanceId,
+            socketIndex: 0,
+            plugItemHash: 0,
+            skipReason: kApplySocketDataUnavailableMessage,
           ),
         );
+      } else {
+        final subclassDef = manifest.itemDef(subclassInstance.itemHash);
+        if (subclassDef == null ||
+            !_subclassSocketLayoutResolvable(subclassDef)) {
+          if (build.subclassPlugs.isNotEmpty) {
+            subclassPlugs.add(
+              const ApplyPlugStep(
+                id: 'subclass-plugs:layout',
+                label: 'Subclass plugs',
+                kind: ApplyPlugKind.aspect,
+                itemInstanceId: '',
+                socketIndex: 0,
+                plugItemHash: 0,
+                skipReason: kApplySubclassSocketsUnavailableMessage,
+              ),
+            );
+          }
+        } else {
+          subclassPlugs.addAll(
+            _planSubclassPlugs(
+              plugs: build.subclassPlugs,
+              instance: subclassInstance,
+              itemDef: subclassDef,
+              manifest: manifest,
+            ),
+          );
+        }
       }
     }
   }
@@ -647,14 +703,47 @@ bool _socketAllowsPlug({
   return kind == ApplyPlugKind.aspect || kind == ApplyPlugKind.fragment;
 }
 
+bool _subclassSocketLayoutResolvable(ApplyManifestItemDef itemDef) {
+  // Need at least one known subclass socket category from the manifest /
+  // live layout — never invent hard-coded indexes here.
+  return itemDef.socketCategories.isNotEmpty &&
+      (_indexesForCategories(itemDef, kApplySuperSocketCategoryHashes)
+              .isNotEmpty ||
+          _indexesForCategories(itemDef, kApplyAbilitySocketCategoryHashes)
+              .isNotEmpty ||
+          _indexesForCategories(itemDef, kApplyAspectSocketCategoryHashes)
+              .isNotEmpty ||
+          _indexesForCategories(itemDef, kApplyFragmentSocketCategoryHashes)
+              .isNotEmpty);
+}
+
+List<int> _unlockedIndexesForKind({
+  required ApplyManifestItemDef itemDef,
+  required ApplyInstanceSocketState instance,
+  required ApplyPlugKind kind,
+}) {
+  final indexes = _indexesForKind(itemDef, kind);
+  final unlocked = instance.unlockedSocketIndexes;
+  if (unlocked == null) return indexes;
+  return [for (final idx in indexes) if (unlocked.contains(idx)) idx];
+}
+
 int? _pickSocketForKind({
   required ApplyManifestItemDef itemDef,
   required ApplyInstanceSocketState instance,
   required ApplyPlugKind kind,
   required int plugHash,
   required Set<int> usedSockets,
+  List<int>? indexesOverride,
 }) {
-  final indexes = _indexesForKind(itemDef, kind);
+  final indexes =
+      indexesOverride ?? _unlockedIndexesForKind(
+        itemDef: itemDef,
+        instance: instance,
+        kind: kind,
+      );
+  // Prefer an already-equipped match for THIS plug (may already be reserved
+  // for it). Free fills below must not steal reserved sockets (F1).
   for (final idx in indexes) {
     if (instance.equippedPlugBySocket[idx] == plugHash) return idx;
   }
@@ -671,6 +760,31 @@ int? _pickSocketForKind({
     }
   }
   return null;
+}
+
+/// Reserve every socket that already holds a wanted plug before free fills
+/// so a later wanted no-op is not overwritten (F1).
+Set<int> _reserveWantedSockets({
+  required ApplyManifestItemDef itemDef,
+  required ApplyInstanceSocketState instance,
+  required List<({ApplyPlugKind kind, int hash, String name, String? skip})>
+      resolved,
+}) {
+  final reserved = <int>{};
+  for (final row in resolved) {
+    if (row.skip != null || row.hash == 0) continue;
+    final indexes = _unlockedIndexesForKind(
+      itemDef: itemDef,
+      instance: instance,
+      kind: row.kind,
+    );
+    for (final idx in indexes) {
+      if (instance.equippedPlugBySocket[idx] == row.hash) {
+        reserved.add(idx);
+      }
+    }
+  }
+  return reserved;
 }
 
 List<ApplyPlugStep> _planSubclassPlugs({
@@ -702,6 +816,8 @@ List<ApplyPlugStep> _planSubclassPlugs({
     if (kind == null ||
         kind == ApplyPlugKind.armorMod ||
         kind == ApplyPlugKind.armorModClear) {
+      // TODO(skeptic-yellow): resolved non-mod hash is skipped silently when
+      // kind is null after category parse — surface fixed text consistently.
       resolved.add((
         kind: ApplyPlugKind.aspect,
         hash: r.hash!,
@@ -720,7 +836,18 @@ List<ApplyPlugStep> _planSubclassPlugs({
 
   resolved.sort((a, b) => _kindOrder(a.kind).compareTo(_kindOrder(b.kind)));
 
-  final usedSockets = <int>{};
+  // F1: reserve sockets already holding a wanted plug before assigning frees.
+  final usedSockets = _reserveWantedSockets(
+    itemDef: itemDef,
+    instance: instance,
+    resolved: resolved,
+  );
+  final fragmentIndexes = _unlockedIndexesForKind(
+    itemDef: itemDef,
+    instance: instance,
+    kind: ApplyPlugKind.fragment,
+  );
+  var fragmentPlaced = 0;
   final steps = <ApplyPlugStep>[];
   var i = 0;
   for (final row in resolved) {
@@ -740,20 +867,69 @@ List<ApplyPlugStep> _planSubclassPlugs({
       );
       continue;
     }
-    if (instance.ownedPlugHashes.isNotEmpty &&
-        !instance.ownedPlugHashes.contains(row.hash)) {
-      steps.add(
-        ApplyPlugStep(
-          id: id,
-          label: formatApplyPlugOutcomeLabel(row.kind, row.name),
-          kind: row.kind,
-          itemInstanceId: instance.instanceId,
-          socketIndex: 0,
-          plugItemHash: row.hash,
-          skipReason: notUnlockedPlugMessage(row.name),
-        ),
-      );
-      continue;
+
+    final alreadyAt = () {
+      for (final idx in _unlockedIndexesForKind(
+        itemDef: itemDef,
+        instance: instance,
+        kind: row.kind,
+      )) {
+        if (instance.equippedPlugBySocket[idx] == row.hash) return idx;
+      }
+      return null;
+    }();
+
+    // Ownership: empty/unknown owned set is UNKNOWN (F3), not fail-open.
+    // Already-equipped no-ops do not require an ownership proof.
+    final ownershipKnown = instance.subclassPlugOwnershipKnown &&
+        instance.ownedPlugHashes.isNotEmpty;
+    if (alreadyAt == null) {
+      if (!ownershipKnown) {
+        steps.add(
+          ApplyPlugStep(
+            id: id,
+            label: formatApplyPlugOutcomeLabel(row.kind, row.name),
+            kind: row.kind,
+            itemInstanceId: instance.instanceId,
+            socketIndex: 0,
+            plugItemHash: row.hash,
+            skipReason: notUnlockedOrUnknownPlugMessage(row.name),
+          ),
+        );
+        continue;
+      }
+      if (!instance.ownedPlugHashes.contains(row.hash)) {
+        steps.add(
+          ApplyPlugStep(
+            id: id,
+            label: formatApplyPlugOutcomeLabel(row.kind, row.name),
+            kind: row.kind,
+            itemInstanceId: instance.instanceId,
+            socketIndex: 0,
+            plugItemHash: row.hash,
+            skipReason: notUnlockedOrUnknownPlugMessage(row.name),
+          ),
+        );
+        continue;
+      }
+    }
+
+    if (row.kind == ApplyPlugKind.fragment) {
+      // Extras beyond unlocked fragment slots → fixed skip (F2).
+      if (alreadyAt == null && fragmentPlaced >= fragmentIndexes.length) {
+        steps.add(
+          ApplyPlugStep(
+            id: id,
+            label: formatApplyPlugOutcomeLabel(row.kind, row.name),
+            kind: row.kind,
+            itemInstanceId: instance.instanceId,
+            socketIndex: 0,
+            plugItemHash: row.hash,
+            skipReason: noFragmentSocketMessage(row.name),
+          ),
+        );
+        continue;
+      }
     }
 
     final socketIndex = _pickSocketForKind(
@@ -762,6 +938,9 @@ List<ApplyPlugStep> _planSubclassPlugs({
       kind: row.kind,
       plugHash: row.hash,
       usedSockets: usedSockets,
+      indexesOverride: row.kind == ApplyPlugKind.fragment
+          ? fragmentIndexes
+          : null,
     );
     if (socketIndex == null) {
       steps.add(
@@ -772,12 +951,15 @@ List<ApplyPlugStep> _planSubclassPlugs({
           itemInstanceId: instance.instanceId,
           socketIndex: 0,
           plugItemHash: row.hash,
-          skipReason: doesNotFitPlugMessage(row.name),
+          skipReason: row.kind == ApplyPlugKind.fragment
+              ? noFragmentSocketMessage(row.name)
+              : doesNotFitPlugMessage(row.name),
         ),
       );
       continue;
     }
     usedSockets.add(socketIndex);
+    if (row.kind == ApplyPlugKind.fragment) fragmentPlaced += 1;
     final current = instance.equippedPlugBySocket[socketIndex];
     steps.add(
       ApplyPlugStep(
@@ -794,6 +976,40 @@ List<ApplyPlugStep> _planSubclassPlugs({
   return steps;
 }
 
+/// Keeps subclass work; armor-mod steps for instances that did not equip are
+/// converted to fixed-text skips (prebuilt plans must not bypass the equipped
+/// filter).
+ApplySocketPlan filterApplySocketPlanToEquipped(
+  ApplySocketPlan plan,
+  Iterable<String> successfullyEquippedInstanceIds,
+) {
+  final ids = successfullyEquippedInstanceIds.toSet();
+  return ApplySocketPlan(
+    subclass: plan.subclass,
+    subclassAlreadyEquipped: plan.subclassAlreadyEquipped,
+    subclassMissingReason: plan.subclassMissingReason,
+    subclassPlugs: plan.subclassPlugs,
+    armorMods: [
+      for (final step in plan.armorMods)
+        if (step.skipReason != null ||
+            step.itemInstanceId.isEmpty ||
+            ids.contains(step.itemInstanceId))
+          step
+        else
+          ApplyPlugStep(
+            id: step.id,
+            label: step.label,
+            kind: step.kind,
+            itemInstanceId: step.itemInstanceId,
+            socketIndex: step.socketIndex,
+            plugItemHash: step.plugItemHash,
+            currentPlugHash: step.currentPlugHash,
+            skipReason: 'Item not equipped',
+          ),
+    ],
+  );
+}
+
 List<ApplyPlugStep> _planArmorMods({
   required List<ApplyNamedPlug> targets,
   required List<ApplyArmorPin> equippedArmor,
@@ -805,6 +1021,11 @@ List<ApplyPlugStep> _planArmorMods({
   for (final armor in equippedArmor) {
     final live = _instanceById(instances, armor.instanceId);
     if (live == null || !live.armorModDataKnown) {
+      // F4 defer: host passes armorModDataKnown:false until live ownership /
+      // energy / allowed plugs exist. TODO(skeptic-yellow): enabling armor
+      // mods requires per-piece usedSockets plus running energy accounting
+      // (two head mods on one piece must share capacity and not reuse a
+      // socket). Also TODO: exotic_armor slot mapping.
       return [
         const ApplyPlugStep(
           id: 'armor-mods:skipped',
