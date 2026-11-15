@@ -81,6 +81,61 @@ class _CorruptRawPrimary implements TokenStore {
   }
 }
 
+/// In-memory primary for DualTokenStore session tests.
+class _MemoryPrimary implements TokenStore {
+  String? raw;
+
+  @override
+  Future<BungieTokens?> read() async {
+    if (raw == null || raw!.trim().isEmpty) return null;
+    return decodeBungieTokens(raw);
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    raw = encodeBungieTokens(tokens);
+  }
+
+  @override
+  Future<void> clear() async {
+    raw = null;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    raw = null;
+  }
+}
+
+/// First migration write leaves Locker empty (null read-back); later writes stick.
+class _FailOnceThenOkPrimary implements TokenStore {
+  int writeCount = 0;
+  BungieTokens? _tokens;
+
+  @override
+  Future<BungieTokens?> read() async => _tokens;
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    writeCount += 1;
+    if (writeCount == 1) {
+      _tokens = null; // force null read-back → rollback
+      return;
+    }
+    _tokens = tokens;
+  }
+
+  @override
+  Future<void> clear() async {
+    _tokens = null;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    _tokens = null;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -167,7 +222,8 @@ void main() {
 
       expect(session.isSignedIn, isFalse);
       expect(session.status, OAuthSessionStatus.error);
-      expect(session.errorMessage, contains('state'));
+      // Fixed UI copy + type only (no raw exception / CSRF detail text).
+      expect(session.errorMessage, 'Sign-in failed (BungieOAuthException). Try again.');
       expect(await store.read(), isNull);
     });
 
@@ -196,9 +252,44 @@ void main() {
       await session.signIn();
       expect(session.isSignedIn, isFalse);
       expect(session.status, OAuthSessionStatus.error);
-      expect(session.errorMessage, contains('User denied'));
+      expect(session.errorMessage, 'Sign-in failed (BungieOAuthException). Try again.');
+      expect(session.errorMessage, isNot(contains('User denied')));
       expect(await store.read(), isNull);
     });
+
+    test(
+      'token-like string inside an exception never reaches the UI message',
+      () async {
+        const leaked =
+            'access-token-SECRET-ui-leak-xyz refresh-token-SECRET-ui-leak-uvw';
+        final store = MemoryTokenStore();
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () async {
+            throw Exception(leaked);
+          },
+        );
+
+        await session.signIn();
+        expect(session.status, OAuthSessionStatus.error);
+        expect(session.errorMessage, isNotNull);
+        expect(session.errorMessage, isNot(contains('SECRET')));
+        expect(session.errorMessage, isNot(contains(leaked)));
+        expect(
+          session.errorMessage,
+          matches(RegExp(r'^Sign-in failed \(.+\)\. Try again\.$')),
+        );
+        expect(session.errorMessage, contains('Exception'));
+      },
+    );
 
     test('signOut clears tokens', () async {
       final store = MemoryTokenStore();
@@ -450,6 +541,100 @@ void main() {
         expect(primary.raw, isNull);
         expect(await sidecar.exists(), isTrue);
         expect((await secondary.read())?.accessToken, 'sidecar-acc-SECRET');
+      },
+    );
+
+    test(
+      'explicit signOut deletes DualTokenStore sidecar file',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('oauth_signout_side_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+
+        final primary = _MemoryPrimary();
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final now = DateTime.now().toUtc();
+        final tokens = BungieTokens(
+          accessToken: 'signout-acc-SECRET',
+          refreshToken: 'signout-ref-SECRET',
+          expiresAt: now.add(const Duration(hours: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 1)),
+          bungieMembershipId: 'mem-signout',
+        );
+        await primary.write(tokens);
+        await secondary.write(tokens);
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        expect(await sidecar.exists(), isTrue);
+
+        final dual = DualTokenStore(primary: primary, secondary: secondary);
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: dual,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+        );
+        await session.restore();
+        expect(session.isSignedIn, isTrue);
+
+        await session.signOut();
+        expect(session.isSignedIn, isFalse);
+        expect(await primary.read(), isNull);
+        expect(await sidecar.exists(), isFalse);
+      },
+    );
+
+    test(
+      'failed migration then second restore migrates cleanly',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('oauth_mig_chain_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+
+        final primary = _FailOnceThenOkPrimary();
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final now = DateTime.now().toUtc();
+        final tokens = BungieTokens(
+          accessToken: 'chain-acc-SECRET',
+          refreshToken: 'chain-ref-SECRET',
+          expiresAt: now.add(const Duration(hours: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 1)),
+          bungieMembershipId: 'mem-chain',
+        );
+        await secondary.write(tokens);
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        expect(await sidecar.exists(), isTrue);
+
+        final dual = DualTokenStore(primary: primary, secondary: secondary);
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: dual,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+        );
+
+        await session.restore();
+        expect(session.isSignedIn, isFalse);
+        expect(await sidecar.exists(), isTrue);
+        expect(primary.writeCount, 1);
+        expect(await primary.read(), isNull);
+
+        await session.restore();
+        expect(session.isSignedIn, isTrue);
+        expect(session.membershipId, 'mem-chain');
+        expect((await primary.read())?.accessToken, 'chain-acc-SECRET');
+        expect(await sidecar.exists(), isFalse);
       },
     );
 
