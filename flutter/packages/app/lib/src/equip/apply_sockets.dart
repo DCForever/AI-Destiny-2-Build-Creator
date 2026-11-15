@@ -156,14 +156,17 @@ Future<bool> _runPlugSteps({
 }) async {
   final completedClears = <String, ApplyPlugStep>{};
   final failedClearIds = <String>{};
+  // Clears whose original plug has not yet been restored (or consumed by a
+  // successful insert). Restored on insert failure or in-activity.
+  final pendingRestoreClears = <String, ApplyPlugStep>{};
 
   for (var i = 0; i < steps.length; i++) {
     final step = steps[i];
     final rowIndex = rows.length;
 
-    // A failed clear must stop its matching insert (cheap should-fix).
-    final requiredClear = step.requiresClearStepId;
-    if (requiredClear != null && failedClearIds.contains(requiredClear)) {
+    // Any failed clear in the chain stops its matching insert.
+    final requiredClears = step.clearStepIdsRequired;
+    if (requiredClears.any(failedClearIds.contains)) {
       rows.add(
         ApplyItemProgress(
           id: step.id,
@@ -224,6 +227,12 @@ Future<bool> _runPlugSteps({
       );
       if (step.kind == ApplyPlugKind.armorModClear) {
         completedClears[step.id] = step;
+        pendingRestoreClears[step.id] = step;
+      } else if (step.kind == ApplyPlugKind.armorMod) {
+        // Successful insert consumes its clears — no restore needed.
+        for (final clearId in step.clearStepIdsRequired) {
+          pendingRestoreClears.remove(clearId);
+        }
       }
       rows[rowIndex] = rows[rowIndex].copyWith(
         state: ApplyItemState.done,
@@ -233,11 +242,27 @@ Future<bool> _runPlugSteps({
     } catch (error) {
       final mapped = _mapWriteError(error);
       if (mapped.isInActivity) {
-        // TODO(skeptic-yellow): in-activity after a successful clear should
-        // attempt restore of that clear before stopping remaining steps.
+        // In-activity after a clear: restore every pending clear, then stop.
+        final pendingSnapshot =
+            Map<String, ApplyPlugStep>.from(pendingRestoreClears);
+        final restored = await _restorePendingClears(
+          writeClient: writeClient,
+          ctx: ctx,
+          characterId: characterId,
+          pending: pendingRestoreClears,
+          sleeper: sleeper,
+        );
+        pendingRestoreClears.clear();
+        if (restored.attempted && !restored.allOk) {
+          _markClearRowsRestoreFailed(rows, pendingSnapshot.keys);
+        }
         rows[rowIndex] = rows[rowIndex].copyWith(
           state: ApplyItemState.failed,
-          reason: kInActivityEquipMessage,
+          reason: restored.attempted
+              ? (restored.allOk
+                  ? kApplySocketRestoredMessage
+                  : kApplySocketRestoreFailedMessage)
+              : kInActivityEquipMessage,
         );
         emit(index: rowIndex, running: true);
         if (step.kind == ApplyPlugKind.armorModClear) {
@@ -259,34 +284,41 @@ Future<bool> _runPlugSteps({
       if (step.kind == ApplyPlugKind.armorModClear) {
         failedClearIds.add(step.id);
       }
-      // TODO(skeptic-yellow): restore is bound to requiresClearStepId (last
-      // clear linked on the insert). Multi-clear frees should restore each.
-      final clearId = step.requiresClearStepId;
-      final clear = clearId == null ? null : completedClears[clearId];
-      final restoreHash = step.restorePlugHash;
-      final restoreSocket = step.restoreSocketIndex;
-      final restoreItem = step.restoreItemInstanceId;
-      if (clear != null &&
-          restoreHash != null &&
-          restoreSocket != null &&
-          restoreItem != null &&
-          restoreItem.isNotEmpty) {
-        try {
-          await runWriteWithThrottleBackoff(
-            () => writeClient.insertSocketPlugFree(
-              ctx,
-              InsertSocketPlugFreeArgs(
-                itemId: restoreItem,
-                socketIndex: restoreSocket,
-                plugItemHash: restoreHash,
-                characterId: characterId,
-              ),
-            ),
-            delay: sleeper,
-          );
-          reason = kApplySocketRestoredMessage;
-        } catch (_) {
-          reason = kApplySocketRestoreFailedMessage;
+
+      final targets = step.restoreTargets;
+      if (targets.isNotEmpty || pendingRestoreClears.isNotEmpty) {
+        final toRestore = targets.isNotEmpty
+            ? targets
+            : [
+                for (final clear in pendingRestoreClears.values)
+                  if (clear.currentPlugHash != null)
+                    ApplySocketRestore(
+                      clearStepId: clear.id,
+                      itemInstanceId: clear.itemInstanceId,
+                      socketIndex: clear.socketIndex,
+                      plugItemHash: clear.currentPlugHash!,
+                    ),
+              ];
+        final restoreResult = await _restoreSocketTargets(
+          writeClient: writeClient,
+          ctx: ctx,
+          characterId: characterId,
+          targets: toRestore,
+          sleeper: sleeper,
+        );
+        for (final t in toRestore) {
+          pendingRestoreClears.remove(t.clearStepId);
+        }
+        if (restoreResult.attempted) {
+          reason = restoreResult.allOk
+              ? kApplySocketRestoredMessage
+              : kApplySocketRestoreFailedMessage;
+          if (!restoreResult.allOk) {
+            _markClearRowsRestoreFailed(
+              rows,
+              toRestore.map((t) => t.clearStepId),
+            );
+          }
         }
       }
 
@@ -298,6 +330,78 @@ Future<bool> _runPlugSteps({
     }
   }
   return false;
+}
+
+class _RestoreOutcome {
+  const _RestoreOutcome({required this.attempted, required this.allOk});
+  final bool attempted;
+  final bool allOk;
+}
+
+Future<_RestoreOutcome> _restorePendingClears({
+  required BungieWriteClient writeClient,
+  required WriteClientContext ctx,
+  required String characterId,
+  required Map<String, ApplyPlugStep> pending,
+  required ApplyDelay sleeper,
+}) async {
+  if (pending.isEmpty) {
+    return const _RestoreOutcome(attempted: false, allOk: true);
+  }
+  final targets = <ApplySocketRestore>[
+    for (final clear in pending.values)
+      if (clear.currentPlugHash != null)
+        ApplySocketRestore(
+          clearStepId: clear.id,
+          itemInstanceId: clear.itemInstanceId,
+          socketIndex: clear.socketIndex,
+          plugItemHash: clear.currentPlugHash!,
+        ),
+  ];
+  return _restoreSocketTargets(
+    writeClient: writeClient,
+    ctx: ctx,
+    characterId: characterId,
+    targets: targets,
+    sleeper: sleeper,
+  );
+}
+
+/// Restores every cleared socket (covers multi-clear frees).
+Future<_RestoreOutcome> _restoreSocketTargets({
+  required BungieWriteClient writeClient,
+  required WriteClientContext ctx,
+  required String characterId,
+  required List<ApplySocketRestore> targets,
+  required ApplyDelay sleeper,
+}) async {
+  if (targets.isEmpty) {
+    return const _RestoreOutcome(attempted: false, allOk: true);
+  }
+  var allOk = true;
+  for (final target in targets) {
+    if (target.itemInstanceId.isEmpty) {
+      allOk = false;
+      continue;
+    }
+    try {
+      await runWriteWithThrottleBackoff(
+        () => writeClient.insertSocketPlugFree(
+          ctx,
+          InsertSocketPlugFreeArgs(
+            itemId: target.itemInstanceId,
+            socketIndex: target.socketIndex,
+            plugItemHash: target.plugItemHash,
+            characterId: characterId,
+          ),
+        ),
+        delay: sleeper,
+      );
+    } catch (_) {
+      allOk = false;
+    }
+  }
+  return _RestoreOutcome(attempted: true, allOk: allOk);
 }
 
 void _appendFailedPlugSteps(
@@ -314,6 +418,23 @@ void _appendFailedPlugSteps(
         state: ApplyItemState.failed,
         reason: reason,
       ),
+    );
+  }
+}
+
+/// When a restore fails, mark the earlier clear row(s) so the UI shows the
+/// cleared socket was not put back (Skeptic should-fix).
+void _markClearRowsRestoreFailed(
+  List<ApplyItemProgress> rows,
+  Iterable<String> clearStepIds,
+) {
+  final ids = clearStepIds.where((id) => id.isNotEmpty).toSet();
+  if (ids.isEmpty) return;
+  for (var i = 0; i < rows.length; i++) {
+    if (!ids.contains(rows[i].id)) continue;
+    rows[i] = rows[i].copyWith(
+      state: ApplyItemState.failed,
+      reason: kApplySocketRestoreFailedMessage,
     );
   }
 }

@@ -82,16 +82,28 @@ class RawSocketCapture {
     required this.socketIndex,
     required this.equippedPlugHash,
     this.reusablePlugHashes = const [],
+    this.isEnabled = true,
+    this.isVisible = true,
   });
 
   final int socketIndex;
+
+  /// Equipped plug hash from 305; may be 0 when the socket is empty/unlocked.
   final int equippedPlugHash;
   final List<int> reusablePlugHashes;
+
+  /// DestinyItemSocketState.isEnabled (305). False ⇒ locked/disabled socket.
+  final bool isEnabled;
+
+  /// DestinyItemSocketState.isVisible (305). False ⇒ hidden socket.
+  final bool isVisible;
 
   Map<String, Object?> toJsonMap() => {
         'socketIndex': socketIndex,
         'equippedPlugHash': equippedPlugHash,
         'reusablePlugHashes': reusablePlugHashes,
+        'isEnabled': isEnabled,
+        'isVisible': isVisible,
       };
 }
 
@@ -119,6 +131,8 @@ class RawInventoryItem {
     this.socketCapture,
     this.isLocked = false,
     this.isTransferable = true,
+    this.energyCapacity,
+    this.energyUsed,
   });
 
   final String instanceId;
@@ -145,6 +159,13 @@ class RawInventoryItem {
   /// False when DestinyTransferStatus is not CanTransfer.
   final bool isTransferable;
 
+  /// Armor energy capacity from instance component 300 (`energy.energyCapacity`).
+  /// Null when the instance has no energy block (not armor / not present).
+  final int? energyCapacity;
+
+  /// Armor energy used from instance component 300 (`energy.energyUsed`).
+  final int? energyUsed;
+
   /// Exotic via instance gearTier or definition tierType.
   bool get isExotic =>
       gearTier == 6 || tierType == 6;
@@ -166,6 +187,8 @@ class RawInventoryItem {
       socketCapture: socketCapture,
       isLocked: isLocked,
       isTransferable: isTransferable,
+      energyCapacity: energyCapacity,
+      energyUsed: energyUsed,
     );
   }
 }
@@ -267,8 +290,28 @@ class FullInventoryParseResult {
   const FullInventoryParseResult({
     required this.items,
     required this.diagnostics,
+    this.profilePlugSetPlugHashes = const {},
+    this.characterPlugSetPlugHashes = const {},
   });
 
   final List<RawInventoryItem> items;
   final InventoryParseDiagnostics diagnostics;
+
+  /// Profile plug sets (104) where canInsert == true and enabled == true.
+  final Set<int> profilePlugSetPlugHashes;
+
+  /// Character plug sets (105) keyed by characterId (same canInsert/enabled).
+  final Map<String, Set<int>> characterPlugSetPlugHashes;
+
+  /// Union of profile + all characters (legacy helpers / tests).
+  Set<int> get unlockedPlugSetPlugHashes => {
+        ...profilePlugSetPlugHashes,
+        for (final set in characterPlugSetPlugHashes.values) ...set,
+      };
+
+  /// Profile (104) + one character's (105) unlocked plug hashes.
+  Set<int> unlockedPlugSetPlugHashesForCharacter(String characterId) => {
+        ...profilePlugSetPlugHashes,
+        ...?characterPlugSetPlugHashes[characterId],
+      };
 }

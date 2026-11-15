@@ -60,6 +60,19 @@ bool isWeaponBucketHash(int bucketHash) =>
 
 bool isArmorBucketHash(int bucketHash) => kArmorBucketHashes.contains(bucketHash);
 
+bool isSubclassBucketHash(int bucketHash) => bucketHash == kSubclassBucketHash;
+
+/// True when GetProfile sockets (305) + reusable plugs (310) should be captured.
+///
+/// Weapons/transfer already captured for perk storage; subclass + armor need the
+/// same capture so Apply can plan InsertSocketPlugFree (super/abilities/aspects/
+/// fragments + armor mods).
+bool needsSocketCapture(int bucketHash) =>
+    isWeaponBucketHash(bucketHash) ||
+    isArmorBucketHash(bucketHash) ||
+    isSubclassBucketHash(bucketHash) ||
+    needsEquipmentBucketResolution(bucketHash);
+
 bool needsEquipmentBucketResolution(int bucketHash) =>
     kTransferContainerBuckets.contains(bucketHash);
 

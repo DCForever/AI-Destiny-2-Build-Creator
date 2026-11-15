@@ -114,6 +114,7 @@ void main() {
             },
             ownedPlugHashes: {superHash, 12, aspectHash, fragmentHash},
             subclassPlugOwnershipKnown: true,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -176,6 +177,7 @@ void main() {
             location: 'equipped',
             ownedPlugHashes: {1}, // does not include 21
             subclassPlugOwnershipKnown: true,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -225,6 +227,7 @@ void main() {
             characterId: target,
             location: 'equipped',
             ownedPlugHashes: {},
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -307,6 +310,7 @@ void main() {
             allowedPlugHashesBySocket: {
               0: {modHash},
             },
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [
@@ -384,6 +388,7 @@ void main() {
             allowedPlugHashesBySocket: {
               0: {headMod},
             },
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [
@@ -399,7 +404,8 @@ void main() {
 
       expect(plan.armorMods, isNotEmpty);
       expect(
-        plan.armorMods.every((s) => s.itemInstanceId != 'arms-1' || s.skipReason != null),
+        plan.armorMods
+            .every((s) => s.itemInstanceId != 'arms-1' || s.skipReason != null),
         isTrue,
       );
       expect(
@@ -433,6 +439,7 @@ void main() {
             allowedPlugHashesBySocket: {
               0: {headMod},
             },
+            socketDataKnown: true,
           ),
           ApplyInstanceSocketState(
             instanceId: 'arms-1',
@@ -447,6 +454,7 @@ void main() {
             allowedPlugHashesBySocket: {
               0: {headMod},
             },
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [
@@ -523,6 +531,7 @@ void main() {
             allowedPlugHashesBySocket: {
               0: {generalMod},
             },
+            socketDataKnown: true,
           ),
       ];
       final plan = planApplySockets(
@@ -608,6 +617,7 @@ void main() {
             location: 'equipped',
             ownedPlugHashes: {superHash, grenadeHash},
             subclassPlugOwnershipKnown: true,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -662,6 +672,7 @@ void main() {
             energyUsed: 0,
             ownedPlugHashes: {},
             armorModDataKnown: false,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [
@@ -750,6 +761,7 @@ void main() {
               0: {expensive},
               1: {cheap},
             },
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [
@@ -793,6 +805,7 @@ void main() {
             bucketHash: subclassBucket,
             characterId: null,
             location: 'vault',
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -858,6 +871,7 @@ void main() {
             equippedPlugBySocket: {7: f1, 8: x},
             ownedPlugHashes: {f1, f3},
             subclassPlugOwnershipKnown: true,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -927,6 +941,7 @@ void main() {
             equippedPlugBySocket: {5: a1, 6: other},
             ownedPlugHashes: {a1, a2},
             subclassPlugOwnershipKnown: true,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -1004,12 +1019,12 @@ void main() {
             ownedPlugHashes: {f1, f2, f3, f4},
             subclassPlugOwnershipKnown: true,
             unlockedSocketIndexes: {7, 8, 9},
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
       );
-      final inserts =
-          plan.subclassPlugs.where((s) => s.shouldCall).toList();
+      final inserts = plan.subclassPlugs.where((s) => s.shouldCall).toList();
       final skipped =
           plan.subclassPlugs.where((s) => s.skipReason != null).toList();
       expect(inserts, hasLength(3));
@@ -1053,6 +1068,7 @@ void main() {
             location: 'equipped',
             ownedPlugHashes: {11},
             subclassPlugOwnershipKnown: true,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -1104,6 +1120,7 @@ void main() {
             location: 'equipped',
             ownedPlugHashes: {},
             subclassPlugOwnershipKnown: false,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [],
@@ -1116,7 +1133,7 @@ void main() {
     });
 
     test('F4: armorModDataKnown false → single skip (host defer contract)', () {
-      // Host passes armorModDataKnown:false via kBuildsMockArmorModDataKnown.
+      // Host sets armorModDataKnown false when socket/energy capture is missing.
       final plan = planApplySockets(
         characterId: target,
         build: const ApplyBuildSocketInputs(
@@ -1152,6 +1169,7 @@ void main() {
             characterId: target,
             location: 'equipped',
             armorModDataKnown: false,
+            socketDataKnown: true,
           ),
         ],
         equippedArmor: const [
@@ -1172,7 +1190,8 @@ void main() {
   });
 
   group('applyToCharacter socket phase', () {
-    test('call order: moves, EquipItems, subclass equip, plugs, mods', () async {
+    test('call order: moves, EquipItems, subclass equip, plugs, mods',
+        () async {
       final calls = <String>[];
       final client = createMockWriteClient(
         transferItem: (c, a) async {
@@ -1285,7 +1304,8 @@ void main() {
       );
     });
 
-    test('no insertSocketPlugFree call when socket already has target', () async {
+    test('no insertSocketPlugFree call when socket already has target',
+        () async {
       final plugCalls = <InsertSocketPlugFreeArgs>[];
       final client = createMockWriteClient(
         equipItems: (c, a) async => [
@@ -1817,6 +1837,11 @@ void main() {
         result.items.firstWhere((i) => i.id == 'insert-1').reason,
         kApplySocketRestoreFailedMessage,
       );
+      expect(
+        result.items.firstWhere((i) => i.id == 'clear-1').reason,
+        kApplySocketRestoreFailedMessage,
+        reason: 'clear row must be marked when restore fails',
+      );
     });
 
     test('prebuilt plan filtered to successfully equipped instances', () async {
@@ -1947,6 +1972,850 @@ void main() {
       expect(row.reason, kApplySocketChangeFailedMessage);
       expect(row.reason!.contains('Exception'), isFalse);
       expect(row.reason!.contains('secret'), isFalse);
+    });
+
+    test('in-activity after clear restores every clear then stops', () async {
+      final plugCalls = <String>[];
+      final client = createMockWriteClient(
+        equipItems: (c, a) async => [
+          for (final id in a.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ],
+        insertSocketPlugFree: (c, a) async {
+          plugCalls.add('${a.itemId}:${a.socketIndex}:${a.plugItemHash}');
+          // Clears succeed; wanted insert hits in-activity; restores succeed.
+          if (a.plugItemHash == 301) {
+            throw const BungiePlatformException(
+              'DestinyCannotPerformActionAtThisLocation',
+              errorCode: kDestinyCannotPerformActionAtThisLocation,
+              errorStatus: 'DestinyCannotPerformActionAtThisLocation',
+            );
+          }
+        },
+      );
+
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'helmet',
+            label: 'Helmet A',
+            itemHash: 1,
+            instanceId: 'i1',
+          ),
+        ],
+        inventory: const [
+          ApplyInventoryItem(
+            instanceId: 'i1',
+            itemHash: 1,
+            location: 'character',
+            bucketHash: helmetBucket,
+            characterId: target,
+          ),
+        ],
+        socketPlan: const ApplySocketPlan(
+          armorMods: [
+            ApplyPlugStep(
+              id: 'clear-1',
+              label: 'Clear mod: A',
+              kind: ApplyPlugKind.armorModClear,
+              itemInstanceId: 'i1',
+              socketIndex: 1,
+              plugItemHash: 999,
+              currentPlugHash: 302,
+            ),
+            ApplyPlugStep(
+              id: 'clear-2',
+              label: 'Clear mod: B',
+              kind: ApplyPlugKind.armorModClear,
+              itemInstanceId: 'i1',
+              socketIndex: 2,
+              plugItemHash: 998,
+              currentPlugHash: 303,
+            ),
+            ApplyPlugStep(
+              id: 'insert-1',
+              label: 'Mod: Heavy Handed',
+              kind: ApplyPlugKind.armorMod,
+              itemInstanceId: 'i1',
+              socketIndex: 0,
+              plugItemHash: 301,
+              currentPlugHash: 0,
+              requiresClearStepIds: ['clear-1', 'clear-2'],
+              restores: [
+                ApplySocketRestore(
+                  clearStepId: 'clear-1',
+                  itemInstanceId: 'i1',
+                  socketIndex: 1,
+                  plugItemHash: 302,
+                ),
+                ApplySocketRestore(
+                  clearStepId: 'clear-2',
+                  itemInstanceId: 'i1',
+                  socketIndex: 2,
+                  plugItemHash: 303,
+                ),
+              ],
+            ),
+            ApplyPlugStep(
+              id: 'later-mod',
+              label: 'Mod: Later',
+              kind: ApplyPlugKind.armorMod,
+              itemInstanceId: 'i1',
+              socketIndex: 3,
+              plugItemHash: 304,
+              currentPlugHash: 0,
+            ),
+          ],
+        ),
+      );
+
+      expect(plugCalls, [
+        'i1:1:999',
+        'i1:2:998',
+        'i1:0:301',
+        'i1:1:302', // restore clear-1
+        'i1:2:303', // restore clear-2
+      ]);
+      expect(
+        result.items.firstWhere((i) => i.id == 'insert-1').reason,
+        kApplySocketRestoredMessage,
+      );
+      expect(
+        result.items.firstWhere((i) => i.id == 'later-mod').reason,
+        kInActivityEquipMessage,
+      );
+    });
+
+    test('failed insert restores every clear (multi-clear)', () async {
+      final plugCalls = <String>[];
+      final client = createMockWriteClient(
+        equipItems: (c, a) async => [
+          for (final id in a.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ],
+        insertSocketPlugFree: (c, a) async {
+          plugCalls.add('${a.itemId}:${a.socketIndex}:${a.plugItemHash}');
+          if (a.plugItemHash == 301) {
+            throw const BungiePlatformException(
+              'insert failed',
+              errorCode: 1665,
+              errorStatus: 'DestinySocketAlreadyHasPlug',
+            );
+          }
+        },
+      );
+
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'helmet',
+            label: 'Helmet A',
+            itemHash: 1,
+            instanceId: 'i1',
+          ),
+        ],
+        inventory: const [
+          ApplyInventoryItem(
+            instanceId: 'i1',
+            itemHash: 1,
+            location: 'character',
+            bucketHash: helmetBucket,
+            characterId: target,
+          ),
+        ],
+        socketPlan: const ApplySocketPlan(
+          armorMods: [
+            ApplyPlugStep(
+              id: 'clear-1',
+              label: 'Clear mod: A',
+              kind: ApplyPlugKind.armorModClear,
+              itemInstanceId: 'i1',
+              socketIndex: 1,
+              plugItemHash: 999,
+              currentPlugHash: 302,
+            ),
+            ApplyPlugStep(
+              id: 'clear-2',
+              label: 'Clear mod: B',
+              kind: ApplyPlugKind.armorModClear,
+              itemInstanceId: 'i1',
+              socketIndex: 2,
+              plugItemHash: 998,
+              currentPlugHash: 303,
+            ),
+            ApplyPlugStep(
+              id: 'insert-1',
+              label: 'Mod: Heavy Handed',
+              kind: ApplyPlugKind.armorMod,
+              itemInstanceId: 'i1',
+              socketIndex: 0,
+              plugItemHash: 301,
+              currentPlugHash: 0,
+              requiresClearStepIds: ['clear-1', 'clear-2'],
+              restores: [
+                ApplySocketRestore(
+                  clearStepId: 'clear-1',
+                  itemInstanceId: 'i1',
+                  socketIndex: 1,
+                  plugItemHash: 302,
+                ),
+                ApplySocketRestore(
+                  clearStepId: 'clear-2',
+                  itemInstanceId: 'i1',
+                  socketIndex: 2,
+                  plugItemHash: 303,
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(plugCalls, [
+        'i1:1:999',
+        'i1:2:998',
+        'i1:0:301',
+        'i1:1:302',
+        'i1:2:303',
+      ]);
+      expect(
+        result.items.firstWhere((i) => i.id == 'insert-1').reason,
+        kApplySocketRestoredMessage,
+      );
+    });
+  });
+
+  group('armor planning: energy budget, exotic_armor, visible skips', () {
+    test('two head mods share capacity and do not reuse a socket', () {
+      const armorHash = 200;
+      const modA = 301;
+      const modB = 302;
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? const ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Helmet',
+                socketCategories: [
+                  ApplyManifestSocketCategory(
+                    socketCategoryHash: 590099826,
+                    socketIndexes: [0, 1],
+                  ),
+                ],
+                allowedPlugHashesBySocket: {
+                  0: {modA, modB},
+                  1: {modA, modB},
+                },
+              )
+            : null,
+        plugDef: (h) {
+          if (h == modA) {
+            return const ApplyManifestPlugDef(
+              hash: modA,
+              name: 'Mod A',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              energyCost: 3,
+            );
+          }
+          if (h == modB) {
+            return const ApplyManifestPlugDef(
+              hash: modB,
+              name: 'Mod B',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              energyCost: 3,
+            );
+          }
+          return null;
+        },
+        resolveUniquePlugHashByName: (_) => null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Mod A', hash: modA),
+            ApplyNamedPlug(name: 'Mod B', hash: modB),
+          ],
+        ),
+        manifest: manifest,
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 5,
+            energyUsed: 0,
+            ownedPlugHashes: {modA, modB},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: {
+              0: {modA, modB},
+              1: {modA, modB},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+
+      final inserts = plan.armorMods
+          .where((s) => s.kind == ApplyPlugKind.armorMod)
+          .toList();
+      expect(inserts.where((s) => s.shouldCall), hasLength(1));
+      expect(
+        inserts.where((s) => s.skipReason != null),
+        hasLength(1),
+        reason: 'second mod must skip — capacity 5 cannot hold 3+3',
+      );
+      expect(
+        inserts.singleWhere((s) => s.skipReason != null).skipReason,
+        notEnoughArmorEnergyMessage('Mod B'),
+      );
+      final sockets =
+          inserts.where((s) => s.shouldCall).map((s) => s.socketIndex).toSet();
+      expect(sockets, hasLength(1));
+    });
+
+    test('exotic_armor wire maps to real slot via bucket hash', () {
+      const armorHash = 200;
+      const headMod = 301;
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? const ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Exotic Helm',
+                socketCategories: [
+                  ApplyManifestSocketCategory(
+                    socketCategoryHash: 590099826,
+                    socketIndexes: [0],
+                  ),
+                ],
+                allowedPlugHashesBySocket: {
+                  0: {headMod},
+                },
+              )
+            : null,
+        plugDef: (h) => h == headMod
+            ? const ApplyManifestPlugDef(
+                hash: headMod,
+                name: 'Hands-On',
+                plugCategoryIdentifier: 'enhancements.v2_head',
+                energyCost: 1,
+              )
+            : null,
+        resolveUniquePlugHashByName: (_) => null,
+      );
+
+      expect(
+        resolveArmorSlot(wireSlot: 'exotic_armor', bucketHash: helmetBucket),
+        ApplyArmorSlot.helmet,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Hands-On', hash: headMod),
+          ],
+        ),
+        manifest: manifest,
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 10,
+            energyUsed: 0,
+            ownedPlugHashes: {headMod},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: {
+              0: {headMod},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'exotic',
+            label: 'Exotic Helm',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'exotic_armor',
+          ),
+        ],
+      );
+
+      final inserts = plan.armorMods.where((s) => s.shouldCall).toList();
+      expect(inserts, hasLength(1));
+      expect(inserts.single.itemInstanceId, 'helm-1');
+    });
+
+    test('wanted hash that is not a mod → visible skipped row', () {
+      const notAMod = 999001;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Some Aspect', hash: notAMod),
+          ],
+        ),
+        manifest: ApplySocketManifestLookup(
+          itemDef: (_) => const ApplyManifestItemDef(
+            hash: 200,
+            name: 'Helmet',
+            socketCategories: [
+              ApplyManifestSocketCategory(
+                socketCategoryHash: 590099826,
+                socketIndexes: [0],
+              ),
+            ],
+          ),
+          plugDef: (h) => h == notAMod
+              ? const ApplyManifestPlugDef(
+                  hash: notAMod,
+                  name: 'Some Aspect',
+                  plugCategoryIdentifier: 'warlock.shared.aspects',
+                )
+              : null,
+          resolveUniquePlugHashByName: (_) => null,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: 200,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 10,
+            energyUsed: 0,
+            ownedPlugHashes: {notAMod},
+            armorModDataKnown: true,
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: 200,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+
+      expect(plan.armorMods, hasLength(1));
+      expect(
+        plan.armorMods.single.skipReason,
+        unresolvablePlugMessage('Some Aspect'),
+      );
+      expect(plan.armorMods.single.shouldCall, isFalse);
+    });
+
+    test('M1: unknown energy cost skips; never used as empty clear', () {
+      const armorHash = 200;
+      const wanted = 301;
+      const equippedUnknown = 302;
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? const ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Helmet',
+                socketCategories: [
+                  ApplyManifestSocketCategory(
+                    socketCategoryHash: 590099826,
+                    socketIndexes: [0, 1],
+                  ),
+                ],
+                allowedPlugHashesBySocket: {
+                  0: {wanted},
+                  1: {equippedUnknown},
+                },
+                emptyPlugHashBySocket: {1: 999},
+              )
+            : null,
+        plugDef: (h) {
+          if (h == wanted) {
+            return const ApplyManifestPlugDef(
+              hash: wanted,
+              name: 'Wanted Mod',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              energyCost: 5,
+            );
+          }
+          if (h == equippedUnknown) {
+            return const ApplyManifestPlugDef(
+              hash: equippedUnknown,
+              name: 'Unknown Cost Mod',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              // energyCost null — must skip, never clear via inventing 0.
+            );
+          }
+          return null;
+        },
+        resolveUniquePlugHashByName: (_) => null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Wanted Mod', hash: wanted),
+          ],
+        ),
+        manifest: manifest,
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 3,
+            energyUsed: 3,
+            ownedPlugHashes: {wanted, equippedUnknown},
+            armorModDataKnown: true,
+            equippedPlugBySocket: {1: equippedUnknown},
+            emptyPlugHashBySocket: {1: 999},
+            allowedPlugHashesBySocket: {
+              0: {wanted},
+              1: {equippedUnknown},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+
+      expect(
+        plan.armorMods.any((s) => s.kind == ApplyPlugKind.armorModClear),
+        isFalse,
+        reason: 'unknown-cost plug must never be cleared as empty',
+      );
+      expect(
+        plan.armorMods.single.skipReason,
+        armorEnergyCostUnknownMessage('Unknown Cost Mod'),
+      );
+    });
+
+    test('M1: wanted mod with null energyCost → visible skip', () {
+      const armorHash = 200;
+      const wanted = 301;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Mystery Mod', hash: wanted),
+          ],
+        ),
+        manifest: ApplySocketManifestLookup(
+          itemDef: (_) => const ApplyManifestItemDef(
+            hash: armorHash,
+            name: 'Helmet',
+            socketCategories: [
+              ApplyManifestSocketCategory(
+                socketCategoryHash: 590099826,
+                socketIndexes: [0],
+              ),
+            ],
+          ),
+          plugDef: (h) => h == wanted
+              ? const ApplyManifestPlugDef(
+                  hash: wanted,
+                  name: 'Mystery Mod',
+                  plugCategoryIdentifier: 'enhancements.v2_head',
+                )
+              : null,
+          resolveUniquePlugHashByName: (_) => null,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 10,
+            energyUsed: 0,
+            ownedPlugHashes: {wanted},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: {
+              0: {wanted},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      expect(
+        plan.armorMods.single.skipReason,
+        armorEnergyCostUnknownMessage('Mystery Mod'),
+      );
+    });
+
+    test('M2: empty unlocked fragment socket gets plug; filled not overwritten',
+        () {
+      const subclassHash = 100;
+      const fragA = 31;
+      const fragB = 32;
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == subclassHash
+            ? const ApplyManifestItemDef(
+                hash: subclassHash,
+                name: 'Broodweaver',
+                socketCategories: [
+                  ApplyManifestSocketCategory(
+                    socketCategoryHash: 271461480,
+                    socketIndexes: [7, 8, 9],
+                  ),
+                ],
+              )
+            : null,
+        plugDef: (h) {
+          if (h == fragA) {
+            return const ApplyManifestPlugDef(
+              hash: fragA,
+              name: 'Fragment A',
+              plugCategoryIdentifier: 'shared.fragments',
+            );
+          }
+          if (h == fragB) {
+            return const ApplyManifestPlugDef(
+              hash: fragB,
+              name: 'Fragment B',
+              plugCategoryIdentifier: 'shared.fragments',
+            );
+          }
+          return null;
+        },
+        resolveUniquePlugHashByName: (_) => null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          subclassHash: subclassHash,
+          subclassPlugs: [
+            ApplyNamedPlug(name: 'Fragment A', hash: fragA),
+            ApplyNamedPlug(name: 'Fragment B', hash: fragB),
+          ],
+        ),
+        manifest: manifest,
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'sub-1',
+            itemHash: subclassHash,
+            bucketHash: subclassBucket,
+            characterId: target,
+            location: 'equipped',
+            equippedPlugBySocket: {7: fragA},
+            ownedPlugHashes: {fragA, fragB},
+            subclassPlugOwnershipKnown: true,
+            unlockedSocketIndexes: {7, 8, 9},
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [],
+      );
+
+      final inserts = plan.subclassPlugs.where((s) => s.shouldCall).toList();
+      expect(inserts, hasLength(1));
+      expect(inserts.single.plugItemHash, fragB);
+      expect(inserts.single.socketIndex, 8);
+      final noop =
+          plan.subclassPlugs.firstWhere((s) => s.plugItemHash == fragA);
+      expect(noop.shouldCall, isFalse);
+      expect(noop.socketIndex, 7);
+    });
+
+    test('M2: all-empty unlocked fragment sockets still assign', () {
+      const subclassHash = 100;
+      const fragA = 31;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          subclassHash: subclassHash,
+          subclassPlugs: [
+            ApplyNamedPlug(name: 'Fragment A', hash: fragA),
+          ],
+        ),
+        manifest: ApplySocketManifestLookup(
+          itemDef: (h) => h == subclassHash
+              ? const ApplyManifestItemDef(
+                  hash: subclassHash,
+                  name: 'Broodweaver',
+                  socketCategories: [
+                    ApplyManifestSocketCategory(
+                      socketCategoryHash: 271461480,
+                      socketIndexes: [7, 8, 9],
+                    ),
+                  ],
+                )
+              : null,
+          plugDef: (h) => h == fragA
+              ? const ApplyManifestPlugDef(
+                  hash: fragA,
+                  name: 'Fragment A',
+                  plugCategoryIdentifier: 'shared.fragments',
+                )
+              : null,
+          resolveUniquePlugHashByName: (_) => null,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'sub-1',
+            itemHash: subclassHash,
+            bucketHash: subclassBucket,
+            characterId: target,
+            location: 'equipped',
+            equippedPlugBySocket: {},
+            ownedPlugHashes: {fragA},
+            subclassPlugOwnershipKnown: true,
+            unlockedSocketIndexes: {7, 8, 9},
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [],
+      );
+      final insert = plan.subclassPlugs.singleWhere((s) => s.shouldCall);
+      expect(insert.socketIndex, 7);
+    });
+
+    test('two mods both fit on one piece → different sockets', () {
+      const armorHash = 200;
+      const modA = 301;
+      const modB = 302;
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? const ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Helmet',
+                socketCategories: [
+                  ApplyManifestSocketCategory(
+                    socketCategoryHash: 590099826,
+                    socketIndexes: [0, 1],
+                  ),
+                ],
+                allowedPlugHashesBySocket: {
+                  0: {modA, modB},
+                  1: {modA, modB},
+                },
+              )
+            : null,
+        plugDef: (h) {
+          if (h == modA) {
+            return const ApplyManifestPlugDef(
+              hash: modA,
+              name: 'Mod A',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              energyCost: 2,
+            );
+          }
+          if (h == modB) {
+            return const ApplyManifestPlugDef(
+              hash: modB,
+              name: 'Mod B',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              energyCost: 2,
+            );
+          }
+          return null;
+        },
+        resolveUniquePlugHashByName: (_) => null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Mod A', hash: modA),
+            ApplyNamedPlug(name: 'Mod B', hash: modB),
+          ],
+        ),
+        manifest: manifest,
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 10,
+            energyUsed: 0,
+            ownedPlugHashes: {modA, modB},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: {
+              0: {modA, modB},
+              1: {modA, modB},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+
+      final inserts = plan.armorMods.where((s) => s.shouldCall).toList();
+      expect(inserts, hasLength(2));
+      expect(
+        inserts.map((s) => s.socketIndex).toSet(),
+        {0, 1},
+      );
+    });
+
+    test('socketDataKnown defaults to false', () {
+      const state = ApplyInstanceSocketState(
+        instanceId: 'x',
+        itemHash: 1,
+        bucketHash: subclassBucket,
+      );
+      expect(state.socketDataKnown, isFalse);
     });
   });
 }

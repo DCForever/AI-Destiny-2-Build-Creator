@@ -249,6 +249,215 @@ void main() {
       expect(result.items.single.statValues?['Health'], 10);
       expect(result.items.single.statValues?['Melee'], 20);
     });
+
+    test('parses socket capture + energy for subclass and armor', () {
+      final result = parseFullInventoryResponse({
+        'profileInventory': {'data': {'items': <Object>[]}},
+        'characterInventories': {'data': <String, Object?>{}},
+        'characterEquipment': {
+          'data': {
+            'char1': {
+              'items': [
+                {
+                  'itemHash': 900001,
+                  'bucketHash': kSubclassBucketHash,
+                  'itemInstanceId': 'sub1',
+                },
+                {
+                  'itemHash': 900002,
+                  'bucketHash': 3448274439,
+                  'itemInstanceId': 'helm1',
+                },
+              ],
+            },
+          },
+        },
+        'itemComponents': {
+          'instances': {
+            'data': {
+              'sub1': {'primaryStat': {'value': 0}},
+              'helm1': {
+                'primaryStat': {'value': 1810},
+                'energy': {
+                  'energyCapacity': 10,
+                  'energyUsed': 4,
+                },
+              },
+            },
+          },
+          'sockets': {
+            'data': {
+              'sub1': {
+                'sockets': [
+                  {'plugHash': 111, 'isEnabled': true, 'isVisible': true},
+                  // Empty but unlocked fragment socket (M2).
+                  {'plugHash': 0, 'isEnabled': true, 'isVisible': true},
+                  {'plugHash': 222, 'isEnabled': true, 'isVisible': true},
+                ],
+              },
+              'helm1': {
+                'sockets': [
+                  {'plugHash': 301, 'isEnabled': true, 'isVisible': true},
+                  {'plugHash': 302, 'isEnabled': true, 'isVisible': true},
+                ],
+              },
+            },
+          },
+          'reusablePlugs': {
+            'data': {
+              'sub1': {
+                'plugs': {
+                  '0': [
+                    {
+                      'plugItemHash': 111,
+                      'canInsert': true,
+                      'enabled': true,
+                    },
+                    {
+                      'plugItemHash': 112,
+                      'canInsert': true,
+                      'enabled': true,
+                    },
+                    {
+                      'plugItemHash': 113,
+                      'canInsert': false,
+                      'enabled': true,
+                    },
+                    {
+                      // Missing canInsert/enabled ⇒ unknown → excluded.
+                      'plugItemHash': 114,
+                    },
+                  ],
+                },
+              },
+              'helm1': {
+                'plugs': {
+                  '0': [
+                    {
+                      'plugItemHash': 301,
+                      'canInsert': true,
+                      'enabled': true,
+                    },
+                    {
+                      'plugItemHash': 303,
+                      'canInsert': true,
+                      'enabled': true,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        'profilePlugSets': {
+          'data': {
+            'plugs': {
+              '55': [
+                {
+                  'plugItemHash': 555,
+                  'canInsert': true,
+                  'enabled': true,
+                },
+                {
+                  'plugItemHash': 556,
+                  'canInsert': false,
+                  'enabled': true,
+                },
+              ],
+            },
+          },
+        },
+        'characterPlugSets': {
+          'data': {
+            'char1': {
+              'plugs': {
+                '66': [
+                  {
+                    'plugItemHash': 666,
+                    'canInsert': true,
+                    'enabled': true,
+                  },
+                ],
+              },
+            },
+            'char2': {
+              'plugs': {
+                '77': [
+                  {
+                    'plugItemHash': 777,
+                    'canInsert': true,
+                    'enabled': true,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      }, membership);
+
+      final sub = result.items.firstWhere((i) => i.instanceId == 'sub1');
+      expect(sub.socketCapture, isNotNull);
+      expect(sub.socketCapture, hasLength(3));
+      expect(sub.socketCapture!.first.equippedPlugHash, 111);
+      expect(
+        sub.socketCapture!.any((s) => s.socketIndex == 1 && s.equippedPlugHash == 0),
+        isTrue,
+        reason: 'empty unlocked socket must be captured',
+      );
+      expect(
+        sub.socketCapture!.first.reusablePlugHashes,
+        containsAll([111, 112]),
+      );
+      expect(
+        sub.socketCapture!.first.reusablePlugHashes.contains(113),
+        isFalse,
+        reason: 'canInsert:false must not count as unlocked/usable',
+      );
+      expect(
+        sub.socketCapture!.first.reusablePlugHashes.contains(114),
+        isFalse,
+        reason: 'missing canInsert/enabled is unknown — skip',
+      );
+
+      final helm = result.items.firstWhere((i) => i.instanceId == 'helm1');
+      expect(helm.socketCapture, isNotNull);
+      expect(helm.energyCapacity, 10);
+      expect(helm.energyUsed, 4);
+      expect(
+        helm.socketCapture!.first.reusablePlugHashes,
+        containsAll([301, 303]),
+      );
+
+      expect(result.profilePlugSetPlugHashes, contains(555));
+      expect(result.profilePlugSetPlugHashes.contains(556), isFalse);
+      expect(
+        result.unlockedPlugSetPlugHashesForCharacter('char1'),
+        containsAll([555, 666]),
+      );
+      expect(
+        result.unlockedPlugSetPlugHashesForCharacter('char1').contains(777),
+        isFalse,
+        reason: '105 must be limited to the Apply character',
+      );
+      expect(
+        result.unlockedPlugSetPlugHashesForCharacter('char2'),
+        containsAll([555, 777]),
+      );
+    });
+
+    test('inventory components include sockets, reusable plugs, plug sets', () {
+      expect(kInventoryProfileComponents, contains('305'));
+      expect(kInventoryProfileComponents, contains('310'));
+      expect(kInventoryProfileComponents, contains('104'));
+      expect(kInventoryProfileComponents, contains('105'));
+    });
+
+    test('needsSocketCapture covers subclass and armor', () {
+      expect(needsSocketCapture(kSubclassBucketHash), isTrue);
+      expect(needsSocketCapture(3448274439), isTrue); // helmet
+      expect(needsSocketCapture(1498876634), isTrue); // kinetic weapon
+      expect(needsSocketCapture(999999), isFalse);
+    });
   });
 
   group('resolveTransferContainerBuckets', () {
