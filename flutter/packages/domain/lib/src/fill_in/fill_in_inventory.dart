@@ -9,7 +9,8 @@ import '../models/soft_stats.dart';
 /// [slot] (armor Type → slot; weapons Category → slot), weapons `Type` →
 /// [weaponType], weapons `Element` → [damageType], set membership →
 /// [armorSetHash] (armor legendaries only). Optional Optimize fields:
-/// `Owner` → [location], armor stat columns → [statValues].
+/// `Owner` → [location], armor stat columns → [statValues], weapons
+/// `Perks 0`–`Perks 18` / offline perk names → [perkTags].
 class FillInInventoryItem {
   const FillInInventoryItem({
     required this.instanceId,
@@ -23,6 +24,7 @@ class FillInInventoryItem {
     this.damageType,
     this.location,
     this.statValues = const <ArmorStatName, int>{},
+    this.perkTags = const <String>[],
   });
 
   /// Stable id of this physical copy (DIM `Id` / instance id).
@@ -58,6 +60,11 @@ class FillInInventoryItem {
   /// Per-piece Armor 3.0 stats from DIM CSV columns when present.
   final Map<ArmorStatName, int> statValues;
 
+  /// Offline perk / synergy tags (DIM `Perks N` or cached offline names).
+  ///
+  /// Never populated from network — CSV import or offline store only.
+  final List<String> perkTags;
+
   /// Copy with selected fields replaced (host-side set-hash stamping).
   FillInInventoryItem copyWith({
     String? instanceId,
@@ -73,6 +80,7 @@ class FillInInventoryItem {
     String? location,
     bool clearLocation = false,
     Map<ArmorStatName, int>? statValues,
+    List<String>? perkTags,
   }) {
     return FillInInventoryItem(
       instanceId: instanceId ?? this.instanceId,
@@ -87,6 +95,7 @@ class FillInInventoryItem {
       damageType: damageType ?? this.damageType,
       location: clearLocation ? null : (location ?? this.location),
       statValues: statValues ?? this.statValues,
+      perkTags: perkTags ?? this.perkTags,
     );
   }
 }

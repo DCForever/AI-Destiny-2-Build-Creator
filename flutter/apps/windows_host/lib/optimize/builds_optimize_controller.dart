@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
@@ -7,6 +9,7 @@ import '../builds_mock/builds_mock_models.dart';
 import '../optimizer/optimizer_controller.dart' show OptimizeRunner;
 import '../optimizer/optimizer_format.dart';
 import 'builds_optimize_apply.dart';
+import 'weapon_optimize_apply.dart';
 
 /// How Optimize was invoked from Builds detail.
 enum BuildsOptimizeMode {
@@ -22,6 +25,7 @@ class BuildsOptimizeController extends ChangeNotifier {
   BuildsOptimizeController({
     this.optimizeRunner,
     this.loadArmorItems,
+    this.loadWeaponItems,
     this.optimizeStore,
     this.fillInStore,
     this.guardianClass = GuardianClass.warlock,
@@ -35,6 +39,9 @@ class BuildsOptimizeController extends ChangeNotifier {
 
   /// Load DIM armor CSV cache items (armor only). Null → no CSV.
   final Future<List<FillInInventoryItem>?> Function()? loadArmorItems;
+
+  /// Load DIM weapons CSV cache items (weapons only). Null / empty → substitute.
+  final Future<List<FillInInventoryItem>?> Function()? loadWeaponItems;
 
   final OptimizeBuildStore? optimizeStore;
   final FillInMissingListStore? fillInStore;
@@ -67,6 +74,15 @@ class BuildsOptimizeController extends ChangeNotifier {
   List<FillInInventoryItem> _armorItems = const [];
   DateTime? _csvImportedAt;
 
+  List<FillInInventoryItem> _weaponItems = const [];
+  bool _hasWeaponsCsv = false;
+  String? _weaponsCsvReason;
+  WeaponOptimizeResponse? _weaponResponse;
+  bool _weaponPanelOpen = false;
+  int _weaponSelectedIndex = 0;
+  MockBuild? _armorAppliedBuild;
+  FillInSavedBuildPlan? _planAfterArmor;
+
   bool get running => _running;
   bool get applying => _applying;
   String? get error => _error;
@@ -85,6 +101,15 @@ class BuildsOptimizeController extends ChangeNotifier {
 
   bool get hasArmorCsv =>
       _disabledReason == null && _armorItems.isNotEmpty;
+
+  List<FillInInventoryItem> get weaponItems => _weaponItems;
+  bool get hasWeaponsCsv => _hasWeaponsCsv;
+  String? get weaponsCsvReason => _weaponsCsvReason;
+  bool get weaponPanelOpen => _weaponPanelOpen;
+  int get weaponSelectedIndex => _weaponSelectedIndex;
+  List<WeaponOptimizeCombination> get weaponCombinations =>
+      _weaponResponse?.combinations ?? const [];
+  MockBuild? get armorAppliedBuild => _armorAppliedBuild;
 
   ArmorPoolCoverageReport? coverageForClass(GuardianClass cls) {
     if (_armorItems.isEmpty) return null;
@@ -126,6 +151,36 @@ class BuildsOptimizeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Refresh Weapons CSV cache (offline only). Empty → substitute path.
+  Future<void> refreshWeaponsCsv() async {
+    final loader = loadWeaponItems;
+    if (loader == null) {
+      _weaponItems = const [];
+      _hasWeaponsCsv = false;
+      _weaponsCsvReason = kWeaponOptimizeNoCsvReason;
+      notifyListeners();
+      return;
+    }
+    try {
+      final items = await loader();
+      if (items == null || items.isEmpty) {
+        _weaponItems = const [];
+        _hasWeaponsCsv = false;
+        _weaponsCsvReason = kWeaponOptimizeNoCsvReason;
+      } else {
+        _weaponItems = List<FillInInventoryItem>.unmodifiable(items);
+        _hasWeaponsCsv = true;
+        _weaponsCsvReason = null;
+      }
+    } catch (e) {
+      _weaponItems = const [];
+      _hasWeaponsCsv = false;
+      _weaponsCsvReason = kWeaponOptimizeNoCsvReason;
+      _error = e.toString();
+    }
+    notifyListeners();
+  }
+
   void setShowAll(bool value) {
     if (_showAll == value) return;
     _showAll = value;
@@ -139,6 +194,13 @@ class BuildsOptimizeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void selectWeaponResult(int index) {
+    if (index < 0 || index >= weaponCombinations.length) return;
+    if (_weaponSelectedIndex == index) return;
+    _weaponSelectedIndex = index;
+    notifyListeners();
+  }
+
   void closePanel() {
     if (!_panelOpen && _response == null) return;
     _panelOpen = false;
@@ -146,6 +208,16 @@ class BuildsOptimizeController extends ChangeNotifier {
     _selectedIndex = 0;
     _showAll = false;
     _error = null;
+    notifyListeners();
+  }
+
+  void closeWeaponPanel() {
+    if (!_weaponPanelOpen && _weaponResponse == null) return;
+    _weaponPanelOpen = false;
+    _weaponResponse = null;
+    _weaponSelectedIndex = 0;
+    _armorAppliedBuild = null;
+    _planAfterArmor = null;
     notifyListeners();
   }
 
@@ -242,7 +314,6 @@ class BuildsOptimizeController extends ChangeNotifier {
         combination: combo,
         resultIndexOneBased: i + 1,
       );
-      _appliedResultIndex = i + 1;
 
       final optStore = optimizeStore;
       final fiStore = fillInStore;
@@ -250,7 +321,8 @@ class BuildsOptimizeController extends ChangeNotifier {
       // Snapshot prior file records BEFORE any write (Undo restores files).
       // Load both into locals first: if the second load fails, an earlier
       // undoable apply's priors + baseline stay intact (never half-updated).
-      // Assign all four fields + baseline together only after both succeed.
+      // Assign all four fields + baseline + applied index together only after
+      // both loads succeed — a failed apply must not highlight the result.
       final loadedFillIn =
           fiStore == null ? null : await fiStore.loadForBuild(build.id);
       final loadedOptimize =
@@ -260,6 +332,7 @@ class BuildsOptimizeController extends ChangeNotifier {
       _priorOptimizeRecord = loadedOptimize;
       _priorOptimizeCaptured = optStore != null;
       _undoBaseline = snapshotMockBuild(build);
+      _appliedResultIndex = i + 1;
 
       if (optStore != null) {
         await optStore.saveBuildRecord(
@@ -269,20 +342,125 @@ class BuildsOptimizeController extends ChangeNotifier {
           ),
         );
       }
+      final mergedPlan = fillInPlanFromCombination(
+        buildId: build.id,
+        combination: combo,
+        existing: _priorFillInPlan,
+      );
       if (fiStore != null) {
-        await fiStore.saveBuildPlan(
-          fillInPlanFromCombination(
-            buildId: build.id,
-            combination: combo,
-            existing: _priorFillInPlan,
-          ),
-        );
+        await fiStore.saveBuildPlan(mergedPlan);
       }
 
       _applying = false;
       _panelOpen = false;
+      _armorAppliedBuild = next;
+      _planAfterArmor = mergedPlan;
       notifyListeners();
       return next;
+    } catch (e) {
+      _applying = false;
+      _error = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Rank weapons after armor confirm/apply. Opens the weapons results panel.
+  ///
+  /// When Weapons CSV is missing, returns a single substitute combination
+  /// (never labeled optimized). Stale CSV rows absent from [cachedInventory]
+  /// are dropped when that list is provided.
+  Future<WeaponOptimizeResponse?> prepareWeaponResults({
+    required MockBuild build,
+    FillInSavedBuildPlan? existingPlan,
+    List<FillInInventoryItem>? cachedInventory,
+    Random? random,
+    bool openPanel = true,
+  }) async {
+    if (_weaponItems.isEmpty && loadWeaponItems != null) {
+      await refreshWeaponsCsv();
+    }
+    var inventory = List<FillInInventoryItem>.from(_weaponItems);
+    final hasCsv = _hasWeaponsCsv && inventory.isNotEmpty;
+    if (hasCsv && cachedInventory != null) {
+      inventory = filterWeaponsPresentInCache(
+        csvWeapons: inventory,
+        cachedInventory: cachedInventory,
+      );
+    } else if (!hasCsv && cachedInventory != null) {
+      // No Weapons CSV import — substitute from offline cached inventory only.
+      inventory = [
+        for (final item in cachedInventory)
+          if (item.slot == EquipmentSlot.primary ||
+              item.slot == EquipmentSlot.special ||
+              item.slot == EquipmentSlot.heavy)
+            item,
+      ];
+    }
+    final plan = existingPlan ?? _planAfterArmor;
+    final response = runWeaponOptimizeForBuild(
+      build: build,
+      weaponInventory: inventory,
+      hasWeaponsCsv: hasCsv,
+      plan: plan,
+      random: random,
+    );
+    _weaponResponse = response;
+    _weaponSelectedIndex = 0;
+    _armorAppliedBuild = build;
+    _planAfterArmor = plan;
+    _weaponPanelOpen =
+        openPanel && response.combinations.isNotEmpty;
+    notifyListeners();
+    return response;
+  }
+
+  /// Apply the selected weapons result (same Undo baseline as armor).
+  ///
+  /// Substitute kits persist as Fill In proposed pins — never as optimized.
+  Future<MockBuild?> applySelectedWeaponResult({
+    required MockBuild build,
+    int? index,
+    FillInSavedBuildPlan? existingPlan,
+  }) async {
+    final i = index ?? _weaponSelectedIndex;
+    final combos = weaponCombinations;
+    if (i < 0 || i >= combos.length) {
+      _error = 'Invalid weapon suggestion index';
+      notifyListeners();
+      return null;
+    }
+    if (_applying) return null;
+    _applying = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final combo = combos[i];
+      // Never persist a substitute as optimized.
+      if (combo.isSubstitute && combo.isOptimized) {
+        _applying = false;
+        _error = 'Substitute kit cannot be marked optimized';
+        notifyListeners();
+        return null;
+      }
+      final merged = applyWeaponOptimizeCombination(
+        build: build,
+        combination: combo,
+        existingPlan: existingPlan ?? _planAfterArmor,
+      );
+      final persistOk = await persistMergedFillInPlan(merged.plan);
+      if (!persistOk) {
+        _applying = false;
+        notifyListeners();
+        return null;
+      }
+      _weaponPanelOpen = false;
+      _weaponResponse = null;
+      _weaponSelectedIndex = 0;
+      _applying = false;
+      notifyListeners();
+      return merged.build;
     } catch (e) {
       _applying = false;
       _error = e.toString();
@@ -348,6 +526,11 @@ class BuildsOptimizeController extends ChangeNotifier {
       _priorFillInCaptured = false;
       _priorOptimizeRecord = null;
       _priorOptimizeCaptured = false;
+      _weaponPanelOpen = false;
+      _weaponResponse = null;
+      _weaponSelectedIndex = 0;
+      _armorAppliedBuild = null;
+      _planAfterArmor = null;
       _applying = false;
       notifyListeners();
       return restored;
