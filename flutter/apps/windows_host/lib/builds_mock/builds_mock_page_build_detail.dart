@@ -303,6 +303,9 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                       superIconPath: icons.superIconPath,
                       exoticArmorIconPath: icons.exoticArmorIconPath,
                       exoticWeaponIconPath: icons.exoticWeaponIconPath,
+                      setBonusIconByLowerName: _setIconByLowerName,
+                      armorItemsForProposedSets: _optimize.armorItems,
+                      setBonusKeyByItemHash: _optimize.setBonusKeyByItemHash,
                       showMods: true,
                       modsBySlot: placed.bySlot,
                       unplacedMods: const [],
@@ -331,6 +334,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     await _optimize.runOptimize(
       build: build,
       mode: BuildsOptimizeMode.panel,
+      fillInPlan: _savedFillInPlans[build.id],
     );
   }
 
@@ -370,6 +374,7 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     var updated = await _optimize.runOptimize(
       build: build,
       mode: BuildsOptimizeMode.autoApplyFirst,
+      fillInPlan: priorPlan,
     );
     if (!mounted || updated == null) return;
 

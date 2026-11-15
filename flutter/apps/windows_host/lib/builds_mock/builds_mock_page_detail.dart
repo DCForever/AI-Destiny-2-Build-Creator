@@ -161,6 +161,9 @@ extension _BuildsMockDetail on _BuildsMockPageState {
       superIconPath: icons.superIconPath,
       exoticArmorIconPath: icons.exoticArmorIconPath,
       exoticWeaponIconPath: icons.exoticWeaponIconPath,
+      setBonusIconByLowerName: _setIconByLowerName,
+      armorItemsForProposedSets: _optimize.armorItems,
+      setBonusKeyByItemHash: _optimize.setBonusKeyByItemHash,
       onSelect: () => _controller.openBuildDetail(build.id),
     );
   }

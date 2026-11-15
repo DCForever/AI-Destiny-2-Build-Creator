@@ -224,6 +224,9 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
         if (name.isEmpty) continue;
         map.putIfAbsent(name, () => icon);
       }
+      // Stamp optimizer candidates so proposed-set goals match inventory keys.
+      _optimize.setBonusKeyByItemHash =
+          setBonusKeyByItemHashFromCatalog(rows);
       setState(() => _setIconByLowerName = map);
     } catch (_) {
       // Set filter falls back to text-only (no letter badge).

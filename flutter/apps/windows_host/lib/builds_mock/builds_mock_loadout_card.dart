@@ -1,3 +1,4 @@
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_ui_flutter/destiny2_ui_flutter.dart';
 import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
@@ -26,6 +27,9 @@ class BuildsMockLoadoutCard extends StatelessWidget {
     this.superIconPath,
     this.exoticArmorIconPath,
     this.exoticWeaponIconPath,
+    this.setBonusIconByLowerName = const {},
+    this.armorItemsForProposedSets = const [],
+    this.setBonusKeyByItemHash = const {},
     this.showMods = false,
     this.modsBySlot = const {},
     this.unplacedMods = const [], // ignored — mods live under armor rows only
@@ -48,6 +52,13 @@ class BuildsMockLoadoutCard extends StatelessWidget {
   final String? superIconPath;
   final String? exoticArmorIconPath;
   final String? exoticWeaponIconPath;
+
+  /// Catalog set-bonus icons (lowercased family name → path).
+  final Map<String, String> setBonusIconByLowerName;
+
+  /// DIM armor CSV rows used to resolve Fill In proposed set families.
+  final List<FillInInventoryItem> armorItemsForProposedSets;
+  final Map<int, String> setBonusKeyByItemHash;
   final bool showMods;
   final Map<String, List<String>> modsBySlot;
   final List<String> unplacedMods;
@@ -72,6 +83,9 @@ class BuildsMockLoadoutCard extends StatelessWidget {
           superIconPath: superIconPath,
           exoticArmorIconPath: exoticArmorIconPath,
           exoticWeaponIconPath: exoticWeaponIconPath,
+          setBonusIconByLowerName: setBonusIconByLowerName,
+          armorItemsForProposedSets: armorItemsForProposedSets,
+          setBonusKeyByItemHash: setBonusKeyByItemHash,
           compact: true,
         );
       case BuildsMockCardDensity.tile:
@@ -84,6 +98,9 @@ class BuildsMockLoadoutCard extends StatelessWidget {
           superIconPath: superIconPath,
           exoticArmorIconPath: exoticArmorIconPath,
           exoticWeaponIconPath: exoticWeaponIconPath,
+          setBonusIconByLowerName: setBonusIconByLowerName,
+          armorItemsForProposedSets: armorItemsForProposedSets,
+          setBonusKeyByItemHash: setBonusKeyByItemHash,
           compact: false,
         );
       case BuildsMockCardDensity.detail:
@@ -96,6 +113,9 @@ class BuildsMockLoadoutCard extends StatelessWidget {
           superIconPath: superIconPath,
           exoticArmorIconPath: exoticArmorIconPath,
           exoticWeaponIconPath: exoticWeaponIconPath,
+          setBonusIconByLowerName: setBonusIconByLowerName,
+          armorItemsForProposedSets: armorItemsForProposedSets,
+          setBonusKeyByItemHash: setBonusKeyByItemHash,
           showMods: showMods,
           modsBySlot: modsBySlot,
           unplacedMods: unplacedMods,
@@ -122,6 +142,9 @@ class _BrowseCard extends StatelessWidget {
     required this.superIconPath,
     required this.exoticArmorIconPath,
     required this.exoticWeaponIconPath,
+    required this.setBonusIconByLowerName,
+    required this.armorItemsForProposedSets,
+    required this.setBonusKeyByItemHash,
     required this.compact,
   });
 
@@ -133,6 +156,9 @@ class _BrowseCard extends StatelessWidget {
   final String? superIconPath;
   final String? exoticArmorIconPath;
   final String? exoticWeaponIconPath;
+  final Map<String, String> setBonusIconByLowerName;
+  final List<FillInInventoryItem> armorItemsForProposedSets;
+  final Map<int, String> setBonusKeyByItemHash;
   final bool compact;
 
   @override
@@ -142,7 +168,12 @@ class _BrowseCard extends StatelessWidget {
     final filled = buildsMockHasFillIn(fillInPlan) ||
         loadout.slots.any((s) => s.filledIn);
     final loop = loadout.loop.trim();
-    final bonuses = displaySetBonusesFor(loadout);
+    final bonuses = displaySetBonusesFor(
+      loadout,
+      plan: fillInPlan,
+      armorItems: armorItemsForProposedSets,
+      setBonusKeyByItemHash: setBonusKeyByItemHash,
+    );
     final artifactName = loadout.artifact.name.trim();
     final showArtifact =
         artifactName.isNotEmpty && artifactName != '—' && artifactName.toLowerCase() != 'none';
@@ -220,7 +251,10 @@ class _BrowseCard extends StatelessWidget {
                 ],
                 if (bonuses.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  BuildsMockSetBonusBoxes(bonuses: bonuses),
+                  BuildsMockSetBonusBoxes(
+                    bonuses: bonuses,
+                    iconByLowerName: setBonusIconByLowerName,
+                  ),
                 ],
                 if (showArtifact) ...[
                   const SizedBox(height: 8),
@@ -306,6 +340,9 @@ class _DetailBody extends StatelessWidget {
     required this.superIconPath,
     required this.exoticArmorIconPath,
     required this.exoticWeaponIconPath,
+    required this.setBonusIconByLowerName,
+    required this.armorItemsForProposedSets,
+    required this.setBonusKeyByItemHash,
     required this.showMods,
     required this.modsBySlot,
     required this.unplacedMods,
@@ -327,6 +364,9 @@ class _DetailBody extends StatelessWidget {
   final String? superIconPath;
   final String? exoticArmorIconPath;
   final String? exoticWeaponIconPath;
+  final Map<String, String> setBonusIconByLowerName;
+  final List<FillInInventoryItem> armorItemsForProposedSets;
+  final Map<int, String> setBonusKeyByItemHash;
   final bool showMods;
   final Map<String, List<String>> modsBySlot;
   final List<String> unplacedMods;
@@ -345,7 +385,12 @@ class _DetailBody extends StatelessWidget {
     final filled = buildsMockHasFillIn(fillInPlan) ||
         loadout.slots.any((s) => s.filledIn);
     final loop = loadout.loop.trim();
-    final bonuses = displaySetBonusesFor(loadout);
+    final bonuses = displaySetBonusesFor(
+      loadout,
+      plan: fillInPlan,
+      armorItems: armorItemsForProposedSets,
+      setBonusKeyByItemHash: setBonusKeyByItemHash,
+    );
     final artifactName = loadout.artifact.name.trim();
     final showArtifact =
         artifactName.isNotEmpty && artifactName != '—' && artifactName.toLowerCase() != 'none';
@@ -432,7 +477,10 @@ class _DetailBody extends StatelessWidget {
               ],
               if (bonuses.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                BuildsMockSetBonusBoxes(bonuses: bonuses),
+                BuildsMockSetBonusBoxes(
+                  bonuses: bonuses,
+                  iconByLowerName: setBonusIconByLowerName,
+                ),
               ],
               if (showArtifact) ...[
                 const SizedBox(height: 10),

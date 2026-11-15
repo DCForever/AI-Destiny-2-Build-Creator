@@ -6,9 +6,11 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:flutter/foundation.dart';
 
 import '../builds_mock/builds_mock_models.dart';
+import '../builds_mock/builds_mock_proposed_sets.dart';
 import '../optimizer/optimizer_controller.dart' show OptimizeRunner;
 import '../optimizer/optimizer_format.dart';
 import 'builds_optimize_apply.dart';
+import 'builds_optimize_preferred_stats.dart';
 import 'weapon_optimize_apply.dart';
 
 /// How Optimize was invoked from Builds detail.
@@ -222,9 +224,13 @@ class BuildsOptimizeController extends ChangeNotifier {
   }
 
   /// Run optimizer for [build]. Panel mode shows results; auto mode applies #1.
+  ///
+  /// [fillInPlan] supplies Fill In `proposed`/`filled` armor rows when the
+  /// build has no [MockBuild.setBonuses] yet (proposed-set goals).
   Future<MockBuild?> runOptimize({
     required MockBuild build,
     required BuildsOptimizeMode mode,
+    FillInSavedBuildPlan? fillInPlan,
   }) async {
     if (_running || _applying) return null;
     if (_disabledReason != null || _armorItems.isEmpty) {
@@ -245,25 +251,59 @@ class BuildsOptimizeController extends ChangeNotifier {
         guardianClass: guardianClass,
         setBonusKeyByItemHash: setBonusKeyByItemHash,
       );
-      final thresholds = <ArmorStatName, int>{
-        for (final e in statTargets.values.entries)
-          if (e.value > 0) e.key: e.value,
-      };
+      // Proposed sets (4pc or 2+2) → hard KitConstraints.setBonusGoals.
+      final setGoals = proposedSetBonusGoalsFor(
+        build: build,
+        plan: fillInPlan,
+        armorItems: _armorItems,
+        setBonusKeyByItemHash: setBonusKeyByItemHash,
+      );
+      // Preferred / inferred stats from the build detail row (soft closeness).
+      // Controller [statTargets] remain a manual override when non-empty.
+      final preferred = statTargets.values.isNotEmpty
+          ? BuildsOptimizePreferredStats(
+              targets: {
+                for (final e in statTargets.values.entries)
+                  if (e.value > 0) e.key: e.value,
+              },
+              priorities: [
+                for (final e in statTargets.values.entries)
+                  if (e.value > 0) e.key,
+              ],
+            )
+          : preferredStatTargetsFromBuild(build);
       final request = ArmorOptimizeRequest(
         candidates: candidates,
-        constraints: const KitConstraints(),
-        statPriorities: [
-          for (final e in thresholds.entries) e.key,
-        ],
-        statThresholds: thresholds.isEmpty ? null : thresholds,
-        requireThresholds: thresholds.isNotEmpty,
+        constraints: KitConstraints(
+          setBonusGoals: setGoals.isEmpty ? null : setGoals,
+        ),
+        statPriorities: preferred.priorities,
+        // Soft guidance only — closeness re-rank below; never hard-filter.
+        statThresholds: preferred.targets.isEmpty ? null : preferred.targets,
+        requireThresholds: false,
         preferReuse: true,
         maxResults: kOptimizerDefaultMaxResults,
         classType: guardianClass.wireName,
         hasInventory: candidates.isNotEmpty,
       );
       final runner = optimizeRunner ?? optimizeArmorInIsolate;
-      final response = await runner(request);
+      var response = await runner(request);
+      // Existing domain order: setBonusGoals already constrained kits; then
+      // lexicographic maximize on priorities. Re-rank by distance to preferred
+      // targets so high/good prefs win without pushing low/very-low stats up.
+      if (preferred.targets.isNotEmpty && response.combinations.length > 1) {
+        final ranked = rankCombinationsByPreferredStatCloseness(
+          combinations: response.combinations,
+          targets: preferred.targets,
+        );
+        response = ArmorOptimizeResponse(
+          combinations: ranked,
+          truncated: response.truncated,
+          evaluatedCount: response.evaluatedCount,
+          emptyReason: response.emptyReason,
+          seed: response.seed,
+        );
+      }
       _response = response;
       _running = false;
 
