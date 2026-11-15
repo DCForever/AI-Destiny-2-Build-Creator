@@ -31,7 +31,7 @@ void main() {
     );
   }
 
-  test('low / very-low stats are not preferred targets', () {
+  test('every preferred stat including low Health/Melee is a target', () {
     final preferred = preferredStatTargetsFromBuild(
       buildWithStats(const [
         MockStatTotal(id: MockStatId.health, value: 30),
@@ -39,9 +39,16 @@ void main() {
         MockStatTotal(id: MockStatId.weapons, value: 110),
       ]),
     );
-    expect(preferred.targets.keys, [ArmorStatName.weapons]);
-    expect(preferred.targets[ArmorStatName.weapons], 110);
-    expect(preferred.priorities, [ArmorStatName.weapons]);
+    expect(
+      preferred.targets,
+      {
+        ArmorStatName.health: 30,
+        ArmorStatName.melee: 20,
+        ArmorStatName.weapons: 110,
+      },
+    );
+    // High target first in priority order.
+    expect(preferred.priorities.first, ArmorStatName.weapons);
   });
 
   test('no preferred stats → empty (regression)', () {
@@ -49,15 +56,40 @@ void main() {
       preferredStatTargetsFromBuild(buildWithStats(const [])).isEmpty,
       isTrue,
     );
-    expect(
-      preferredStatTargetsFromBuild(
-        buildWithStats(const [
-          MockStatTotal(id: MockStatId.health, value: 30),
-          MockStatTotal(id: MockStatId.melee, value: 20),
-        ]),
-      ).isEmpty,
-      isTrue,
+  });
+
+  test('Melee target 20: candidate at 20 ranks before 80', () {
+    final overshoot = combo(
+      const {ArmorStatName.melee: 80, ArmorStatName.weapons: 50},
+      score: 130,
     );
+    final onTarget = combo(
+      const {ArmorStatName.melee: 20, ArmorStatName.weapons: 50},
+      score: 70,
+    );
+    final ranked = rankCombinationsByPreferredStatCloseness(
+      combinations: [overshoot, onTarget],
+      targets: const {ArmorStatName.melee: 20},
+    );
+    expect(ranked.first, same(onTarget));
+    expect(ranked.last, same(overshoot));
+  });
+
+  test('Health target 30: candidate at 30 ranks before 80', () {
+    final overshoot = combo(
+      const {ArmorStatName.health: 80, ArmorStatName.weapons: 50},
+      score: 130,
+    );
+    final onTarget = combo(
+      const {ArmorStatName.health: 30, ArmorStatName.weapons: 50},
+      score: 80,
+    );
+    final ranked = rankCombinationsByPreferredStatCloseness(
+      combinations: [overshoot, onTarget],
+      targets: const {ArmorStatName.health: 30},
+    );
+    expect(ranked.first, same(onTarget));
+    expect(ranked.last, same(overshoot));
   });
 
   test('closer candidate ranks first among otherwise-equal kits', () {

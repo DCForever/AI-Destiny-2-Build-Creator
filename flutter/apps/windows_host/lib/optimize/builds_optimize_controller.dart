@@ -272,13 +272,22 @@ class BuildsOptimizeController extends ChangeNotifier {
               ],
             )
           : preferredStatTargetsFromBuild(build);
+      // Domain maximize only for high preferred targets (prune hint). Low
+      // targets (Health 30, Melee 20) stay closeness-only so they are not
+      // pushed up before the absolute-distance re-rank below.
+      const highPriorityFloor = 70;
+      final maximizePriorities = <ArmorStatName>[
+        for (final p in preferred.priorities)
+          if ((preferred.targets[p] ?? 0) >= highPriorityFloor) p,
+      ];
       final request = ArmorOptimizeRequest(
         candidates: candidates,
         constraints: KitConstraints(
           setBonusGoals: setGoals.isEmpty ? null : setGoals,
         ),
-        statPriorities: preferred.priorities,
+        statPriorities: maximizePriorities,
         // Soft guidance only — closeness re-rank below; never hard-filter.
+        // Includes every preferred target (high and low).
         statThresholds: preferred.targets.isEmpty ? null : preferred.targets,
         requireThresholds: false,
         preferReuse: true,
@@ -289,8 +298,9 @@ class BuildsOptimizeController extends ChangeNotifier {
       final runner = optimizeRunner ?? optimizeArmorInIsolate;
       var response = await runner(request);
       // Existing domain order: setBonusGoals already constrained kits; then
-      // lexicographic maximize on priorities. Re-rank by distance to preferred
-      // targets so high/good prefs win without pushing low/very-low stats up.
+      // lexicographic maximize on priorities. Re-rank by absolute distance to
+      // every preferred target (high and low) so overshooting Melee 20 / Health
+      // 30 counts against a kit; higher targets weigh more.
       if (preferred.targets.isNotEmpty && response.combinations.length > 1) {
         final ranked = rankCombinationsByPreferredStatCloseness(
           combinations: response.combinations,

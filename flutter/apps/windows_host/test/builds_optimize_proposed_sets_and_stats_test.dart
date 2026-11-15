@@ -125,7 +125,7 @@ void main() {
     expect(seen!.setBonusGoals, isNull);
   });
 
-  test('preferred stats: closer kit ranks first; low stats not required',
+  test('preferred stats: closer kit ranks first; Health/Melee targets included',
       () async {
     ArmorOptimizePiece piece({
       required EquipmentSlot slot,
@@ -159,6 +159,7 @@ void main() {
       estimatedStats: const {
         ArmorStatName.weapons: 40,
         ArmorStatName.health: 80,
+        ArmorStatName.melee: 80,
       },
       incompleteEstimate: false,
       setBonusSummary: const [],
@@ -170,12 +171,13 @@ void main() {
       pieces: far.pieces,
       estimatedStats: const {
         ArmorStatName.weapons: 108,
-        ArmorStatName.health: 80,
+        ArmorStatName.health: 30,
+        ArmorStatName.melee: 20,
       },
       incompleteEstimate: false,
       setBonusSummary: const [],
       reusePieceCount: 0,
-      score: 188,
+      score: 158,
       meetsSoftThresholds: true,
     );
 
@@ -184,12 +186,10 @@ void main() {
       optimizeRunner: (request) async {
         // Soft thresholds must not hard-filter preferred targets.
         expect(request.requireThresholds, isFalse);
-        expect(
-          request.statThresholds?[ArmorStatName.weapons],
-          110,
-        );
-        // Low Health 30 must not be a push-up target.
-        expect(request.statThresholds?.containsKey(ArmorStatName.health), isFalse);
+        expect(request.statThresholds?[ArmorStatName.weapons], 110);
+        // Low preferred stats are closeness targets too (not dropped).
+        expect(request.statThresholds?[ArmorStatName.health], 30);
+        expect(request.statThresholds?[ArmorStatName.melee], 20);
         // Domain order: far first; host re-ranks by closeness.
         return ArmorOptimizeResponse(
           combinations: [far, close],
@@ -210,7 +210,84 @@ void main() {
       mode: BuildsOptimizeMode.panel,
     );
     expect(c.combinations.first.estimatedStats[ArmorStatName.weapons], 108);
+    expect(c.combinations.first.estimatedStats[ArmorStatName.melee], 20);
     expect(c.combinations.last.estimatedStats[ArmorStatName.weapons], 40);
+  });
+
+  test('Melee target 20: kit at 20 ranks before overshoot 80', () async {
+    final overshoot = ArmorCombination(
+      pieces: const [],
+      estimatedStats: const {ArmorStatName.melee: 80},
+      incompleteEstimate: false,
+      setBonusSummary: const [],
+      reusePieceCount: 0,
+      score: 80,
+      meetsSoftThresholds: true,
+    );
+    final onTarget = ArmorCombination(
+      pieces: const [],
+      estimatedStats: const {ArmorStatName.melee: 20},
+      incompleteEstimate: false,
+      setBonusSummary: const [],
+      reusePieceCount: 0,
+      score: 20,
+      meetsSoftThresholds: true,
+    );
+    final c = BuildsOptimizeController(
+      loadArmorItems: () async => armorPool(),
+      optimizeRunner: (_) async => ArmorOptimizeResponse(
+        combinations: [overshoot, onTarget],
+        truncated: false,
+        evaluatedCount: 2,
+      ),
+    );
+    await c.refreshArmorCsv();
+    await c.runOptimize(
+      build: build(
+        stats: const [MockStatTotal(id: MockStatId.melee, value: 20)],
+      ),
+      mode: BuildsOptimizeMode.panel,
+    );
+    expect(c.combinations.first.estimatedStats[ArmorStatName.melee], 20);
+    expect(c.combinations.last.estimatedStats[ArmorStatName.melee], 80);
+  });
+
+  test('Health target 30: kit at 30 ranks before overshoot 80', () async {
+    final overshoot = ArmorCombination(
+      pieces: const [],
+      estimatedStats: const {ArmorStatName.health: 80},
+      incompleteEstimate: false,
+      setBonusSummary: const [],
+      reusePieceCount: 0,
+      score: 80,
+      meetsSoftThresholds: true,
+    );
+    final onTarget = ArmorCombination(
+      pieces: const [],
+      estimatedStats: const {ArmorStatName.health: 30},
+      incompleteEstimate: false,
+      setBonusSummary: const [],
+      reusePieceCount: 0,
+      score: 30,
+      meetsSoftThresholds: true,
+    );
+    final c = BuildsOptimizeController(
+      loadArmorItems: () async => armorPool(),
+      optimizeRunner: (_) async => ArmorOptimizeResponse(
+        combinations: [overshoot, onTarget],
+        truncated: false,
+        evaluatedCount: 2,
+      ),
+    );
+    await c.refreshArmorCsv();
+    await c.runOptimize(
+      build: build(
+        stats: const [MockStatTotal(id: MockStatId.health, value: 30)],
+      ),
+      mode: BuildsOptimizeMode.panel,
+    );
+    expect(c.combinations.first.estimatedStats[ArmorStatName.health], 30);
+    expect(c.combinations.last.estimatedStats[ArmorStatName.health], 80);
   });
 
   test('no preferred stats keeps runner order (regression)', () async {

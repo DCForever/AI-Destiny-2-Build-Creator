@@ -3,14 +3,6 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import '../builds_mock/builds_mock_models.dart';
 import 'builds_optimize_apply.dart';
 
-/// Preferred-stat bands for Builds Optimize (deterministic).
-///
-/// Values below [kPreferredStatPushFloor] are treated as low / very-low and
-/// are **not** pushed up (excluded from closeness targets). Daniel's examples:
-/// Health 30 (low), Melee 20 (very low) stay out; Weapons 110 (high/good)
-/// stays in.
-const int kPreferredStatPushFloor = 70;
-
 /// Preferred stat targets derived from a build's displayed / inferred stats.
 class BuildsOptimizePreferredStats {
   const BuildsOptimizePreferredStats({
@@ -19,9 +11,13 @@ class BuildsOptimizePreferredStats {
   });
 
   /// Soft closeness targets (never hard-filtered via requireThresholds).
+  ///
+  /// Includes every preferred row with value &gt; 0 — high and low alike
+  /// (e.g. Weapons 110, Health 30, Melee 20).
   final Map<ArmorStatName, int> targets;
 
-  /// High → low target value order for prune / secondary keys.
+  /// High → low target value order (seed / prune hint only; final rank is
+  /// [rankCombinationsByPreferredStatCloseness]).
   final List<ArmorStatName> priorities;
 
   bool get isEmpty => targets.isEmpty;
@@ -34,15 +30,15 @@ class BuildsOptimizePreferredStats {
 
 /// Map [MockBuild.stats] into soft preferred targets for Optimize ranking.
 ///
-/// Skips stats below [kPreferredStatPushFloor] so low / very-low rows are not
-/// maximized. Empty [build.stats] → [BuildsOptimizePreferredStats.empty]
-/// (caller keeps the optimizer's current ordering).
+/// Every positive preferred value is a closeness target (Daniel Nov 15 2026:
+/// Health 30 and Melee 20 must count — overshooting them ranks worse).
+/// Empty [build.stats] → [BuildsOptimizePreferredStats.empty] (caller keeps
+/// the optimizer's current ordering).
 BuildsOptimizePreferredStats preferredStatTargetsFromBuild(MockBuild build) {
   final targets = <ArmorStatName, int>{};
   for (final s in build.stats) {
     final name = armorStatFromMockStatId(s.id);
     if (name == null) continue;
-    if (s.value < kPreferredStatPushFloor) continue;
     if (s.value <= 0) continue;
     targets[name] = s.value;
   }
@@ -61,7 +57,9 @@ BuildsOptimizePreferredStats preferredStatTargetsFromBuild(MockBuild build) {
 
 /// Weighted L1 distance to preferred targets (lower is better).
 ///
-/// Weight = target value so high/good prefs pull harder than mid prefs.
+/// Distance is absolute (undershoot and overshoot both hurt). Weight = target
+/// value so high-priority prefs (e.g. Weapons 110) pull harder than low ones
+/// (e.g. Melee 20), while wasted points on overshooting Melee still count.
 int preferredStatDistanceScore({
   required Map<ArmorStatName, int> estimatedStats,
   required Map<ArmorStatName, int> targets,
