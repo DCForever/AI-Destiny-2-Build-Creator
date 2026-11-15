@@ -119,6 +119,8 @@ class RawInventoryItem {
     this.socketCapture,
     this.isLocked = false,
     this.isTransferable = true,
+    this.energyCapacity,
+    this.energyUsed,
   });
 
   final String instanceId;
@@ -145,6 +147,13 @@ class RawInventoryItem {
   /// False when DestinyTransferStatus is not CanTransfer.
   final bool isTransferable;
 
+  /// Armor energy capacity from instance component 300 (`energy.energyCapacity`).
+  /// Null when the instance has no energy block (not armor / not present).
+  final int? energyCapacity;
+
+  /// Armor energy used from instance component 300 (`energy.energyUsed`).
+  final int? energyUsed;
+
   /// Exotic via instance gearTier or definition tierType.
   bool get isExotic =>
       gearTier == 6 || tierType == 6;
@@ -166,6 +175,8 @@ class RawInventoryItem {
       socketCapture: socketCapture,
       isLocked: isLocked,
       isTransferable: isTransferable,
+      energyCapacity: energyCapacity,
+      energyUsed: energyUsed,
     );
   }
 }
@@ -267,8 +278,13 @@ class FullInventoryParseResult {
   const FullInventoryParseResult({
     required this.items,
     required this.diagnostics,
+    this.unlockedPlugSetPlugHashes = const {},
   });
 
   final List<RawInventoryItem> items;
   final InventoryParseDiagnostics diagnostics;
+
+  /// Plug item hashes from profile (104) + character (105) plug sets where
+  /// `canInsert != false` and `enabled != false` (read-only ownership signal).
+  final Set<int> unlockedPlugSetPlugHashes;
 }

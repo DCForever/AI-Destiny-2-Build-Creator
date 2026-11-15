@@ -5,7 +5,14 @@ import 'inventory_parse.dart';
 import 'profile_types.dart';
 
 /// Components for full inventory import (product INVENTORY_COMPONENTS).
-const String kInventoryProfileComponents = '102,201,205,300,304,305,310';
+///
+/// Includes ItemSockets (305) + ItemReusablePlugs (310) for live plug state,
+/// plus ProfilePlugSets (104) + CharacterPlugSets (105) read-only for
+/// aspect/fragment ownership that is not always present on per-item 310 rows.
+/// See Bungie DestinyComponentType docs: 310 alone is incomplete without plug
+/// sets for a full available-plug picture.
+const String kInventoryProfileComponents =
+    '102,104,105,201,205,300,304,305,310';
 
 /// Profile characters component (equip character pick — DART-038).
 const String kCharactersProfileComponents = '200';

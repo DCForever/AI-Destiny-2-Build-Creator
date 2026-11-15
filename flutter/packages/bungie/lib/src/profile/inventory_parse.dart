@@ -126,7 +126,16 @@ FullInventoryParseResult parseFullInventoryResponse(
       diagnostics.raw.characterInventoriesTotal +
       diagnostics.raw.characterEquipmentTotal;
 
-  return FullInventoryParseResult(items: items, diagnostics: diagnostics);
+  final unlockedPlugSetPlugHashes = <int>{
+    ..._extractPlugSetPlugHashes(res['profilePlugSets']),
+    ..._extractCharacterPlugSetPlugHashes(res['characterPlugSets']),
+  };
+
+  return FullInventoryParseResult(
+    items: items,
+    diagnostics: diagnostics,
+    unlockedPlugSetPlugHashes: unlockedPlugSetPlugHashes,
+  );
 }
 
 /// Sort memberships so primary (if known) is first.
@@ -307,9 +316,10 @@ _ParseAttempt _parseItemAttempt(
   final gearTier = _parseGearTier(instance);
   final itemHash = _asInt(item['itemHash']) ?? 0;
   final tierType = tierTypeByItemHash?[itemHash];
-  final socketCapture = isWeapon || isTransfer
+  final socketCapture = needsSocketCapture(bucketHash)
       ? _parseSocketCapture(instanceId, sockets, reusablePlugsMap)
       : null;
+  final energy = _parseInstanceEnergy(instance);
   final itemState = _asInt(item['state']) ?? 0;
   final isLocked = (itemState & kDestinyItemStateLocked) != 0;
   final transferStatus = _asInt(item['transferStatus']) ??
@@ -333,6 +343,8 @@ _ParseAttempt _parseItemAttempt(
       socketCapture: socketCapture,
       isLocked: isLocked,
       isTransferable: isTransferable,
+      energyCapacity: energy.capacity,
+      energyUsed: energy.used,
     ),
     dropReason: null,
   );
@@ -586,6 +598,66 @@ List<RawSocketCapture>? _parseSocketCapture(
     );
   }
   return result.isEmpty ? null : result;
+}
+
+/// Instance energy block (component 300). Null fields when absent.
+({int? capacity, int? used}) _parseInstanceEnergy(
+  Map<String, Object?>? instance,
+) {
+  if (instance == null) return (capacity: null, used: null);
+  final energy = instance['energy'];
+  if (energy is! Map) return (capacity: null, used: null);
+  final e = _asStringKeyedMap(energy);
+  return (
+    capacity: _asInt(e['energyCapacity']),
+    used: _asInt(e['energyUsed']),
+  );
+}
+
+/// Profile plug sets (component 104) — plugs with canInsert/enabled.
+Set<int> _extractPlugSetPlugHashes(Object? section) {
+  if (section is! Map) return {};
+  final s = _asStringKeyedMap(section);
+  final data = s['data'];
+  if (data is! Map) return {};
+  return _plugHashesFromPlugSetsMap(_asStringKeyedMap(data)['plugs']);
+}
+
+/// Character plug sets (component 105) — union across characters.
+Set<int> _extractCharacterPlugSetPlugHashes(Object? section) {
+  if (section is! Map) return {};
+  final s = _asStringKeyedMap(section);
+  final data = s['data'];
+  if (data is! Map) return {};
+  final out = <int>{};
+  for (final entry in _asStringKeyedMap(data).entries) {
+    if (entry.value is! Map) continue;
+    final char = _asStringKeyedMap(entry.value as Map);
+    out.addAll(_plugHashesFromPlugSetsMap(char['plugs']));
+  }
+  return out;
+}
+
+/// Collect plugItemHash values that are insertable and enabled.
+///
+/// Bungie DestinyItemPlugBase: `canInsert` means insertion requirements are
+/// met; `enabled` means the plug would provide benefits if inserted. We treat
+/// a reusable/plug-set entry as unlocked/usable only when both are not false
+/// (same filter as [_extractReusablePlugsMap] for component 310).
+Set<int> _plugHashesFromPlugSetsMap(Object? plugs) {
+  if (plugs is! Map) return {};
+  final out = <int>{};
+  for (final entry in _asStringKeyedMap(plugs).entries) {
+    if (entry.value is! List) continue;
+    for (final plug in entry.value as List) {
+      if (plug is! Map) continue;
+      final p = _asStringKeyedMap(plug);
+      if (p['canInsert'] == false || p['enabled'] == false) continue;
+      final hash = _asInt(p['plugItemHash']);
+      if (hash != null && hash != 0) out.add(hash);
+    }
+  }
+  return out;
 }
 
 Map<String, Object?> _asStringKeyedMap(Map<dynamic, dynamic> map) {
