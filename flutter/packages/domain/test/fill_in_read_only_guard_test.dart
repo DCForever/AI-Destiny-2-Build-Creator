@@ -31,7 +31,9 @@ const List<String> kFillInBannedPatterns = <String>[
 /// Domain 11 → 13 when Optimize added `armor_pool_set_coverage.dart` +
 /// `candidates_from_dim_armor.dart` (pure set-coverage + CSV→candidates;
 /// still no IO / no writes).
-const int kDomainFillInSourceFileCount = 13;
+/// Domain 13 → 14 when weapon Optimize v1 added `weapon_optimize.dart`
+/// (pure hard-filter + perk/synergy scoring; still no IO / no writes).
+const int kDomainFillInSourceFileCount = 14;
 /// Was 4 → 5 when `fill_in_saved_plan_card.dart` was added (detail-card
 /// Armor/Weapons saved-plan UI; still read-only / no IO / no writes).
 /// Was 5 → 6 when Optimize Fill In added `fill_in_weapon_apply.dart`
