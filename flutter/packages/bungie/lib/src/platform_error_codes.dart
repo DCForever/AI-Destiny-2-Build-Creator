@@ -54,13 +54,14 @@ bool isEquipNotPossibleErrorCode(int code) {
 const String kInActivityEquipMessage =
     'You are in an activity; equip from orbit or a social space';
 
-/// Clear message when the target character bucket is full (no auto make-room).
+/// Clear message when the target character bucket is full and make-room cannot
+/// free a slot (no eligible uneqipped non-plan item, or vault full).
 const String kNoRoomOnCharacterMessage = 'No room on character';
 
-/// Vault cannot accept another transfer (no auto make-room).
+/// Vault cannot accept another transfer (including make-room eviction).
 const String kNoRoomInVaultMessage = 'No room in vault';
 
-/// To-vault hop succeeded but vault→character failed.
+/// To-vault hop succeeded but vault→character failed after make-room attempts.
 const String kMovedToVaultStuckMessage =
     'Moved to vault; could not move to character';
 
@@ -70,6 +71,19 @@ const String kItemHashMismatchMessage =
 
 /// Generic apply failure — never surface Exception.toString() / tokens.
 const String kGenericApplyFailureMessage = 'Apply failed';
+
+/// Fixed-text failure after make-room retries still cannot free a character slot.
+String kMakeRoomStillFullMessage(String itemLabel) =>
+    'No room on character for $itemLabel: tried to free a slot, still full';
+
+/// Outcome-row text when an unequipped item was moved to vault to free a slot.
+String kMakeRoomMovedToVaultMessage(String evicteeName) =>
+    'Moved $evicteeName to vault to make room';
+
+/// True for Bungie codes that mean the destination inventory/bucket is full.
+bool isNoRoomInDestinationErrorCode(int code) {
+  return code == kDestinyNoRoomInDestination || code == kDestinyInventoryFull;
+}
 
 /// Fixed HTTP failure text for apply rows (auth-style; no body/snippet).
 String bungieHttpFailureMessage(int statusCode) =>

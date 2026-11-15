@@ -376,53 +376,87 @@ void main() {
     expect(result.items[1].reason, kInActivityEquipMessage);
   });
 
-  test('full bucket refuses with No room on character (no transfer)', () async {
-    var transferCalls = 0;
-    var equipCalls = 0;
-    final client = createMockWriteClient(
-      transferItem: (c, a) async => transferCalls += 1,
-      equipItems: (c, a) async {
-        equipCalls += 1;
-        return const [];
-      },
-    );
+  test(
+    'full bucket at plan time: evicts unequipped non-plan item then moves target',
+    () async {
+      // CHANGED: previously refused with kNoRoomOnCharacterMessage and made
+      // zero transfers. Now makes room (DIM-style) then moves the pin.
+      final transfers = <TransferItemArgs>[];
+      final client = createMockWriteClient(
+        transferItem: (c, a) async => transfers.add(a),
+        equipItems: (c, a) async => [
+              for (final id in a.itemIds)
+                EquipItemResultEntry(
+                  instanceId: id,
+                  equipStatus: kPlatformErrorSuccess,
+                ),
+            ],
+      );
 
-    final inventory = <ApplyInventoryItem>[
-      const ApplyInventoryItem(
-        instanceId: 'vault-full',
-        itemHash: 1,
-        location: 'vault',
-        bucketHash: helmetBucket,
-      ),
-      for (var i = 0; i < 10; i++)
-        ApplyInventoryItem(
-          instanceId: 'fill-$i',
-          itemHash: 100 + i,
-          location: i == 0 ? 'equipped' : 'character',
+      final inventory = <ApplyInventoryItem>[
+        const ApplyInventoryItem(
+          instanceId: 'vault-full',
+          itemHash: 1,
+          location: 'vault',
+          bucketHash: helmetBucket,
+          name: 'Lustrous Boots',
+        ),
+        const ApplyInventoryItem(
+          instanceId: 'fill-0',
+          itemHash: 100,
+          location: 'equipped',
           bucketHash: helmetBucket,
           characterId: target,
+          power: 200,
+          name: 'Equipped Helm',
         ),
-    ];
+        for (var i = 1; i < 10; i++)
+          ApplyInventoryItem(
+            instanceId: 'fill-$i',
+            itemHash: 100 + i,
+            location: 'character',
+            bucketHash: helmetBucket,
+            characterId: target,
+            power: 100 + i,
+            name: 'Junk Helm $i',
+            isExotic: i == 9,
+          ),
+      ];
 
-    final result = await applyToCharacter(
-      writeClient: client,
-      ctx: ctx,
-      characterId: target,
-      items: const [
-        ApplyToCharacterItem(
-          id: 'helmet',
-          label: 'Helmet',
-          itemHash: 1,
-          instanceId: 'vault-full',
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'helmet',
+            label: 'Lustrous Boots',
+            itemHash: 1,
+            instanceId: 'vault-full',
+            slot: 'helmet',
+          ),
+        ],
+        inventory: inventory,
+      );
+
+      // Eviction prefers non-exotic + lowest power among unequipped → fill-1.
+      expect(transfers, hasLength(2));
+      expect(transfers[0].instanceId, 'fill-1');
+      expect(transfers[0].transferToVault, isTrue);
+      expect(transfers[0].characterId, target);
+      expect(transfers[1].instanceId, 'vault-full');
+      expect(transfers[1].transferToVault, isFalse);
+      expect(result.appliedCount, 1);
+      expect(
+        result.items.any(
+          (r) =>
+              r.id.startsWith(kApplyMakeRoomRowIdPrefix) &&
+              r.label == kMakeRoomMovedToVaultMessage('Junk Helm 1'),
         ),
-      ],
-      inventory: inventory,
-    );
-
-    expect(transferCalls, 0);
-    expect(equipCalls, 0);
-    expect(result.items.single.reason, kNoRoomOnCharacterMessage);
-  });
+        isTrue,
+      );
+    },
+  );
 
   test('500-with-envelope error surfaces ErrorStatus on item row', () async {
     final client = createMockWriteClient(
@@ -538,119 +572,138 @@ void main() {
     expect(client.deleteCalls, 0);
   });
 
-  test('two pins into one free slot: second refused, first proceeds', () async {
-    var transferCalls = 0;
-    List<String>? equipOrder;
-    final client = createMockWriteClient(
-      transferItem: (c, a) async => transferCalls += 1,
-      equipItems: (c, a) async {
-        equipOrder = List<String>.from(a.itemIds);
-        return [
-          for (final id in a.itemIds)
-            EquipItemResultEntry(
-              instanceId: id,
-              equipStatus: kPlatformErrorSuccess,
-            ),
-        ];
-      },
-    );
+  test(
+    'two pins into one free slot: first proceeds, second makes room',
+    () async {
+      // CHANGED: previously the second pin was refused with
+      // kNoRoomOnCharacterMessage. Make-room now frees a slot for the second.
+      final transfers = <TransferItemArgs>[];
+      List<String>? equipOrder;
+      final client = createMockWriteClient(
+        transferItem: (c, a) async => transfers.add(a),
+        equipItems: (c, a) async {
+          equipOrder = List<String>.from(a.itemIds);
+          return [
+            for (final id in a.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
+        },
+      );
 
-    final inventory = <ApplyInventoryItem>[
-      const ApplyInventoryItem(
-        instanceId: 'vault-a',
-        itemHash: 1,
-        location: 'vault',
-        bucketHash: helmetBucket,
-      ),
-      const ApplyInventoryItem(
-        instanceId: 'vault-b',
-        itemHash: 2,
-        location: 'vault',
-        bucketHash: helmetBucket,
-      ),
-      for (var i = 0; i < 9; i++)
-        ApplyInventoryItem(
-          instanceId: 'fill-$i',
-          itemHash: 200 + i,
-          location: i == 0 ? 'equipped' : 'character',
-          bucketHash: helmetBucket,
-          characterId: target,
-        ),
-    ];
-
-    final result = await applyToCharacter(
-      writeClient: client,
-      ctx: ctx,
-      characterId: target,
-      items: const [
-        ApplyToCharacterItem(
-          id: 'a',
-          label: 'A',
-          itemHash: 1,
+      final inventory = <ApplyInventoryItem>[
+        const ApplyInventoryItem(
           instanceId: 'vault-a',
+          itemHash: 1,
+          location: 'vault',
+          bucketHash: helmetBucket,
         ),
-        ApplyToCharacterItem(
-          id: 'b',
-          label: 'B',
-          itemHash: 2,
+        const ApplyInventoryItem(
           instanceId: 'vault-b',
-        ),
-      ],
-      inventory: inventory,
-    );
-
-    expect(transferCalls, 1);
-    expect(equipOrder, ['vault-a']);
-    expect(result.items[0].state, ApplyItemState.done);
-    expect(result.items[1].state, ApplyItemState.failed);
-    expect(result.items[1].reason, kNoRoomOnCharacterMessage);
-  });
-
-  test('to-vault hop succeeded then from-vault fail: stranded vault message',
-      () async {
-    var hop = 0;
-    final client = createMockWriteClient(
-      transferItem: (c, a) async {
-        hop += 1;
-        if (hop == 1) {
-          expect(a.transferToVault, isTrue);
-          return;
-        }
-        throw const BungiePlatformException(
-          'Bungie API error: No room',
-          errorCode: kDestinyNoRoomInDestination,
-          errorStatus: 'DestinyNoRoomInDestination',
-        );
-      },
-    );
-
-    final result = await applyToCharacter(
-      writeClient: client,
-      ctx: ctx,
-      characterId: target,
-      items: const [
-        ApplyToCharacterItem(
-          id: 'arms',
-          label: 'Arms',
           itemHash: 2,
-          instanceId: 'other-1',
+          location: 'vault',
+          bucketHash: helmetBucket,
         ),
-      ],
-      inventory: const [
-        ApplyInventoryItem(
-          instanceId: 'other-1',
-          itemHash: 2,
-          location: 'character',
-          bucketHash: armsBucket,
-          characterId: 'char-other',
-        ),
-      ],
-    );
+        for (var i = 0; i < 9; i++)
+          ApplyInventoryItem(
+            instanceId: 'fill-$i',
+            itemHash: 200 + i,
+            location: i == 0 ? 'equipped' : 'character',
+            bucketHash: helmetBucket,
+            characterId: target,
+            power: 50 + i,
+            name: 'Fill $i',
+          ),
+      ];
 
-    expect(hop, 2);
-    expect(result.items.single.state, ApplyItemState.failed);
-    expect(result.items.single.reason, kMovedToVaultStuckMessage);
-  });
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'a',
+            label: 'A',
+            itemHash: 1,
+            instanceId: 'vault-a',
+          ),
+          ApplyToCharacterItem(
+            id: 'b',
+            label: 'B',
+            itemHash: 2,
+            instanceId: 'vault-b',
+          ),
+        ],
+        inventory: inventory,
+      );
+
+      expect(transfers, hasLength(3));
+      expect(transfers[0].instanceId, 'vault-a');
+      expect(transfers[1].instanceId, 'fill-1');
+      expect(transfers[1].transferToVault, isTrue);
+      expect(transfers[2].instanceId, 'vault-b');
+      expect(equipOrder, ['vault-a', 'vault-b']);
+      expect(result.appliedCount, 2);
+      expect(result.failedCount, 0);
+    },
+  );
+
+  test(
+    'to-vault hop then 1642 with no evictee: make-room still-full message',
+    () async {
+      // CHANGED: previously surfaced kMovedToVaultStuckMessage on the first
+      // 1642 after vault hop. Make-room tries to free a slot; with none
+      // eligible it fails with the fixed still-full text (no raw exception).
+      var hop = 0;
+      final client = createMockWriteClient(
+        transferItem: (c, a) async {
+          hop += 1;
+          if (hop == 1) {
+            expect(a.transferToVault, isTrue);
+            return;
+          }
+          throw const BungiePlatformException(
+            'Bungie API error: No room',
+            errorCode: kDestinyNoRoomInDestination,
+            errorStatus: 'DestinyNoRoomInDestination',
+          );
+        },
+      );
+
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'arms',
+            label: 'Synthoceps',
+            itemHash: 2,
+            instanceId: 'other-1',
+            slot: 'arms',
+          ),
+        ],
+        inventory: const [
+          ApplyInventoryItem(
+            instanceId: 'other-1',
+            itemHash: 2,
+            location: 'character',
+            bucketHash: armsBucket,
+            characterId: 'char-other',
+          ),
+        ],
+      );
+
+      expect(hop, 2);
+      expect(result.items.first.state, ApplyItemState.failed);
+      expect(
+        result.items.first.reason,
+        kMakeRoomStillFullMessage('Synthoceps'),
+      );
+    },
+  );
 
   test('hash mismatch refuses before any TransferItem', () async {
     var transferCalls = 0;
@@ -857,6 +910,397 @@ void main() {
 
     expect(result.items.single.reason, bungieHttpFailureMessage(503));
     expect(result.items.single.reason, isNot(contains('upstream')));
+  });
+
+  test('TransferItem 1642 at run time: make-room then retry succeeds', () async {
+    final transfers = <TransferItemArgs>[];
+    var vaultPullAttempts = 0;
+    final client = createMockWriteClient(
+      transferItem: (c, a) async {
+        transfers.add(a);
+        if (!a.transferToVault && a.instanceId == 'vault-1') {
+          vaultPullAttempts += 1;
+          if (vaultPullAttempts == 1) {
+            throw const BungiePlatformException(
+              'Bungie API error: No room',
+              errorCode: kDestinyNoRoomInDestination,
+              errorStatus: 'DestinyNoRoomInDestination',
+            );
+          }
+        }
+      },
+      equipItems: (c, a) async => [
+            for (final id in a.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ],
+    );
+
+    // 9 on character → planner thinks there is room; runtime 1642 triggers
+    // make-room against an unequipped filler.
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-1',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+        name: 'Lustrous Boots',
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'eq',
+        itemHash: 10,
+        location: 'equipped',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 200,
+        name: 'Equipped',
+      ),
+      for (var i = 0; i < 8; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 50 + i,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+          power: 10 + i,
+          name: 'Filler $i',
+        ),
+    ];
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'boots',
+          label: 'Lustrous Boots',
+          itemHash: 1,
+          instanceId: 'vault-1',
+          slot: 'legs',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    expect(transfers.map((t) => t.instanceId).toList(), [
+      'vault-1',
+      'fill-0',
+      'vault-1',
+    ]);
+    expect(transfers[1].transferToVault, isTrue);
+    expect(result.appliedCount, 1);
+    expect(
+      result.items.any(
+        (r) => r.label == kMakeRoomMovedToVaultMessage('Filler 0'),
+      ),
+      isTrue,
+    );
+  });
+
+  test('still full after 2 make-room attempts: fixed-text failure, no further writes',
+      () async {
+    final transfers = <TransferItemArgs>[];
+    final client = createMockWriteClient(
+      transferItem: (c, a) async {
+        transfers.add(a);
+        if (!a.transferToVault && a.instanceId == 'vault-1') {
+          throw const BungiePlatformException(
+            'Bungie API error: No room',
+            errorCode: kDestinyNoRoomInDestination,
+            errorStatus: 'DestinyNoRoomInDestination',
+          );
+        }
+      },
+      equipItems: (c, a) async => const [],
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-1',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+        name: 'Target',
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'eq',
+        itemHash: 10,
+        location: 'equipped',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 200,
+      ),
+      for (var i = 0; i < 8; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 50 + i,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+          power: i,
+          name: 'Filler $i',
+        ),
+    ];
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Target Helm',
+          itemHash: 1,
+          instanceId: 'vault-1',
+          slot: 'helmet',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    // Initial pull + 2 evictions + 2 retries = 5 transfers; then stop.
+    expect(transfers, hasLength(5));
+    expect(
+      transfers.where((t) => t.transferToVault).map((t) => t.instanceId),
+      ['fill-0', 'fill-1'],
+    );
+    expect(result.items.first.state, ApplyItemState.failed);
+    expect(
+      result.items.first.reason,
+      kMakeRoomStillFullMessage('Target Helm'),
+    );
+    expect(result.items.first.reason, isNot(contains('DestinyNoRoom')));
+  });
+
+  test('never evicts equipped items or plan items; vault full refuses clearly',
+      () async {
+    var transferCalls = 0;
+    final client = createMockWriteClient(
+      transferItem: (c, a) async => transferCalls += 1,
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-target',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+      ),
+      // Only equipped + a plan peer occupy the bucket → no eligible evictee.
+      const ApplyInventoryItem(
+        instanceId: 'equipped-only',
+        itemHash: 10,
+        location: 'equipped',
+        bucketHash: helmetBucket,
+        characterId: target,
+      ),
+      for (var i = 0; i < 8; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 100 + i,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+        ),
+      // Second plan item sitting on character — must not be chosen as evictee.
+      const ApplyInventoryItem(
+        instanceId: 'plan-peer',
+        itemHash: 2,
+        location: 'character',
+        bucketHash: helmetBucket,
+        characterId: target,
+      ),
+      for (var i = 0; i < kApplyVaultCapacity; i++)
+        ApplyInventoryItem(
+          instanceId: 'vault-fill-$i',
+          itemHash: 9000 + i,
+          location: 'vault',
+          bucketHash: armsBucket,
+        ),
+    ];
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'a',
+          label: 'A',
+          itemHash: 1,
+          instanceId: 'vault-target',
+        ),
+        ApplyToCharacterItem(
+          id: 'b',
+          label: 'B',
+          itemHash: 2,
+          instanceId: 'plan-peer',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    expect(transferCalls, 0);
+    expect(result.items[0].state, ApplyItemState.failed);
+    expect(result.items[0].reason, kNoRoomInVaultMessage);
+  });
+
+  test('never evicts equipped or plan items when making room', () async {
+    final transfers = <TransferItemArgs>[];
+    final client = createMockWriteClient(
+      transferItem: (c, a) async => transfers.add(a),
+      equipItems: (c, a) async => [
+            for (final id in a.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ],
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-1',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'equipped',
+        itemHash: 10,
+        location: 'equipped',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 1,
+        name: 'Equipped Low Power',
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'plan-peer',
+        itemHash: 2,
+        location: 'character',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 1,
+        name: 'Plan Peer',
+      ),
+      for (var i = 0; i < 8; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 50 + i,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+          power: 100 + i,
+          name: 'Filler $i',
+        ),
+    ];
+
+    await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'a',
+          label: 'A',
+          itemHash: 1,
+          instanceId: 'vault-1',
+        ),
+        ApplyToCharacterItem(
+          id: 'b',
+          label: 'B',
+          itemHash: 2,
+          instanceId: 'plan-peer',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    final evicted = transfers.where((t) => t.transferToVault).toList();
+    expect(evicted, isNotEmpty);
+    for (final e in evicted) {
+      expect(e.instanceId, isNot(anyOf('equipped', 'plan-peer', 'vault-1')));
+    }
+  });
+
+  test('labels: exotic weapon/armor annotated; never primary alone', () async {
+    final client = createMockWriteClient(
+      equipItems: (c, a) async => [
+            for (final id in a.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ],
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'exo-w',
+          label: 'primary',
+          itemHash: 9001,
+          instanceId: 'exo-w',
+          slot: 'primary',
+          isExotic: true,
+        ),
+        ApplyToCharacterItem(
+          id: 'exo-a',
+          label: 'Briarbinds',
+          itemHash: 9002,
+          instanceId: 'exo-a',
+          slot: 'arms',
+          isExotic: true,
+        ),
+        ApplyToCharacterItem(
+          id: 'named-w',
+          label: 'Barrow-Dyad',
+          itemHash: 9003,
+          instanceId: 'named-w',
+          slot: 'primary',
+          isExotic: true,
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'exo-w',
+          itemHash: 9001,
+          location: 'character',
+          bucketHash: 1498876634,
+          characterId: target,
+          isExotic: true,
+        ),
+        ApplyInventoryItem(
+          instanceId: 'exo-a',
+          itemHash: 9002,
+          location: 'character',
+          bucketHash: armsBucket,
+          characterId: target,
+          isExotic: true,
+        ),
+        ApplyInventoryItem(
+          instanceId: 'named-w',
+          itemHash: 9003,
+          location: 'character',
+          bucketHash: 1498876634,
+          characterId: target,
+          isExotic: true,
+        ),
+      ],
+    );
+
+    expect(result.items[0].label, isNot('primary'));
+    expect(result.items[0].label, isNot(contains('None')));
+    // Slot-key fallback when name is unknown: readable exotic kind.
+    expect(result.items[0].label, 'Exotic weapon');
+    expect(result.items[1].label, 'Briarbinds (Exotic armor)');
+    expect(result.items[2].label, 'Barrow-Dyad (Exotic weapon)');
   });
 }
 

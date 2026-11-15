@@ -2,10 +2,15 @@
 ///
 /// Pressing Apply plans transfers from vault / other characters onto the
 /// target, runs them immediately with inline per-item progress, then one
-/// EquipItems call (exotics last). Never dismantles or auto-makes room.
+/// EquipItems call (exotics last). Never dismantles. When the target bucket
+/// is full (planner count or Bungie 1642/1637), makes room by transferring one
+/// eligible unequipped non-plan item to the vault (at most 2 attempts per
+/// item), then retries the original move.
 library;
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
+
+import '../presentation/equip_format.dart';
 
 /// Per-item apply state shown inline on the build detail card.
 enum ApplyItemState {
@@ -84,6 +89,7 @@ class ApplyToCharacterItem {
     required this.itemHash,
     required this.instanceId,
     this.slot,
+    this.isExotic = false,
   });
 
   final String id;
@@ -91,6 +97,7 @@ class ApplyToCharacterItem {
   final int itemHash;
   final String instanceId;
   final String? slot;
+  final bool isExotic;
 }
 
 /// Live inventory row used to locate pins before transfer / equip.
@@ -102,6 +109,8 @@ class ApplyInventoryItem {
     required this.bucketHash,
     this.characterId,
     this.isExotic = false,
+    this.power = 0,
+    this.name = '',
   });
 
   final String instanceId;
@@ -112,6 +121,12 @@ class ApplyInventoryItem {
   final int bucketHash;
   final String? characterId;
   final bool isExotic;
+
+  /// Primary-stat power for make-room eviction ordering (lowest first).
+  final int power;
+
+  /// Display name when known (make-room outcome rows).
+  final String name;
 }
 
 /// Optional delay injector (tests record throttle sleeps).
@@ -120,8 +135,14 @@ typedef ApplyDelay = Future<void> Function(Duration delay);
 /// Character inventory capacity per equipment bucket (equipped + inventory).
 const int kApplyCharacterBucketCapacity = 10;
 
-/// Vault capacity (all vault items). No auto make-room.
+/// Vault capacity (all vault items). Make-room refuses when vault is full.
 const int kApplyVaultCapacity = 600;
+
+/// Max make-room eviction attempts per planned item (then fixed-text failure).
+const int kApplyMakeRoomMaxAttempts = 2;
+
+/// Id prefix for make-room outcome rows (excluded from applied/failed counts).
+const String kApplyMakeRoomRowIdPrefix = 'make-room:';
 
 /// Builds a DIM-style move + equip plan and executes it.
 ///
@@ -140,7 +161,11 @@ Future<ApplyToCharacterProgress> applyToCharacter({
     for (final item in items)
       ApplyItemProgress(
         id: item.id,
-        label: item.label,
+        label: formatApplyOutcomeLabel(
+          rawLabel: item.label,
+          slot: item.slot,
+          isExotic: item.isExotic,
+        ),
         state: ApplyItemState.waiting,
         itemHash: item.itemHash,
         instanceId: item.instanceId,
@@ -152,10 +177,10 @@ Future<ApplyToCharacterProgress> applyToCharacter({
     final snap = ApplyToCharacterProgress(
       items: List<ApplyItemProgress>.unmodifiable(rows),
       currentIndex: index.clamp(0, rows.isEmpty ? 0 : rows.length - 1),
-      total: rows.length,
+      total: _planItemCount(rows),
       running: running,
-      appliedCount: rows.where((r) => r.state == ApplyItemState.done).length,
-      failedCount: rows.where((r) => r.state == ApplyItemState.failed).length,
+      appliedCount: _countPlanRows(rows, ApplyItemState.done),
+      failedCount: _countPlanRows(rows, ApplyItemState.failed),
       summary: summary,
     );
     onProgress?.call(snap);
@@ -181,6 +206,8 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   final plannedIds = {for (final item in items) item.instanceId};
   final characterReserved = <int, int>{};
   var vaultReserved = 0;
+  final reservedEvicteeIds = <String>{};
+  final workingInventory = List<ApplyInventoryItem>.from(inventory);
 
   final plan = <_ApplyItemPlan>[
     for (var i = 0; i < items.length; i++)
@@ -189,11 +216,12 @@ Future<ApplyToCharacterProgress> applyToCharacter({
         rowIndex: i,
         characterId: characterId,
         byInstance: byInstance,
-        inventory: inventory,
+        inventory: workingInventory,
         plannedIds: plannedIds,
         characterReserved: characterReserved,
         vaultReserved: () => vaultReserved,
         reserveVault: () => vaultReserved += 1,
+        reservedEvicteeIds: reservedEvicteeIds,
       ),
   ];
 
@@ -235,14 +263,36 @@ Future<ApplyToCharacterProgress> applyToCharacter({
           delay: sleeper,
         );
       }
-      for (final step in p.transferSteps) {
-        await runWriteWithThrottleBackoff(
-          () => writeClient.transferItem(ctx, step),
-          delay: sleeper,
+      final transferResult = await _runTransfersWithMakeRoom(
+        writeClient: writeClient,
+        ctx: ctx,
+        characterId: characterId,
+        plan: p,
+        inventory: workingInventory,
+        plannedIds: plannedIds,
+        reservedEvicteeIds: reservedEvicteeIds,
+        vaultReserved: () => vaultReserved,
+        sleeper: sleeper,
+        itemLabel: rows[index].label,
+        onMakeRoom: (message, evicteeId) {
+          rows.add(
+            ApplyItemProgress(
+              id: '$kApplyMakeRoomRowIdPrefix$evicteeId',
+              label: message,
+              state: ApplyItemState.done,
+            ),
+          );
+          emit(index: index, running: true);
+        },
+        onReachedVault: () => reachedVault = true,
+      );
+      if (transferResult != null) {
+        rows[index] = rows[index].copyWith(
+          state: ApplyItemState.failed,
+          reason: transferResult,
         );
-        if (step.transferToVault) {
-          reachedVault = true;
-        }
+        emit(index: index, running: true);
+        continue;
       }
     } catch (error) {
       final mapped = _mapWriteError(error);
@@ -361,12 +411,12 @@ ApplyToCharacterProgress _finish(
   List<ApplyItemProgress> rows,
   void Function(ApplyToCharacterProgress progress)? onProgress,
 ) {
-  final applied = rows.where((r) => r.state == ApplyItemState.done).length;
-  final failed = rows.where((r) => r.state == ApplyItemState.failed).length;
+  final applied = _countPlanRows(rows, ApplyItemState.done);
+  final failed = _countPlanRows(rows, ApplyItemState.failed);
   final done = ApplyToCharacterProgress(
     items: List<ApplyItemProgress>.unmodifiable(rows),
     currentIndex: rows.isEmpty ? 0 : rows.length - 1,
-    total: rows.length,
+    total: _planItemCount(rows),
     running: false,
     appliedCount: applied,
     failedCount: failed,
@@ -376,12 +426,28 @@ ApplyToCharacterProgress _finish(
   return done;
 }
 
+bool _isMakeRoomRow(ApplyItemProgress row) =>
+    row.id.startsWith(kApplyMakeRoomRowIdPrefix);
+
+int _planItemCount(List<ApplyItemProgress> rows) =>
+    rows.where((r) => !_isMakeRoomRow(r)).length;
+
+int _countPlanRows(List<ApplyItemProgress> rows, ApplyItemState state) {
+  var n = 0;
+  for (final row in rows) {
+    if (_isMakeRoomRow(row)) continue;
+    if (row.state == state) n += 1;
+  }
+  return n;
+}
+
 void _failRemainingWaiting(
   List<ApplyItemProgress> rows, {
   required int fromIndex,
   required String reason,
 }) {
   for (var i = fromIndex; i < rows.length; i++) {
+    if (_isMakeRoomRow(rows[i])) continue;
     if (rows[i].state == ApplyItemState.waiting ||
         rows[i].state == ApplyItemState.applying) {
       rows[i] = rows[i].copyWith(state: ApplyItemState.failed, reason: reason);
@@ -393,6 +459,8 @@ class _ApplyItemPlan {
   const _ApplyItemPlan({
     required this.rowIndex,
     required this.instanceId,
+    required this.itemHash,
+    required this.bucketHash,
     required this.isExotic,
     required this.dequipSteps,
     required this.transferSteps,
@@ -401,6 +469,8 @@ class _ApplyItemPlan {
 
   final int rowIndex;
   final String instanceId;
+  final int itemHash;
+  final int bucketHash;
   final bool isExotic;
   final List<EquipItemArgs> dequipSteps;
   final List<TransferItemArgs> transferSteps;
@@ -417,12 +487,15 @@ _ApplyItemPlan _planItem({
   required Map<int, int> characterReserved,
   required int Function() vaultReserved,
   required void Function() reserveVault,
+  required Set<String> reservedEvicteeIds,
 }) {
   final live = byInstance[item.instanceId];
   if (live == null) {
     return _ApplyItemPlan(
       rowIndex: rowIndex,
       instanceId: item.instanceId,
+      itemHash: item.itemHash,
+      bucketHash: 0,
       isExotic: false,
       dequipSteps: const [],
       transferSteps: const [],
@@ -434,6 +507,8 @@ _ApplyItemPlan _planItem({
     return _ApplyItemPlan(
       rowIndex: rowIndex,
       instanceId: item.instanceId,
+      itemHash: item.itemHash,
+      bucketHash: live.bucketHash,
       isExotic: live.isExotic,
       dequipSteps: const [],
       transferSteps: const [],
@@ -453,25 +528,65 @@ _ApplyItemPlan _planItem({
     return _ApplyItemPlan(
       rowIndex: rowIndex,
       instanceId: item.instanceId,
+      itemHash: item.itemHash,
+      bucketHash: live.bucketHash,
       isExotic: live.isExotic,
       dequipSteps: const [],
       transferSteps: const [],
     );
   }
 
+  final dequips = <EquipItemArgs>[];
+  final transfers = <TransferItemArgs>[];
+
   final needsCharacterSlot = onOther || inVault;
   if (needsCharacterSlot) {
     final occupied = _bucketCount(inventory, characterId, live.bucketHash) +
         (characterReserved[live.bucketHash] ?? 0);
     if (occupied >= kApplyCharacterBucketCapacity) {
-      return _ApplyItemPlan(
-        rowIndex: rowIndex,
-        instanceId: item.instanceId,
-        isExotic: live.isExotic,
-        dequipSteps: const [],
-        transferSteps: const [],
-        refusalReason: kNoRoomOnCharacterMessage,
+      final vaultOccupied = _vaultCount(inventory) + vaultReserved();
+      if (vaultOccupied >= kApplyVaultCapacity) {
+        return _ApplyItemPlan(
+          rowIndex: rowIndex,
+          instanceId: item.instanceId,
+          itemHash: item.itemHash,
+          bucketHash: live.bucketHash,
+          isExotic: live.isExotic,
+          dequipSteps: const [],
+          transferSteps: const [],
+          refusalReason: kNoRoomInVaultMessage,
+        );
+      }
+      final evictee = _pickMakeRoomEvictee(
+        inventory: inventory,
+        characterId: characterId,
+        bucketHash: live.bucketHash,
+        excludeIds: {...plannedIds, ...reservedEvicteeIds},
       );
+      if (evictee == null) {
+        return _ApplyItemPlan(
+          rowIndex: rowIndex,
+          instanceId: item.instanceId,
+          itemHash: item.itemHash,
+          bucketHash: live.bucketHash,
+          isExotic: live.isExotic,
+          dequipSteps: const [],
+          transferSteps: const [],
+          refusalReason: kNoRoomOnCharacterMessage,
+        );
+      }
+      transfers.add(
+        TransferItemArgs(
+          itemHash: evictee.itemHash,
+          instanceId: evictee.instanceId,
+          characterId: characterId,
+          transferToVault: true,
+        ),
+      );
+      reservedEvicteeIds.add(evictee.instanceId);
+      // Mutate working inventory so later plan rows see the freed slot and
+      // vault occupancy; do not also bump vaultReserved (would double-count).
+      _markInventoryMovedToVault(inventory, evictee.instanceId);
     }
   }
 
@@ -481,6 +596,8 @@ _ApplyItemPlan _planItem({
       return _ApplyItemPlan(
         rowIndex: rowIndex,
         instanceId: item.instanceId,
+        itemHash: item.itemHash,
+        bucketHash: live.bucketHash,
         isExotic: live.isExotic,
         dequipSteps: const [],
         transferSteps: const [],
@@ -488,9 +605,6 @@ _ApplyItemPlan _planItem({
       );
     }
   }
-
-  final dequips = <EquipItemArgs>[];
-  final transfers = <TransferItemArgs>[];
 
   if (equippedOnOther) {
     final replacement = _findDequipReplacement(
@@ -503,6 +617,8 @@ _ApplyItemPlan _planItem({
       return _ApplyItemPlan(
         rowIndex: rowIndex,
         instanceId: item.instanceId,
+        itemHash: item.itemHash,
+        bucketHash: live.bucketHash,
         isExotic: live.isExotic,
         dequipSteps: const [],
         transferSteps: const [],
@@ -553,6 +669,8 @@ _ApplyItemPlan _planItem({
     return _ApplyItemPlan(
       rowIndex: rowIndex,
       instanceId: item.instanceId,
+      itemHash: item.itemHash,
+      bucketHash: live.bucketHash,
       isExotic: live.isExotic,
       dequipSteps: const [],
       transferSteps: const [],
@@ -563,10 +681,196 @@ _ApplyItemPlan _planItem({
   return _ApplyItemPlan(
     rowIndex: rowIndex,
     instanceId: item.instanceId,
+    itemHash: item.itemHash,
+    bucketHash: live.bucketHash,
     isExotic: live.isExotic,
     dequipSteps: dequips,
     transferSteps: transfers,
   );
+}
+
+/// Runs planned transfers; on 1642/1637 to-character, make-room and retry.
+///
+/// Returns a fixed failure reason, or null on success. Throws mapped stop
+/// errors (in-activity) via the caller catch path for non-no-room failures.
+Future<String?> _runTransfersWithMakeRoom({
+  required BungieWriteClient writeClient,
+  required WriteClientContext ctx,
+  required String characterId,
+  required _ApplyItemPlan plan,
+  required List<ApplyInventoryItem> inventory,
+  required Set<String> plannedIds,
+  required Set<String> reservedEvicteeIds,
+  required int Function() vaultReserved,
+  required ApplyDelay sleeper,
+  required String itemLabel,
+  required void Function(String message, String evicteeId) onMakeRoom,
+  required void Function() onReachedVault,
+}) async {
+  var makeRoomAttempts = 0;
+  final steps = List<TransferItemArgs>.from(plan.transferSteps);
+
+  for (var i = 0; i < steps.length; i++) {
+    final step = steps[i];
+    try {
+      await runWriteWithThrottleBackoff(
+        () => writeClient.transferItem(ctx, step),
+        delay: sleeper,
+      );
+      if (step.transferToVault) {
+        onReachedVault();
+      }
+      if (step.instanceId != plan.instanceId && step.transferToVault) {
+        final name = _evicteeDisplayName(inventory, step.instanceId);
+        onMakeRoom(kMakeRoomMovedToVaultMessage(name), step.instanceId);
+        _markInventoryMovedToVault(inventory, step.instanceId);
+      }
+    } catch (error) {
+      if (!_isNoRoomError(error)) {
+        rethrow;
+      }
+      if (step.transferToVault) {
+        return kNoRoomInVaultMessage;
+      }
+      // Destination character bucket full — make room, then retry this step.
+      while (true) {
+        if (makeRoomAttempts >= kApplyMakeRoomMaxAttempts) {
+          return kMakeRoomStillFullMessage(itemLabel);
+        }
+        final vaultOccupied = _vaultCount(inventory) + vaultReserved();
+        if (vaultOccupied >= kApplyVaultCapacity) {
+          return kNoRoomInVaultMessage;
+        }
+        final evictee = _pickMakeRoomEvictee(
+          inventory: inventory,
+          characterId: characterId,
+          bucketHash: plan.bucketHash,
+          excludeIds: {
+            ...plannedIds,
+            ...reservedEvicteeIds,
+            plan.instanceId,
+          },
+        );
+        if (evictee == null) {
+          return kMakeRoomStillFullMessage(itemLabel);
+        }
+        try {
+          await runWriteWithThrottleBackoff(
+            () => writeClient.transferItem(
+              ctx,
+              TransferItemArgs(
+                itemHash: evictee.itemHash,
+                instanceId: evictee.instanceId,
+                characterId: characterId,
+                transferToVault: true,
+              ),
+            ),
+            delay: sleeper,
+          );
+        } catch (evictError) {
+          if (_isNoRoomError(evictError)) {
+            return kNoRoomInVaultMessage;
+          }
+          rethrow;
+        }
+        makeRoomAttempts += 1;
+        reservedEvicteeIds.add(evictee.instanceId);
+        // Inventory mutation tracks vault occupancy; skip vaultReserved bump.
+        _markInventoryMovedToVault(inventory, evictee.instanceId);
+        final name = _evicteeDisplayName(inventory, evictee.instanceId);
+        onMakeRoom(kMakeRoomMovedToVaultMessage(name), evictee.instanceId);
+        try {
+          await runWriteWithThrottleBackoff(
+            () => writeClient.transferItem(ctx, step),
+            delay: sleeper,
+          );
+          break;
+        } catch (retryError) {
+          if (!_isNoRoomError(retryError)) {
+            rethrow;
+          }
+          // Loop for another make-room attempt.
+        }
+      }
+    }
+  }
+  return null;
+}
+
+bool _isNoRoomError(Object error) {
+  if (error is BungiePlatformException) {
+    return isNoRoomInDestinationErrorCode(error.errorCode);
+  }
+  return false;
+}
+
+/// Pick an unequipped non-plan item to move to vault.
+///
+/// Rule (deterministic): same character + bucketHash, location == `character`
+/// (never equipped), not excluded; prefer non-exotic, then lowest power, then
+/// lowest instanceId. TransferItem only — never lock-state changes.
+ApplyInventoryItem? _pickMakeRoomEvictee({
+  required List<ApplyInventoryItem> inventory,
+  required String characterId,
+  required int bucketHash,
+  required Set<String> excludeIds,
+}) {
+  ApplyInventoryItem? best;
+  for (final row in inventory) {
+    if (row.characterId != characterId) continue;
+    if (row.bucketHash != bucketHash) continue;
+    if (row.location != 'character') continue;
+    if (excludeIds.contains(row.instanceId)) continue;
+    if (best == null) {
+      best = row;
+      continue;
+    }
+    if (row.isExotic != best.isExotic) {
+      if (!row.isExotic) best = row;
+      continue;
+    }
+    if (row.power != best.power) {
+      if (row.power < best.power) best = row;
+      continue;
+    }
+    if (row.instanceId.compareTo(best.instanceId) < 0) {
+      best = row;
+    }
+  }
+  return best;
+}
+
+String _evicteeDisplayName(
+  List<ApplyInventoryItem> inventory,
+  String instanceId,
+) {
+  for (final row in inventory) {
+    if (row.instanceId != instanceId) continue;
+    final name = row.name.trim();
+    if (name.isNotEmpty) return name;
+    break;
+  }
+  return 'item';
+}
+
+void _markInventoryMovedToVault(
+  List<ApplyInventoryItem> inventory,
+  String instanceId,
+) {
+  for (var i = 0; i < inventory.length; i++) {
+    final row = inventory[i];
+    if (row.instanceId != instanceId) continue;
+    inventory[i] = ApplyInventoryItem(
+      instanceId: row.instanceId,
+      itemHash: row.itemHash,
+      location: 'vault',
+      bucketHash: row.bucketHash,
+      isExotic: row.isExotic,
+      power: row.power,
+      name: row.name,
+    );
+    return;
+  }
 }
 
 int _bucketCount(
