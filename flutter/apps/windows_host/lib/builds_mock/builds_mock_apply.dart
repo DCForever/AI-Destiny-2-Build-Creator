@@ -221,6 +221,7 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
       ports: ports,
       accessToken: token,
       membership: target.membership,
+      characterId: target.characterId,
       items: items,
       rows: rows,
       onProgress: onProgress,
@@ -249,9 +250,14 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
         for (final row in gated.inventory)
           if (row.bucketHash == kSubclassBucketHash) row.itemHash,
       };
+      final armorHashes = <int>{
+        for (final row in gated.inventory)
+          if (isArmorBucketHash(row.bucketHash)) row.itemHash,
+      };
       resolvedManifest = await _buildSocketManifestLookup(
         ports,
         subclassItemHashes: subclassHashes,
+        armorItemHashes: armorHashes,
       );
     }
     if (!isMounted()) {
@@ -336,6 +342,7 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   required BuildsMockApplyPorts ports,
   required String accessToken,
   required DestinyMembership membership,
+  required String characterId,
   required List<ApplyToCharacterItem> items,
   required List<ApplyItemProgress> rows,
   required void Function(ApplyToCharacterProgress progress) onProgress,
@@ -457,20 +464,24 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
     items: present,
     inventory: snapshot,
     liveItems: liveItems,
-    unlockedPlugSetPlugHashes: parsed.unlockedPlugSetPlugHashes,
+    // 105 limited to the Apply character (Skeptic should-fix).
+    unlockedPlugSetPlugHashes:
+        parsed.unlockedPlugSetPlugHashesForCharacter(characterId),
   );
 }
 
 /// True when live socket + energy data is present for armor mod planning.
 ///
-/// F4: stays false when capture or energy is missing so the planner emits the
-/// fixed skip row instead of guessing.
+/// Requires component 310 reusable plugs on capture AND known energyUsed
+/// (Skeptic: 305-only is not enough). F4 stays false when either is missing.
 bool isArmorModDataKnown(RawInventoryItem? live) {
   if (live == null) return false;
   final capture = live.socketCapture;
   if (capture == null || capture.isEmpty) return false;
-  // energyCapacity null ⇒ instance energy block absent / not parsed.
-  if (live.energyCapacity == null) return false;
+  final hasReusable =
+      capture.any((s) => s.reusablePlugHashes.any((h) => h != 0));
+  if (!hasReusable) return false;
+  if (live.energyCapacity == null || live.energyUsed == null) return false;
   return true;
 }
 
@@ -526,7 +537,7 @@ ApplySocketPlan? _socketPlanForApplySync({
         final keyed = _equippedPlugsKeyedBySocket(live);
         final fromCapture = _ownedPlugsFromCapture(live);
         final isSubclass = isSubclassBucketHash(row.bucketHash);
-        // Subclass ownership: 310 reusable + 104/105 plug sets. Armor: 310 only.
+        // Subclass ownership: 310 reusable + 104/105 (Apply character only).
         final owned = <int>{
           if (fromCapture != null) ...fromCapture,
           if (isSubclass) ...unlockedPlugSetPlugHashes,
@@ -535,7 +546,12 @@ ApplySocketPlan? _socketPlanForApplySync({
             ? owned.isNotEmpty
             : (fromCapture != null && fromCapture.isNotEmpty);
         final allowed = _allowedPlugsBySocket(live);
-        final emptyPlugs = _emptyPlugHashesBySocket(live, resolved);
+        final itemDef = resolved.itemDef(row.itemHash);
+        // M1: empty plugs ONLY from manifest singleInitialItemHash.
+        final emptyPlugs = itemDef?.emptyPlugHashBySocket ?? const {};
+        final unlocked = unlockedSocketIndexesFromCapture(live);
+        final capturePresent =
+            live?.socketCapture != null && live!.socketCapture!.isNotEmpty;
         return ApplyInstanceSocketState(
           instanceId: row.instanceId,
           itemHash: row.itemHash,
@@ -550,8 +566,8 @@ ApplySocketPlan? _socketPlanForApplySync({
           allowedPlugHashesBySocket: allowed,
           armorModDataKnown: isArmorModDataKnown(live),
           subclassPlugOwnershipKnown: ownershipKnown,
-          unlockedSocketIndexes: keyed?.keys.toSet(),
-          socketDataKnown: keyed != null,
+          unlockedSocketIndexes: unlocked,
+          socketDataKnown: capturePresent,
         );
       }(),
   ];
@@ -619,7 +635,7 @@ bool _isArmorSlotWire(String? slot) {
   }
 }
 
-/// Equipped plugs keyed by socketCapture indexes only.
+/// Equipped plugs keyed by socketCapture indexes only (nonzero hashes).
 ///
 /// Returns null when capture is missing/empty — never assumes plugHashes[i]
 /// maps to socket i (disabled sockets break that alignment).
@@ -636,11 +652,26 @@ Map<int, int>? _equippedPlugsKeyedBySocket(RawInventoryItem? live) {
   return fromCapture.isEmpty ? null : fromCapture;
 }
 
+/// Unlocked socket indexes from 305 isEnabled/isVisible or 310 presence (M2).
+///
+/// Empty but enabled sockets are included so fragments can fill them. Occupied
+/// ≠ unlocked — do not derive this from nonzero equippedPlugHash alone.
+Set<int>? unlockedSocketIndexesFromCapture(RawInventoryItem? live) {
+  final capture = live?.socketCapture;
+  if (capture == null || capture.isEmpty) return null;
+  final out = <int>{};
+  for (final sock in capture) {
+    final from305 = sock.isEnabled && sock.isVisible;
+    final from310 = sock.reusablePlugHashes.any((h) => h != 0);
+    if (from305 || from310) out.add(sock.socketIndex);
+  }
+  return out.isEmpty ? null : out;
+}
+
 /// Unlocked/reusable plugs from socketCapture when present (existing read data).
 ///
-/// Component 310 reusable plugs are filtered at parse to `canInsert != false`
-/// and `enabled != false` — Bungie treats those as insertable/usable; DIM uses
-/// the same flags when building plug options.
+/// Component 310 reusable plugs require explicit canInsert == true and
+/// enabled == true at parse — missing flags are unknown and excluded.
 Set<int>? _ownedPlugsFromCapture(RawInventoryItem? live) {
   final capture = live?.socketCapture;
   if (capture == null || capture.isEmpty) return null;
@@ -667,38 +698,10 @@ Map<int, Set<int>> _allowedPlugsBySocket(RawInventoryItem? live) {
   return out;
 }
 
-/// Empty-plug hashes for energy clears from reusable/equipped zero-cost plugs.
-///
-/// Never invents a hash — if no zero-cost plug is known for a socket, clears
-/// for that socket are not planned (insert still may fit without a clear).
-Map<int, int> _emptyPlugHashesBySocket(
-  RawInventoryItem? live,
-  ApplySocketManifestLookup manifest,
-) {
-  final capture = live?.socketCapture;
-  if (capture == null || capture.isEmpty) return const {};
-  final out = <int, int>{};
-  for (final sock in capture) {
-    int? empty;
-    final candidates = <int>[
-      ...sock.reusablePlugHashes.where((h) => h != 0),
-      if (sock.equippedPlugHash != 0) sock.equippedPlugHash,
-    ];
-    for (final hash in candidates) {
-      final def = manifest.plugDef(hash);
-      if (def != null && def.energyCost <= 0) {
-        empty = hash;
-        break;
-      }
-    }
-    if (empty != null) out[sock.socketIndex] = empty;
-  }
-  return out;
-}
-
 ApplyManifestItemDef conventionalArmorItemDef({
   required int hash,
   required String name,
+  Map<int, int> emptyPlugHashBySocket = const {},
 }) {
   return ApplyManifestItemDef(
     hash: hash,
@@ -709,12 +712,14 @@ ApplyManifestItemDef conventionalArmorItemDef({
         socketIndexes: [0, 1, 2, 3, 4],
       ),
     ],
+    emptyPlugHashBySocket: emptyPlugHashBySocket,
   );
 }
 
 Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
   BuildsMockApplyPorts ports, {
   Set<int> subclassItemHashes = const {},
+  Set<int> armorItemHashes = const {},
 }) async {
   final services = ports.services;
   if (services == null) return null;
@@ -777,7 +782,8 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
           hash: m.hash,
           name: m.name,
           plugCategoryIdentifier: _modCategoryId(m.slotCategory),
-          energyCost: m.energyCost ?? 0,
+          // Keep nullable — never coerce missing cost to 0 (M1).
+          energyCost: m.energyCost,
         ),
       );
     }
@@ -790,8 +796,11 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
 
     // F2: resolve subclass socket indexes from DestinyInventoryItemDefinition
     // socket categories (never a hard-coded Strand layout).
+    // Armor: singleInitialItemHash → emptyPlugHashBySocket for clears (M1).
     final subclassDefs = <int, ApplyManifestItemDef>{};
-    if (subclassItemHashes.isNotEmpty) {
+    final armorDefs = <int, ApplyManifestItemDef>{};
+    final needDefs = {...subclassItemHashes, ...armorItemHashes};
+    if (needDefs.isNotEmpty) {
       try {
         final table = await refresh.service.loadRawTable(
           version,
@@ -812,8 +821,18 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
           );
           if (def != null) subclassDefs[hash] = def;
         }
+        for (final hash in armorItemHashes) {
+          final raw = table['$hash'];
+          final empties = _emptyPlugHashesFromItemDefRaw(raw);
+          final name = catalogNames[hash] ?? 'Item';
+          armorDefs[hash] = conventionalArmorItemDef(
+            hash: hash,
+            name: name,
+            emptyPlugHashBySocket: empties,
+          );
+        }
       } catch (_) {
-        // Leave subclassDefs empty → planner skips with fixed text.
+        // Leave defs empty → planner skips with fixed text.
       }
     }
 
@@ -827,6 +846,7 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
                 name: name.isNotEmpty ? name : 'Subclass',
               );
         }
+        if (armorDefs.containsKey(hash)) return armorDefs[hash];
         return conventionalArmorItemDef(
           hash: hash,
           name: name.isNotEmpty ? name : 'Item',
@@ -842,6 +862,27 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
   } catch (_) {
     return null;
   }
+}
+
+/// Empty/clear plug hashes from DestinyInventoryItemDefinition socketEntries
+/// `singleInitialItemHash` only (M1 — never invent from 310 cost).
+Map<int, int> _emptyPlugHashesFromItemDefRaw(Object? raw) {
+  if (raw is! Map) return const {};
+  final sockets = raw['sockets'];
+  if (sockets is! Map) return const {};
+  final entriesRaw = sockets['socketEntries'];
+  if (entriesRaw is! List) return const {};
+  final out = <int, int>{};
+  for (var i = 0; i < entriesRaw.length; i++) {
+    final entry = entriesRaw[i];
+    if (entry is! Map) continue;
+    final initial = entry['singleInitialItemHash'];
+    if (initial is! num) continue;
+    final hash = initial.toInt();
+    if (hash == 0) continue;
+    out[i] = hash;
+  }
+  return out;
 }
 
 /// Builds an [ApplyManifestItemDef] from a raw DestinyInventoryItemDefinition

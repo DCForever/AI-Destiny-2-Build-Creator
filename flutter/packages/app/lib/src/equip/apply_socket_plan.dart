@@ -20,6 +20,7 @@ const String kApplySubclassNotOnCharacterMessage =
 const String kApplyPlugNotUnlockedPrefix = 'Not unlocked: ';
 const String kApplyPlugNotUnlockedOrUnknownPrefix = 'Not unlocked or unknown: ';
 const String kApplyPlugNotEnoughEnergyPrefix = 'Not enough armor energy: ';
+const String kApplyPlugEnergyCostUnknownPrefix = 'Armor energy cost unknown: ';
 const String kApplyPlugUnresolvablePrefix = 'Could not resolve: ';
 const String kApplyPlugDoesNotFitPrefix = 'Does not fit: ';
 const String kApplyNoFragmentSocketPrefix = 'No fragment socket: ';
@@ -99,6 +100,9 @@ String notUnlockedOrUnknownPlugMessage(String name) =>
 
 String notEnoughArmorEnergyMessage(String name) =>
     '$kApplyPlugNotEnoughEnergyPrefix${name.trim()}';
+
+String armorEnergyCostUnknownMessage(String name) =>
+    '$kApplyPlugEnergyCostUnknownPrefix${name.trim()}';
 
 String unresolvablePlugMessage(String name) =>
     '$kApplyPlugUnresolvablePrefix${name.trim()}';
@@ -279,13 +283,15 @@ class ApplyManifestPlugDef {
     required this.hash,
     required this.name,
     required this.plugCategoryIdentifier,
-    this.energyCost = 0,
+    this.energyCost,
   });
 
   final int hash;
   final String name;
   final String plugCategoryIdentifier;
-  final int energyCost;
+
+  /// Null when the manifest does not know the cost — never treat as 0.
+  final int? energyCost;
 }
 
 /// Minimal item definition for socket-index lookup (fakeable).
@@ -296,6 +302,7 @@ class ApplyManifestItemDef {
     this.socketCategories = const [],
     this.allowedPlugHashesBySocket = const {},
     this.socketPlugCategoryHint = const {},
+    this.emptyPlugHashBySocket = const {},
   });
 
   final int hash;
@@ -307,6 +314,9 @@ class ApplyManifestItemDef {
 
   /// Optional plugCategoryIdentifier hint per socket (from initial plug).
   final Map<int, String> socketPlugCategoryHint;
+
+  /// Empty / clear plug per socket from manifest `singleInitialItemHash` only.
+  final Map<int, int> emptyPlugHashBySocket;
 }
 
 /// Live socket state on an instance (fakeable profile slice).
@@ -326,7 +336,7 @@ class ApplyInstanceSocketState {
     this.armorModDataKnown = false,
     this.subclassPlugOwnershipKnown = false,
     this.unlockedSocketIndexes,
-    this.socketDataKnown = true,
+    this.socketDataKnown = false,
   });
 
   final String instanceId;
@@ -350,11 +360,11 @@ class ApplyInstanceSocketState {
   /// [notUnlockedOrUnknownPlugMessage] (F3). Empty owned is UNKNOWN, not open.
   final bool subclassPlugOwnershipKnown;
 
-  /// Live unlocked/enabled socket indexes when known (fragment slot count).
-  /// Null means "use manifest category indexes as-is".
+  /// Live unlocked/enabled socket indexes (305 isEnabled/isVisible or 310
+  /// presence) — not "occupied". Null means use manifest indexes as-is.
   final Set<int>? unlockedSocketIndexes;
 
-  /// False when equipped plugs could not be keyed by socket index (no capture).
+  /// False until live socket capture is present (defaults false — Skeptic).
   final bool socketDataKnown;
 }
 
@@ -1195,6 +1205,22 @@ List<ApplyPlugStep> _planArmorMods({
       continue;
     }
 
+    final cost = def.energyCost;
+    if (cost == null) {
+      steps.add(
+        ApplyPlugStep(
+          id: 'armor-mod:skip:$n',
+          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, displayName),
+          kind: ApplyPlugKind.armorMod,
+          itemInstanceId: '',
+          socketIndex: 0,
+          plugItemHash: r.hash!,
+          skipReason: armorEnergyCostUnknownMessage(displayName),
+        ),
+      );
+      continue;
+    }
+
     // General/tuning: exactly one piece (first that accepts the plug).
     if (modSlot == ApplyArmorSlot.general) {
       if (generalAssigned.contains(r.hash!)) continue;
@@ -1202,7 +1228,7 @@ List<ApplyPlugStep> _planArmorMods({
         idPrefix: 'armor-mod:$n',
         plugHash: r.hash!,
         plugName: displayName,
-        cost: def.energyCost,
+        cost: cost,
         modSlot: modSlot,
         anyPiece: true,
         equippedArmor: equippedArmor,
@@ -1222,7 +1248,7 @@ List<ApplyPlugStep> _planArmorMods({
       idPrefix: 'armor-mod:$n',
       plugHash: r.hash!,
       plugName: displayName,
-      cost: def.energyCost,
+      cost: cost,
       modSlot: modSlot,
       anyPiece: false,
       equippedArmor: equippedArmor,
@@ -1335,8 +1361,33 @@ List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({
       ];
     }
 
-    final currentCost =
-        current == null ? 0 : (manifest.plugDef(current)?.energyCost ?? 0);
+    // Empty plug comes from manifest singleInitialItemHash (via host) only —
+    // never invent from a zero/unknown-cost 310 plug (M1).
+    final emptyBySocket = <int, int>{
+      ...def.emptyPlugHashBySocket,
+      ...live.emptyPlugHashBySocket,
+    };
+
+    int currentCost = 0;
+    if (current != null && current != 0) {
+      final known = manifest.plugDef(current)?.energyCost;
+      if (known == null) {
+        return [
+          ApplyPlugStep(
+            id: idPrefix,
+            label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
+            kind: ApplyPlugKind.armorMod,
+            itemInstanceId: armor.instanceId,
+            socketIndex: socketIndex,
+            plugItemHash: plugHash,
+            skipReason: armorEnergyCostUnknownMessage(
+              manifest.plugDef(current)?.name ?? '$current',
+            ),
+          ),
+        ];
+      }
+      currentCost = known;
+    }
     var energyUsed =
         energyUsedByPiece[armor.instanceId] ?? live.energyUsed;
     final capacity = live.energyCapacity;
@@ -1355,10 +1406,29 @@ List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({
         if (idx == socketIndex) continue;
         if (usedSockets.contains(idx)) continue;
         final equipped = live.equippedPlugBySocket[idx];
-        if (equipped == null) continue;
-        final empty = live.emptyPlugHashBySocket[idx];
-        if (empty == null) continue;
-        final eqCost = manifest.plugDef(equipped)?.energyCost ?? 0;
+        if (equipped == null || equipped == 0) continue;
+        final empty = emptyBySocket[idx];
+        if (empty == null || empty == 0) continue;
+        final eqCost = manifest.plugDef(equipped)?.energyCost;
+        // Unknown cost on an equipped mod ⇒ cannot safely clear for energy.
+        if (eqCost == null) {
+          return [
+            ApplyPlugStep(
+              id: idPrefix,
+              label: formatApplyPlugOutcomeLabel(
+                ApplyPlugKind.armorMod,
+                plugName,
+              ),
+              kind: ApplyPlugKind.armorMod,
+              itemInstanceId: armor.instanceId,
+              socketIndex: socketIndex,
+              plugItemHash: plugHash,
+              skipReason: armorEnergyCostUnknownMessage(
+                manifest.plugDef(equipped)?.name ?? '$equipped',
+              ),
+            ),
+          ];
+        }
         if (eqCost <= 0) continue;
         final tentativeClearId = '$idPrefix:clear:$idx';
         tentative.add(

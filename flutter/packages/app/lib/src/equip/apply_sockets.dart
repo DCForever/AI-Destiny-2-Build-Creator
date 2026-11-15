@@ -243,6 +243,8 @@ Future<bool> _runPlugSteps({
       final mapped = _mapWriteError(error);
       if (mapped.isInActivity) {
         // In-activity after a clear: restore every pending clear, then stop.
+        final pendingSnapshot =
+            Map<String, ApplyPlugStep>.from(pendingRestoreClears);
         final restored = await _restorePendingClears(
           writeClient: writeClient,
           ctx: ctx,
@@ -251,6 +253,9 @@ Future<bool> _runPlugSteps({
           sleeper: sleeper,
         );
         pendingRestoreClears.clear();
+        if (restored.attempted && !restored.allOk) {
+          _markClearRowsRestoreFailed(rows, pendingSnapshot.keys);
+        }
         rows[rowIndex] = rows[rowIndex].copyWith(
           state: ApplyItemState.failed,
           reason: restored.attempted
@@ -308,6 +313,12 @@ Future<bool> _runPlugSteps({
           reason = restoreResult.allOk
               ? kApplySocketRestoredMessage
               : kApplySocketRestoreFailedMessage;
+          if (!restoreResult.allOk) {
+            _markClearRowsRestoreFailed(
+              rows,
+              toRestore.map((t) => t.clearStepId),
+            );
+          }
         }
       }
 
@@ -407,6 +418,23 @@ void _appendFailedPlugSteps(
         state: ApplyItemState.failed,
         reason: reason,
       ),
+    );
+  }
+}
+
+/// When a restore fails, mark the earlier clear row(s) so the UI shows the
+/// cleared socket was not put back (Skeptic should-fix).
+void _markClearRowsRestoreFailed(
+  List<ApplyItemProgress> rows,
+  Iterable<String> clearStepIds,
+) {
+  final ids = clearStepIds.where((id) => id.isNotEmpty).toSet();
+  if (ids.isEmpty) return;
+  for (var i = 0; i < rows.length; i++) {
+    if (!ids.contains(rows[i].id)) continue;
+    rows[i] = rows[i].copyWith(
+      state: ApplyItemState.failed,
+      reason: kApplySocketRestoreFailedMessage,
     );
   }
 }

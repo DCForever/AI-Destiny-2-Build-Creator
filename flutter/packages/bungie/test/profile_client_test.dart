@@ -289,14 +289,16 @@ void main() {
             'data': {
               'sub1': {
                 'sockets': [
-                  {'plugHash': 111, 'isEnabled': true},
-                  {'plugHash': 222, 'isEnabled': true},
+                  {'plugHash': 111, 'isEnabled': true, 'isVisible': true},
+                  // Empty but unlocked fragment socket (M2).
+                  {'plugHash': 0, 'isEnabled': true, 'isVisible': true},
+                  {'plugHash': 222, 'isEnabled': true, 'isVisible': true},
                 ],
               },
               'helm1': {
                 'sockets': [
-                  {'plugHash': 301, 'isEnabled': true},
-                  {'plugHash': 302, 'isEnabled': true},
+                  {'plugHash': 301, 'isEnabled': true, 'isVisible': true},
+                  {'plugHash': 302, 'isEnabled': true, 'isVisible': true},
                 ],
               },
             },
@@ -320,6 +322,10 @@ void main() {
                       'plugItemHash': 113,
                       'canInsert': false,
                       'enabled': true,
+                    },
+                    {
+                      // Missing canInsert/enabled ⇒ unknown → excluded.
+                      'plugItemHash': 114,
                     },
                   ],
                 },
@@ -374,14 +380,30 @@ void main() {
                 ],
               },
             },
+            'char2': {
+              'plugs': {
+                '77': [
+                  {
+                    'plugItemHash': 777,
+                    'canInsert': true,
+                    'enabled': true,
+                  },
+                ],
+              },
+            },
           },
         },
       }, membership);
 
       final sub = result.items.firstWhere((i) => i.instanceId == 'sub1');
       expect(sub.socketCapture, isNotNull);
-      expect(sub.socketCapture, hasLength(2));
+      expect(sub.socketCapture, hasLength(3));
       expect(sub.socketCapture!.first.equippedPlugHash, 111);
+      expect(
+        sub.socketCapture!.any((s) => s.socketIndex == 1 && s.equippedPlugHash == 0),
+        isTrue,
+        reason: 'empty unlocked socket must be captured',
+      );
       expect(
         sub.socketCapture!.first.reusablePlugHashes,
         containsAll([111, 112]),
@@ -390,6 +412,11 @@ void main() {
         sub.socketCapture!.first.reusablePlugHashes.contains(113),
         isFalse,
         reason: 'canInsert:false must not count as unlocked/usable',
+      );
+      expect(
+        sub.socketCapture!.first.reusablePlugHashes.contains(114),
+        isFalse,
+        reason: 'missing canInsert/enabled is unknown — skip',
       );
 
       final helm = result.items.firstWhere((i) => i.instanceId == 'helm1');
@@ -401,8 +428,21 @@ void main() {
         containsAll([301, 303]),
       );
 
-      expect(result.unlockedPlugSetPlugHashes, containsAll([555, 666]));
-      expect(result.unlockedPlugSetPlugHashes.contains(556), isFalse);
+      expect(result.profilePlugSetPlugHashes, contains(555));
+      expect(result.profilePlugSetPlugHashes.contains(556), isFalse);
+      expect(
+        result.unlockedPlugSetPlugHashesForCharacter('char1'),
+        containsAll([555, 666]),
+      );
+      expect(
+        result.unlockedPlugSetPlugHashesForCharacter('char1').contains(777),
+        isFalse,
+        reason: '105 must be limited to the Apply character',
+      );
+      expect(
+        result.unlockedPlugSetPlugHashesForCharacter('char2'),
+        containsAll([555, 777]),
+      );
     });
 
     test('inventory components include sockets, reusable plugs, plug sets', () {

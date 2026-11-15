@@ -126,15 +126,12 @@ FullInventoryParseResult parseFullInventoryResponse(
       diagnostics.raw.characterInventoriesTotal +
       diagnostics.raw.characterEquipmentTotal;
 
-  final unlockedPlugSetPlugHashes = <int>{
-    ..._extractPlugSetPlugHashes(res['profilePlugSets']),
-    ..._extractCharacterPlugSetPlugHashes(res['characterPlugSets']),
-  };
-
   return FullInventoryParseResult(
     items: items,
     diagnostics: diagnostics,
-    unlockedPlugSetPlugHashes: unlockedPlugSetPlugHashes,
+    profilePlugSetPlugHashes: _extractPlugSetPlugHashes(res['profilePlugSets']),
+    characterPlugSetPlugHashes:
+        _extractCharacterPlugSetPlugHashesByCharacter(res['characterPlugSets']),
   );
 }
 
@@ -480,7 +477,9 @@ Map<String, Map<int, List<int>>> _extractReusablePlugsMap(Object? itemComponents
       for (final plug in plugEntry.value as List) {
         if (plug is! Map) continue;
         final p = _asStringKeyedMap(plug);
-        if (p['canInsert'] == false || p['enabled'] == false) continue;
+        // Missing canInsert/enabled ⇒ unknown ownership → do not treat as
+        // unlocked (Skeptic: only explicit true counts).
+        if (p['canInsert'] != true || p['enabled'] != true) continue;
         final hash = _asInt(p['plugItemHash']);
         if (hash != null) hashes.add(hash);
       }
@@ -586,14 +585,20 @@ List<RawSocketCapture>? _parseSocketCapture(
     final sock = sockets[socketIndex];
     if (sock is! Map) continue;
     final s = _asStringKeyedMap(sock);
-    if (s['isEnabled'] == false) continue;
-    final plugHash = _asInt(s['plugHash']);
-    if (plugHash == null) continue;
+    // Keep disabled/hidden rows so callers can distinguish locked vs empty.
+    final isEnabled = s['isEnabled'] != false;
+    final isVisible = s['isVisible'] != false;
+    final plugHash = _asInt(s['plugHash']) ?? 0;
+    final reusable = instanceReusable[socketIndex] ?? const <int>[];
+    // Skip totally absent sockets (no plug, not enabled, no reusable list).
+    if (!isEnabled && plugHash == 0 && reusable.isEmpty) continue;
     result.add(
       RawSocketCapture(
         socketIndex: socketIndex,
         equippedPlugHash: plugHash,
-        reusablePlugHashes: instanceReusable[socketIndex] ?? const [],
+        reusablePlugHashes: reusable,
+        isEnabled: isEnabled,
+        isVisible: isVisible,
       ),
     );
   }
@@ -623,17 +628,20 @@ Set<int> _extractPlugSetPlugHashes(Object? section) {
   return _plugHashesFromPlugSetsMap(_asStringKeyedMap(data)['plugs']);
 }
 
-/// Character plug sets (component 105) — union across characters.
-Set<int> _extractCharacterPlugSetPlugHashes(Object? section) {
+/// Character plug sets (component 105) keyed by characterId.
+Map<String, Set<int>> _extractCharacterPlugSetPlugHashesByCharacter(
+  Object? section,
+) {
   if (section is! Map) return {};
   final s = _asStringKeyedMap(section);
   final data = s['data'];
   if (data is! Map) return {};
-  final out = <int>{};
+  final out = <String, Set<int>>{};
   for (final entry in _asStringKeyedMap(data).entries) {
     if (entry.value is! Map) continue;
     final char = _asStringKeyedMap(entry.value as Map);
-    out.addAll(_plugHashesFromPlugSetsMap(char['plugs']));
+    final hashes = _plugHashesFromPlugSetsMap(char['plugs']);
+    if (hashes.isNotEmpty) out[entry.key] = hashes;
   }
   return out;
 }
@@ -641,9 +649,8 @@ Set<int> _extractCharacterPlugSetPlugHashes(Object? section) {
 /// Collect plugItemHash values that are insertable and enabled.
 ///
 /// Bungie DestinyItemPlugBase: `canInsert` means insertion requirements are
-/// met; `enabled` means the plug would provide benefits if inserted. We treat
-/// a reusable/plug-set entry as unlocked/usable only when both are not false
-/// (same filter as [_extractReusablePlugsMap] for component 310).
+/// met; `enabled` means the plug would provide benefits if inserted. Missing
+/// either flag is UNKNOWN — do not treat as unlocked (Skeptic should-fix).
 Set<int> _plugHashesFromPlugSetsMap(Object? plugs) {
   if (plugs is! Map) return {};
   final out = <int>{};
@@ -652,7 +659,7 @@ Set<int> _plugHashesFromPlugSetsMap(Object? plugs) {
     for (final plug in entry.value as List) {
       if (plug is! Map) continue;
       final p = _asStringKeyedMap(plug);
-      if (p['canInsert'] == false || p['enabled'] == false) continue;
+      if (p['canInsert'] != true || p['enabled'] != true) continue;
       final hash = _asInt(p['plugItemHash']);
       if (hash != null && hash != 0) out.add(hash);
     }

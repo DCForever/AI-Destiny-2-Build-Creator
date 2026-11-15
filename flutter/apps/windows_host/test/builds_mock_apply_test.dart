@@ -31,7 +31,7 @@ void main() {
     displayName: 'Guardian',
   );
 
-  test('F4: armorModDataKnown stays false when socket/energy data missing', () {
+  test('F4: armorModDataKnown stays false when 310 or energyUsed missing', () {
     expect(isArmorModDataKnown(null), isFalse);
     expect(
       isArmorModDataKnown(
@@ -44,21 +44,7 @@ void main() {
       ),
       isFalse,
     );
-    expect(
-      isArmorModDataKnown(
-        const RawInventoryItem(
-          instanceId: 'a1',
-          itemHash: 1,
-          bucketHash: 3448274439,
-          location: 'equipped',
-          socketCapture: [
-            RawSocketCapture(socketIndex: 0, equippedPlugHash: 10),
-          ],
-          // energyCapacity null → still unknown
-        ),
-      ),
-      isFalse,
-    );
+    // 305-only (no reusable plugs) → false, no write path.
     expect(
       isArmorModDataKnown(
         const RawInventoryItem(
@@ -73,8 +59,81 @@ void main() {
           energyUsed: 3,
         ),
       ),
+      isFalse,
+    );
+    expect(
+      isArmorModDataKnown(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+          socketCapture: [
+            RawSocketCapture(
+              socketIndex: 0,
+              equippedPlugHash: 10,
+              reusablePlugHashes: [10, 11],
+            ),
+          ],
+          energyCapacity: 10,
+          // energyUsed null → still unknown
+        ),
+      ),
+      isFalse,
+    );
+    expect(
+      isArmorModDataKnown(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+          socketCapture: [
+            RawSocketCapture(
+              socketIndex: 0,
+              equippedPlugHash: 10,
+              reusablePlugHashes: [10, 11],
+            ),
+          ],
+          energyCapacity: 10,
+          energyUsed: 3,
+        ),
+      ),
       isTrue,
     );
+  });
+
+  test('M2: unlocked indexes include empty enabled sockets, not only occupied',
+      () {
+    final live = const RawInventoryItem(
+      instanceId: 'sub-1',
+      itemHash: 100,
+      bucketHash: kSubclassBucketHash,
+      location: 'equipped',
+      socketCapture: [
+        RawSocketCapture(
+          socketIndex: 7,
+          equippedPlugHash: 31,
+          isEnabled: true,
+          isVisible: true,
+        ),
+        RawSocketCapture(
+          socketIndex: 8,
+          equippedPlugHash: 0,
+          isEnabled: true,
+          isVisible: true,
+        ),
+        RawSocketCapture(
+          socketIndex: 9,
+          equippedPlugHash: 0,
+          isEnabled: false,
+          isVisible: true,
+        ),
+      ],
+    );
+    final unlocked = unlockedSocketIndexesFromCapture(live)!;
+    expect(unlocked, containsAll([7, 8]));
+    expect(unlocked.contains(9), isFalse);
   });
 
   test('label includes class, light, and last 4 of character id', () {

@@ -82,16 +82,28 @@ class RawSocketCapture {
     required this.socketIndex,
     required this.equippedPlugHash,
     this.reusablePlugHashes = const [],
+    this.isEnabled = true,
+    this.isVisible = true,
   });
 
   final int socketIndex;
+
+  /// Equipped plug hash from 305; may be 0 when the socket is empty/unlocked.
   final int equippedPlugHash;
   final List<int> reusablePlugHashes;
+
+  /// DestinyItemSocketState.isEnabled (305). False ⇒ locked/disabled socket.
+  final bool isEnabled;
+
+  /// DestinyItemSocketState.isVisible (305). False ⇒ hidden socket.
+  final bool isVisible;
 
   Map<String, Object?> toJsonMap() => {
         'socketIndex': socketIndex,
         'equippedPlugHash': equippedPlugHash,
         'reusablePlugHashes': reusablePlugHashes,
+        'isEnabled': isEnabled,
+        'isVisible': isVisible,
       };
 }
 
@@ -278,13 +290,28 @@ class FullInventoryParseResult {
   const FullInventoryParseResult({
     required this.items,
     required this.diagnostics,
-    this.unlockedPlugSetPlugHashes = const {},
+    this.profilePlugSetPlugHashes = const {},
+    this.characterPlugSetPlugHashes = const {},
   });
 
   final List<RawInventoryItem> items;
   final InventoryParseDiagnostics diagnostics;
 
-  /// Plug item hashes from profile (104) + character (105) plug sets where
-  /// `canInsert != false` and `enabled != false` (read-only ownership signal).
-  final Set<int> unlockedPlugSetPlugHashes;
+  /// Profile plug sets (104) where canInsert == true and enabled == true.
+  final Set<int> profilePlugSetPlugHashes;
+
+  /// Character plug sets (105) keyed by characterId (same canInsert/enabled).
+  final Map<String, Set<int>> characterPlugSetPlugHashes;
+
+  /// Union of profile + all characters (legacy helpers / tests).
+  Set<int> get unlockedPlugSetPlugHashes => {
+        ...profilePlugSetPlugHashes,
+        for (final set in characterPlugSetPlugHashes.values) ...set,
+      };
+
+  /// Profile (104) + one character's (105) unlocked plug hashes.
+  Set<int> unlockedPlugSetPlugHashesForCharacter(String characterId) => {
+        ...profilePlugSetPlugHashes,
+        ...?characterPlugSetPlugHashes[characterId],
+      };
 }
