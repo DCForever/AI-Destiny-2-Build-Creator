@@ -1,6 +1,6 @@
 /// Sequential Apply-to-character for a prepared item list (Builds mock path).
 ///
-/// Reuses [executeEquipPlan] + [BungieWriteClient] equip/transfer only.
+/// Builds equip-only plan steps (does not move vault items onto the character).
 /// Progress is reported one item at a time (DIM-style).
 library;
 

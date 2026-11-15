@@ -7,6 +7,7 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/auth/token_codec.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 BungieTokens sampleTokens({
   String access = 'access-token-SECRET-aaa',
@@ -21,6 +22,55 @@ BungieTokens sampleTokens({
     refreshExpiresAt: now.add(const Duration(days: 90)),
     bungieMembershipId: membership,
   );
+}
+
+/// Mirrors [SecureTokenStore] corrupt/empty behavior without Credential Locker.
+class InMemorySecureStore implements TokenStore {
+  String? raw;
+
+  @override
+  Future<BungieTokens?> read() async {
+    if (raw == null || raw!.trim().isEmpty) return null;
+    final decoded = decodeBungieTokens(raw);
+    if (decoded == null) {
+      throw const TokenStoreCorruptException();
+    }
+    return decoded;
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    raw = encodeBungieTokens(tokens);
+  }
+
+  @override
+  Future<void> clear() async {
+    raw = null;
+  }
+}
+
+/// Empty until written; then read-back returns different secrets (verify fail).
+class MismatchReadBackStore implements TokenStore {
+  bool _written = false;
+
+  @override
+  Future<BungieTokens?> read() async {
+    if (!_written) return null;
+    return sampleTokens(
+      access: 'other-access-SECRET',
+      refresh: 'other-refresh-SECRET',
+    );
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    _written = true;
+  }
+
+  @override
+  Future<void> clear() async {
+    _written = false;
+  }
 }
 
 void main() {
@@ -73,7 +123,7 @@ void main() {
     });
   });
 
-  group('FileTokenStore + DualTokenStore', () {
+  group('FileTokenStore + DualTokenStore hardening', () {
     test('file store round-trips under temp dir', () async {
       final dir = await Directory.systemTemp.createTemp('tok_file_');
       addTearDown(() async {
@@ -90,25 +140,164 @@ void main() {
       expect(await store.read(), isNull);
     });
 
-    test('dual store recovers from empty primary via secondary', () async {
-      final dir = await Directory.systemTemp.createTemp('tok_dual_');
+    test('(a) save never creates the plaintext sidecar', () async {
+      final dir = await Directory.systemTemp.createTemp('tok_no_sidecar_');
       addTearDown(() async {
         if (await dir.exists()) await dir.delete(recursive: true);
       });
-      final primary = MemoryTokenStore();
+      final primary = InMemorySecureStore();
       final secondary = FileTokenStore(baseDir: dir.path);
-      final dual = DualTokenStore(primary: primary, secondary: secondary);
-      final tokens = sampleTokens(access: 'dual-acc', refresh: 'dual-ref');
+      final reports = <String>[];
+      final dual = DualTokenStore(
+        primary: primary,
+        secondary: secondary,
+        report: reports.add,
+      );
+      final tokens = sampleTokens(access: 'save-acc-SECRET', refresh: 'save-ref-SECRET');
       await dual.write(tokens);
-      // Simulate Credential Manager miss after process restart.
-      await primary.clear();
-      expect(await primary.read(), isNull);
+
+      final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+      expect(await sidecar.exists(), isFalse);
+      expect((await primary.read())?.accessToken, 'save-acc-SECRET');
+      expect(await secondary.read(), isNull);
+    });
+
+    test(
+      '(b) migration happy path deletes sidecar only after verified read-back',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('tok_mig_ok_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+        final primary = InMemorySecureStore();
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final tokens = sampleTokens(
+          access: 'mig-acc-SECRET',
+          refresh: 'mig-ref-SECRET',
+        );
+        await secondary.write(tokens);
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        expect(await sidecar.exists(), isTrue);
+
+        final reports = <String>[];
+        final dual = DualTokenStore(
+          primary: primary,
+          secondary: secondary,
+          report: reports.add,
+        );
+        final recovered = await dual.read();
+        expect(recovered, isNotNull);
+        expect(recovered!.accessToken, 'mig-acc-SECRET');
+        expect(recovered.refreshToken, 'mig-ref-SECRET');
+        expect((await primary.read())?.accessToken, 'mig-acc-SECRET');
+        expect(await sidecar.exists(), isFalse);
+        expect(
+          reports.any((m) => m.contains('migrated tokens into secure store')),
+          isTrue,
+        );
+      },
+    );
+
+    test('(c) read-back mismatch keeps sidecar', () async {
+      final dir = await Directory.systemTemp.createTemp('tok_mig_fail_');
+      addTearDown(() async {
+        if (await dir.exists()) await dir.delete(recursive: true);
+      });
+      final secondary = FileTokenStore(baseDir: dir.path);
+      final tokens = sampleTokens(
+        access: 'keep-acc-SECRET',
+        refresh: 'keep-ref-SECRET',
+      );
+      await secondary.write(tokens);
+      final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+      expect(await sidecar.exists(), isTrue);
+
+      final reports = <String>[];
+      final dual = DualTokenStore(
+        primary: MismatchReadBackStore(),
+        secondary: secondary,
+        report: reports.add,
+      );
       final recovered = await dual.read();
-      expect(recovered, isNotNull);
-      expect(recovered!.accessToken, 'dual-acc');
-      expect(recovered.refreshToken, 'dual-ref');
-      // Healed primary.
-      expect((await primary.read())?.accessToken, 'dual-acc');
+      expect(recovered, isNull);
+      expect(await sidecar.exists(), isTrue);
+      expect(await secondary.read(), isNotNull);
+      expect(
+        reports.any((m) => m.contains('verify failed') && m.contains('sidecar kept')),
+        isTrue,
+      );
+      for (final msg in reports) {
+        expect(msg.contains('keep-acc-SECRET'), isFalse);
+        expect(msg.contains('keep-ref-SECRET'), isFalse);
+      }
+    });
+
+    test(
+      '(d) corrupt secure store is signed-out path — no plaintext fallback',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('tok_corrupt_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+        final primary = InMemorySecureStore()..raw = '{not-valid-json';
+        final secondary = FileTokenStore(baseDir: dir.path);
+        await secondary.write(
+          sampleTokens(access: 'fallback-acc-SECRET', refresh: 'fallback-ref-SECRET'),
+        );
+
+        final dual = DualTokenStore(primary: primary, secondary: secondary);
+        expect(
+          () => dual.read(),
+          throwsA(
+            isA<TokenStoreCorruptException>().having(
+              (e) => e.message,
+              'message',
+              'Sign-in data could not be read - please sign in again',
+            ),
+          ),
+        );
+        // Sidecar must remain (never used as fallback for corrupt primary).
+        expect(
+          await File(p.join(dir.path, kBungieTokenFileName)).exists(),
+          isTrue,
+        );
+      },
+    );
+
+    test('(e) no secret values appear in logs/errors (redaction)', () async {
+      const access = 'access-token-SECRET-redact-xyz';
+      const refresh = 'refresh-token-SECRET-redact-uvw';
+      final tokens = sampleTokens(access: access, refresh: refresh);
+
+      expect(tokens.toString().contains(access), isFalse);
+      expect(tokens.toString().contains(refresh), isFalse);
+      expect(tokens.toString(), contains('[redacted]'));
+
+      const corrupt = TokenStoreCorruptException();
+      expect(corrupt.toString(), isNot(contains(access)));
+      expect(corrupt.toString(), isNot(contains(refresh)));
+      expect(
+        corrupt.toString(),
+        'Sign-in data could not be read - please sign in again',
+      );
+
+      final dir = await Directory.systemTemp.createTemp('tok_redact_');
+      addTearDown(() async {
+        if (await dir.exists()) await dir.delete(recursive: true);
+      });
+      final reports = <String>[];
+      final dual = DualTokenStore(
+        primary: MismatchReadBackStore(),
+        secondary: FileTokenStore(baseDir: dir.path),
+        report: reports.add,
+      );
+      await FileTokenStore(baseDir: dir.path).write(tokens);
+      await dual.read();
+      final blob = reports.join('\n');
+      expect(blob.contains(access), isFalse);
+      expect(blob.contains(refresh), isFalse);
+      expect(blob.contains('access-token-SECRET'), isFalse);
+      expect(blob.contains('refresh-token-SECRET'), isFalse);
     });
   });
 

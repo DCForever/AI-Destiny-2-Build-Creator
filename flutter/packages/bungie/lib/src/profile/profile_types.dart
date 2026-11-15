@@ -151,6 +151,7 @@ class InventoryParseDiagnostics {
     required this.parsed,
     required this.dropped,
     this.resolution,
+    this.inventorySectionsComplete = true,
   });
 
   final DestinyMembership membership;
@@ -158,6 +159,10 @@ class InventoryParseDiagnostics {
   final InventoryParsedCounts parsed;
   final InventoryDroppedCounts dropped;
   InventoryResolutionCounts? resolution;
+
+  /// False when any of profileInventory / characterInventories /
+  /// characterEquipment lacked a `data` object (privacy / partial profile).
+  final bool inventorySectionsComplete;
 }
 
 class InventoryRawCounts {

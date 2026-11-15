@@ -363,6 +363,110 @@ void main() {
       );
     },
   );
+
+  test(
+    '(B1) partial profile (missing component section) is read failure, '
+    'not re-import DIM CSV',
+    () async {
+      final equipped = <String>[];
+      final writeClient = createMockWriteClient(
+        equipItem: (ctx, args) async {
+          equipped.add(args.instanceId);
+        },
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      final plan = _singleSlotPlan(build, instanceId: 'inst-helmet-1');
+
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          profileClient: FakeProfileClient(
+            characters: const [warlockA],
+            // Item id matches the plan, but sections are incomplete → fail closed.
+            items: const [
+              RawInventoryItem(
+                instanceId: 'inst-helmet-1',
+                itemHash: 1001,
+                bucketHash: 3448274439,
+                location: 'character',
+                characterId: '2305843009264904821',
+              ),
+            ],
+            inventorySectionsComplete: false,
+          ),
+          writeClient: writeClient,
+        ),
+        target: const BuildsMockApplyTarget(
+          membership: membership,
+          character: warlockA,
+        ),
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(outcome.error, isNull);
+      expect(equipped, isEmpty);
+      expect(outcome.progress!.failedCount, 1);
+      expect(outcome.progress!.appliedCount, 0);
+      expect(
+        outcome.progress!.items.single.reason,
+        kApplyLiveInventoryReadFailedReason,
+      );
+      expect(
+        outcome.progress!.items.single.reason,
+        isNot(equals(kApplyLiveInventoryMissingReason)),
+      );
+      expect(outcome.progress!.items.single.state, ApplyItemState.failed);
+    },
+  );
+
+  test('(B2) vault instance counts as present for the live-inventory gate',
+      () async {
+    final equipped = <String>[];
+    final writeClient = createMockWriteClient(
+      equipItem: (ctx, args) async {
+        equipped.add(args.instanceId);
+      },
+    );
+    final session = await _signedInSession();
+    final build = loadBuildsMockFixture().builds.first;
+    final plan = _singleSlotPlan(build, instanceId: 'inst-vault-1');
+
+    final outcome = await runBuildsMockApplyToCharacter(
+      build: build,
+      plan: plan,
+      ports: BuildsMockApplyPorts(
+        oauthSession: session,
+        profileClient: FakeProfileClient(
+          characters: const [warlockA],
+          items: const [
+            RawInventoryItem(
+              instanceId: 'inst-vault-1',
+              itemHash: 1001,
+              bucketHash: 138197802, // vault general
+              location: 'vault',
+            ),
+          ],
+        ),
+        writeClient: writeClient,
+      ),
+      target: const BuildsMockApplyTarget(
+        membership: membership,
+        character: warlockA,
+      ),
+      isMounted: () => true,
+      onProgress: (_) {},
+    );
+
+    expect(outcome.error, isNull);
+    expect(equipped, ['inst-vault-1']);
+    expect(outcome.progress!.appliedCount, 1);
+    expect(outcome.progress!.failedCount, 0);
+    expect(outcome.progress!.items.single.state, ApplyItemState.done);
+  });
 }
 
 Future<WindowsOAuthSession> _signedInSession() async {

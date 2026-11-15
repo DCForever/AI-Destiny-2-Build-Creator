@@ -171,6 +171,16 @@ class WindowsOAuthSession extends ChangeNotifier {
               'you should not need to re-authorize.';
         }
       }
+    } on TokenStoreCorruptException catch (e) {
+      // Fail closed: treat as signed out; never fall back to plaintext.
+      // ignore: avoid_print
+      print('OAuth: restore — corrupt secure store');
+      try {
+        await _tokenStore.clear();
+      } catch (_) {}
+      _tokens = null;
+      _status = OAuthSessionStatus.signedOut;
+      _errorMessage = e.message;
     } catch (e, st) {
       // ignore: avoid_print
       print('OAuth: restore failed (keeping store): $e\n$st');
