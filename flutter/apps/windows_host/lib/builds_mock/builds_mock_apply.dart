@@ -1,5 +1,7 @@
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_bungie/destiny2_bungie.dart';
+import 'package:destiny2_domain/destiny2_domain.dart';
+import 'package:destiny2_manifest/destiny2_manifest.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 
 import '../auth/windows_oauth_session.dart';
@@ -26,6 +28,7 @@ class BuildsMockApplyPorts {
     this.oauthSession,
     this.profileClient,
     this.exoticItemHashes,
+    this.socketManifest,
   });
 
   final AppServices? services;
@@ -36,6 +39,9 @@ class BuildsMockApplyPorts {
   /// Optional itemHash set known exotic (definition tierType / catalog).
   /// Merged with OfflineCatalog.isExotic when [services] is present.
   final Set<int>? exoticItemHashes;
+
+  /// Optional manifest/plug lookup for subclass + mod InsertSocketPlugFree.
+  final ApplySocketManifestLookup? socketManifest;
 
   BungieWriteClient? get resolvedWriteClient =>
       writeClient ?? services?.writeClient;
@@ -156,6 +162,8 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   required BuildsMockApplyTarget target,
   required bool Function() isMounted,
   required void Function(ApplyToCharacterProgress progress) onProgress,
+  CachedDimLoadout? loadout,
+  ApplySocketPlan? socketPlan,
 }) async {
   final writeClient = ports.resolvedWriteClient;
   final oauth = ports.resolvedOauth;
@@ -234,6 +242,15 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
       );
     }
 
+    final resolvedSockets = socketPlan ??
+        await _socketPlanForApply(
+          ports: ports,
+          loadout: loadout,
+          characterId: target.characterId,
+          inventory: gated.inventory,
+          liveItems: gated.liveItems,
+          appliedItems: gated.items,
+        );
     final result = await applyToCharacter(
       writeClient: writeClient,
       ctx: WriteClientContext(
@@ -243,6 +260,7 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
       characterId: target.characterId,
       items: gated.items,
       inventory: gated.inventory,
+      socketPlan: resolvedSockets,
       onProgress: (progress) {
         if (!isMounted()) return;
         onProgress(_mergeApplyProgress(rows, progress));
@@ -269,10 +287,14 @@ class _GatedApplyItems {
   const _GatedApplyItems({
     required this.items,
     required this.inventory,
+    this.liveItems = const [],
   });
 
   final List<ApplyToCharacterItem> items;
   final List<ApplyInventoryItem> inventory;
+
+  /// Raw profile rows (plugHashes) for socket planning.
+  final List<RawInventoryItem> liveItems;
 }
 
 /// Reads live inventory once. Returns present items + snapshot, or `null` when
@@ -304,7 +326,7 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   }
 
   if (!isMounted()) {
-    return const _GatedApplyItems(items: [], inventory: []);
+    return const _GatedApplyItems(items: [], inventory: [], liveItems: []);
   }
 
   final inventoryIncomplete = parsed == null ||
@@ -322,6 +344,7 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   }
 
   final inventory = parsed.items;
+  final liveItems = List<RawInventoryItem>.from(inventory);
   final liveIds = <String>{
     for (final item in inventory)
       if (item.instanceId.isNotEmpty) item.instanceId,
@@ -396,7 +419,297 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
       summary: present.isEmpty ? _summaryForRows(rows) : null,
     ),
   );
-  return _GatedApplyItems(items: present, inventory: snapshot);
+  return _GatedApplyItems(
+    items: present,
+    inventory: snapshot,
+    liveItems: liveItems,
+  );
+}
+
+/// Builds an [ApplySocketPlan] from the build-detail DIM loadout when possible.
+Future<ApplySocketPlan?> _socketPlanForApply({
+  required BuildsMockApplyPorts ports,
+  required CachedDimLoadout? loadout,
+  required String characterId,
+  required List<ApplyInventoryItem> inventory,
+  required List<RawInventoryItem> liveItems,
+  required List<ApplyToCharacterItem> appliedItems,
+}) async {
+  if (loadout == null) return null;
+  final hasPlugs =
+      loadout.subclassPlugs.isNotEmpty || loadout.mods.isNotEmpty;
+  final hasSubclass = loadout.subclass != null;
+  if (!hasPlugs && !hasSubclass) return null;
+
+  final subclassHashes = <int>{
+    if (loadout.subclass != null) loadout.subclass!.hash,
+    for (final row in inventory)
+      if (row.bucketHash == kSubclassBucketHash) row.itemHash,
+  };
+
+  final manifest = ports.socketManifest ??
+      await _buildSocketManifestLookup(
+        ports,
+        subclassItemHashes: subclassHashes,
+      );
+  if (manifest == null) return null;
+
+  final byId = <String, RawInventoryItem>{
+    for (final row in liveItems)
+      if (row.instanceId.isNotEmpty) row.instanceId: row,
+  };
+
+  final instances = <ApplyInstanceSocketState>[
+    for (final row in inventory)
+      ApplyInstanceSocketState(
+        instanceId: row.instanceId,
+        itemHash: row.itemHash,
+        bucketHash: row.bucketHash,
+        characterId: row.characterId,
+        location: row.location,
+        equippedPlugBySocket: _equippedPlugsByIndex(byId[row.instanceId]),
+        ownedPlugHashes: const {},
+        energyCapacity: 0,
+        energyUsed: 0,
+      ),
+  ];
+
+  final armorPins = <ApplyArmorPin>[
+    for (final item in appliedItems)
+      if (_isArmorSlotWire(item.slot))
+        ApplyArmorPin(
+          id: item.id,
+          label: item.label,
+          itemHash: item.itemHash,
+          instanceId: item.instanceId,
+        ),
+  ];
+
+  return planApplySockets(
+    characterId: characterId,
+    build: ApplyBuildSocketInputs(
+      subclassHash: loadout.subclass?.hash,
+      subclassName: loadout.subclass?.name ?? '',
+      subclassPlugs: [
+        for (final p in loadout.subclassPlugs)
+          ApplyNamedPlug(name: p.name, hash: p.hash),
+      ],
+      armorMods: [
+        for (final p in loadout.mods)
+          ApplyNamedPlug(name: p.name, hash: p.hash),
+      ],
+    ),
+    manifest: manifest,
+    instances: instances,
+    equippedArmor: armorPins,
+  );
+}
+
+bool _isArmorSlotWire(String? slot) {
+  switch ((slot ?? '').trim().toLowerCase()) {
+    case 'helmet':
+    case 'arms':
+    case 'gauntlets':
+    case 'chest':
+    case 'legs':
+    case 'class_item':
+    case 'classitem':
+    case 'exotic_armor':
+      return true;
+    default:
+      return false;
+  }
+}
+
+Map<int, int> _equippedPlugsByIndex(RawInventoryItem? live) {
+  if (live == null) return const {};
+  final out = <int, int>{};
+  for (var i = 0; i < live.plugHashes.length; i++) {
+    final h = live.plugHashes[i];
+    if (h != 0) out[i] = h;
+  }
+  return out;
+}
+
+/// Conventional subclass socket layout (DIM / modern 3.0 subclasses).
+ApplyManifestItemDef conventionalSubclassItemDef({
+  required int hash,
+  required String name,
+}) {
+  return ApplyManifestItemDef(
+    hash: hash,
+    name: name,
+    socketCategories: const [
+      ApplyManifestSocketCategory(
+        socketCategoryHash: 457473665,
+        socketIndexes: [0],
+      ),
+      ApplyManifestSocketCategory(
+        socketCategoryHash: 309722977,
+        socketIndexes: [1, 2, 3, 4],
+      ),
+      ApplyManifestSocketCategory(
+        socketCategoryHash: 2047681910,
+        socketIndexes: [5, 6],
+      ),
+      ApplyManifestSocketCategory(
+        socketCategoryHash: 271461480,
+        socketIndexes: [7, 8, 9, 10, 11],
+      ),
+    ],
+  );
+}
+
+ApplyManifestItemDef conventionalArmorItemDef({
+  required int hash,
+  required String name,
+}) {
+  return ApplyManifestItemDef(
+    hash: hash,
+    name: name,
+    socketCategories: const [
+      ApplyManifestSocketCategory(
+        socketCategoryHash: 590099826,
+        socketIndexes: [0, 1, 2, 3, 4],
+      ),
+    ],
+  );
+}
+
+Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
+  BuildsMockApplyPorts ports, {
+  Set<int> subclassItemHashes = const {},
+}) async {
+  final services = ports.services;
+  if (services == null) return null;
+  try {
+    final refresh = services.manifestRefresh;
+    if (refresh is! WindowsManifestRefresh) return null;
+    final version = await refresh.service.readCurrentVersion();
+    if (version == null || version.isEmpty) return null;
+    final cache = FileEntityCache(
+      storageRoot: services.storageRoot,
+      version: version,
+    );
+    final abilities =
+        await cache.getStore<AbilityRecord>(MvpStoreName.abilities);
+    final aspects = await cache.getStore<AspectRecord>(MvpStoreName.aspects);
+    final fragments =
+        await cache.getStore<FragmentRecord>(MvpStoreName.fragments);
+    final mods = await cache.getStore<ModRecord>(MvpStoreName.mods);
+
+    final plugsByHash = <int, ApplyManifestPlugDef>{};
+    final hashesByName = <String, List<int>>{};
+
+    void addPlug(ApplyManifestPlugDef def) {
+      plugsByHash[def.hash] = def;
+      final key = def.name.trim().toLowerCase();
+      if (key.isEmpty) return;
+      hashesByName.putIfAbsent(key, () => <int>[]).add(def.hash);
+    }
+
+    for (final a in abilities) {
+      addPlug(
+        ApplyManifestPlugDef(
+          hash: a.hash,
+          name: a.name,
+          plugCategoryIdentifier: _abilityCategoryId(a.kind),
+        ),
+      );
+    }
+    for (final a in aspects) {
+      addPlug(
+        ApplyManifestPlugDef(
+          hash: a.hash,
+          name: a.name,
+          plugCategoryIdentifier: 'warlock.shared.aspects',
+        ),
+      );
+    }
+    for (final f in fragments) {
+      addPlug(
+        ApplyManifestPlugDef(
+          hash: f.hash,
+          name: f.name,
+          plugCategoryIdentifier: 'shared.fragments',
+        ),
+      );
+    }
+    for (final m in mods) {
+      addPlug(
+        ApplyManifestPlugDef(
+          hash: m.hash,
+          name: m.name,
+          plugCategoryIdentifier: _modCategoryId(m.slotCategory),
+          energyCost: m.energyCost ?? 0,
+        ),
+      );
+    }
+
+    final catalogNames = <int, String>{};
+    for (final item in services.offlineCatalog.baseItems) {
+      final name = item.name.trim();
+      if (name.isNotEmpty) catalogNames[item.hash] = name;
+    }
+
+    return ApplySocketManifestLookup(
+      itemDef: (hash) {
+        final name = catalogNames[hash] ?? '';
+        if (subclassItemHashes.contains(hash)) {
+          return conventionalSubclassItemDef(
+            hash: hash,
+            name: name.isNotEmpty ? name : 'Subclass',
+          );
+        }
+        return conventionalArmorItemDef(
+          hash: hash,
+          name: name.isNotEmpty ? name : 'Item',
+        );
+      },
+      plugDef: (hash) => plugsByHash[hash],
+      resolveUniquePlugHashByName: (name) {
+        final list = hashesByName[name.trim().toLowerCase()] ?? const [];
+        if (list.length == 1) return list.first;
+        return null;
+      },
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
+String _abilityCategoryId(AbilityKind kind) {
+  switch (kind) {
+    case AbilityKind.superAbility:
+      return 'warlock.shared.supers';
+    case AbilityKind.classAbility:
+      return 'warlock.shared.class_abilities';
+    case AbilityKind.movement:
+      return 'warlock.shared.movement';
+    case AbilityKind.melee:
+      return 'warlock.shared.melee';
+    case AbilityKind.grenade:
+      return 'warlock.shared.grenades';
+  }
+}
+
+String _modCategoryId(ModSlotCategory slot) {
+  switch (slot) {
+    case ModSlotCategory.helmet:
+      return 'enhancements.v2_head';
+    case ModSlotCategory.arms:
+      return 'enhancements.v2_arms';
+    case ModSlotCategory.chest:
+      return 'enhancements.v2_chest';
+    case ModSlotCategory.legs:
+      return 'enhancements.v2_legs';
+    case ModSlotCategory.classItem:
+      return 'enhancements.v2_class';
+    case ModSlotCategory.general:
+      return 'enhancements.v2_general';
+    case ModSlotCategory.tuning:
+      return 'enhancements.tuning';
+  }
 }
 
 ApplyToCharacterProgress _mergeApplyProgress(

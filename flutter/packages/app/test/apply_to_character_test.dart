@@ -1708,6 +1708,12 @@ class _RecordingWriteClient implements BungieWriteClient {
   }
 
   @override
+  Future<void> insertSocketPlugFree(
+    WriteClientContext ctx,
+    InsertSocketPlugFreeArgs args,
+  ) async {}
+
+  @override
   Future<void> applyArtifactConfig(
     WriteClientContext ctx,
     ApplyArtifactArgs args,

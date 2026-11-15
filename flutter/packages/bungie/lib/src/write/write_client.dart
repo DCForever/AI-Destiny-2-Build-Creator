@@ -105,13 +105,37 @@ class ApplyFashionArgs {
   final String? instanceId;
 }
 
+/// DestinySocketArrayType.Default — free plug insert uses the default array.
+const int kDestinySocketArrayTypeDefault = 0;
+
+/// Arguments for Destiny2 InsertSocketPlugFree (never the paid non-Free action).
+class InsertSocketPlugFreeArgs {
+  const InsertSocketPlugFreeArgs({
+    required this.itemId,
+    required this.socketIndex,
+    required this.plugItemHash,
+    required this.characterId,
+    this.socketArrayType = kDestinySocketArrayTypeDefault,
+  });
+
+  /// Item instance id receiving the plug.
+  final String itemId;
+  final int socketIndex;
+  final int plugItemHash;
+  final String characterId;
+
+  /// Always [kDestinySocketArrayTypeDefault] (0) for free inserts.
+  final int socketArrayType;
+}
+
 /// Bungie Platform write surface used by equip orchestration (DART-037).
 ///
 /// Hosts inject tokens at call time. Implementations MUST NOT accept or store
 /// `CLIENT_SECRET` / `client_secret`.
 ///
-/// Allowed write endpoints: TransferItem, EquipItem, EquipItems only for apply
-/// inventory moves — never dismantle / delete / insert-plug / postmaster pull.
+/// Allowed write endpoints for Apply: TransferItem, EquipItem, EquipItems,
+/// InsertSocketPlugFree. Never dismantle / delete / paid (non-Free) socket
+/// insert / postmaster pull / lock-state or track-state writes.
 abstract class BungieWriteClient {
   Future<void> transferItem(WriteClientContext ctx, TransferItemArgs args);
 
@@ -121,6 +145,15 @@ abstract class BungieWriteClient {
   Future<List<EquipItemResultEntry>> equipItems(
     WriteClientContext ctx,
     EquipItemsArgs args,
+  );
+
+  /// Free socket plug insert (subclass abilities/aspects/fragments, armor mods).
+  ///
+  /// Must POST only `/Destiny2/Actions/Items/InsertSocketPlugFree/` — never the
+  /// paid non-Free InsertSocketPlug action.
+  Future<void> insertSocketPlugFree(
+    WriteClientContext ctx,
+    InsertSocketPlugFreeArgs args,
   );
 
   Future<void> applyArtifactConfig(
@@ -187,6 +220,27 @@ class HttpBungieWriteClient implements BungieWriteClient {
   }
 
   @override
+  Future<void> insertSocketPlugFree(
+    WriteClientContext ctx,
+    InsertSocketPlugFreeArgs args,
+  ) async {
+    await _http.postJson(
+      '/Destiny2/Actions/Items/InsertSocketPlugFree/',
+      accessToken: ctx.accessToken,
+      body: {
+        'itemId': args.itemId,
+        'plug': {
+          'socketIndex': args.socketIndex,
+          'socketArrayType': args.socketArrayType,
+          'plugItemHash': args.plugItemHash,
+        },
+        'characterId': args.characterId,
+        'membershipType': ctx.membershipType,
+      },
+    );
+  }
+
+  @override
   Future<void> applyArtifactConfig(
     WriteClientContext ctx,
     ApplyArtifactArgs args,
@@ -234,6 +288,10 @@ typedef EquipItemsHandler = Future<List<EquipItemResultEntry>> Function(
   WriteClientContext ctx,
   EquipItemsArgs args,
 );
+typedef InsertSocketPlugFreeHandler = Future<void> Function(
+  WriteClientContext ctx,
+  InsertSocketPlugFreeArgs args,
+);
 typedef ApplyArtifactHandler = Future<void> Function(
   WriteClientContext ctx,
   ApplyArtifactArgs args,
@@ -249,6 +307,7 @@ class MockBungieWriteClient implements BungieWriteClient {
     this.onTransferItem,
     this.onEquipItem,
     this.onEquipItems,
+    this.onInsertSocketPlugFree,
     this.onApplyArtifactConfig,
     this.onApplyFashionSlot,
   });
@@ -256,6 +315,7 @@ class MockBungieWriteClient implements BungieWriteClient {
   final TransferItemHandler? onTransferItem;
   final EquipItemHandler? onEquipItem;
   final EquipItemsHandler? onEquipItems;
+  final InsertSocketPlugFreeHandler? onInsertSocketPlugFree;
   final ApplyArtifactHandler? onApplyArtifactConfig;
   final ApplyFashionHandler? onApplyFashionSlot;
 
@@ -304,6 +364,19 @@ class MockBungieWriteClient implements BungieWriteClient {
   }
 
   @override
+  Future<void> insertSocketPlugFree(
+    WriteClientContext ctx,
+    InsertSocketPlugFreeArgs args,
+  ) async {
+    final handler = onInsertSocketPlugFree;
+    if (handler != null) {
+      await handler(ctx, args);
+    } else {
+      await _noop();
+    }
+  }
+
+  @override
   Future<void> applyArtifactConfig(
     WriteClientContext ctx,
     ApplyArtifactArgs args,
@@ -335,6 +408,7 @@ BungieWriteClient createMockWriteClient({
   TransferItemHandler? transferItem,
   EquipItemHandler? equipItem,
   EquipItemsHandler? equipItems,
+  InsertSocketPlugFreeHandler? insertSocketPlugFree,
   ApplyArtifactHandler? applyArtifactConfig,
   ApplyFashionHandler? applyFashionSlot,
 }) {
@@ -342,6 +416,7 @@ BungieWriteClient createMockWriteClient({
     onTransferItem: transferItem,
     onEquipItem: equipItem,
     onEquipItems: equipItems,
+    onInsertSocketPlugFree: insertSocketPlugFree,
     onApplyArtifactConfig: applyArtifactConfig,
     onApplyFashionSlot: applyFashionSlot,
   );

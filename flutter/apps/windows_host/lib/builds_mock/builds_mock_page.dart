@@ -412,6 +412,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       plan: _savedFillInPlans[build.id],
       ports: ports,
       target: target,
+      loadout: _controller.dimLoadoutFor(build),
       isMounted: () => mounted,
       onProgress: (progress) {
         if (!mounted) return;
