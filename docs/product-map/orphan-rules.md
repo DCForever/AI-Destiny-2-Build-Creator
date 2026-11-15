@@ -1,6 +1,6 @@
 # Orphan rules (not on product map)
 
-Generated: 2026-11-13
+Generated: 2026-11-15
 
 Rules listed here exist in domain/feature markdown but are **not** referenced by any surface or flow phase `rules:` list.
 That can be intentional (backend-only, not yet mapped, superseded).

@@ -3,7 +3,14 @@ import 'dart:io';
 import 'package:test/test.dart';
 
 /// Apply-to-character path must never reference dismantle/delete/destroy,
-/// insert-plug, or pull-from-postmaster APIs. Equip + vault transfer OK.
+/// paid insert-plug, InsertPlug, or pull-from-postmaster APIs.
+///
+/// CHANGED (InsertSocketPlugFree + Skeptic RED R5): ban regexes
+/// `InsertSocketPlug(?!Free)` and `insertSocketPlug(?!Free)` as substrings in
+/// every scanned file so a missing trailing slash, a string built in pieces,
+/// or an `insertSocketPlug(` method cannot slip through. The previous
+/// `/InsertSocketPlug/` + Free-suffix loophole is removed. Free remains
+/// allowed only as `InsertSocketPlugFree` / `insertSocketPlugFree`.
 const List<String> kBannedApplyPatterns = <String>[
   'dismantleItem',
   'DismantleItem',
@@ -19,11 +26,9 @@ const List<String> kBannedApplyPatterns = <String>[
   'TransferToVaultToDelete',
   'InsertPlug',
   'insertPlug',
-  'InsertSocketPlug',
   'PullFromPostmaster',
   'pullFromPostmaster',
   '/Destiny2/Actions/Items/PullFromPostmaster',
-  '/Destiny2/Actions/Items/InsertSocketPlug',
   'SetLockState',
   'setLockState',
   '/Destiny2/Actions/Items/SetLockState',
@@ -33,6 +38,16 @@ const List<String> kBannedApplyPatterns = <String>[
   '/Destiny2/Actions/Items/SetTrackedState',
 ];
 
+/// Paid / incomplete InsertSocketPlug identifiers (R5). Negative lookahead
+/// keeps `InsertSocketPlugFree` / `insertSocketPlugFree` allowed.
+final RegExp kBannedInsertSocketPlugNotFree = RegExp(r'InsertSocketPlug(?!Free)');
+final RegExp kBannedInsertSocketPlugMethodNotFree =
+    RegExp(r'insertSocketPlug(?!Free)');
+
+/// Exact Free endpoint that Apply may call (must appear when Free is wired).
+const String kAllowedInsertSocketPlugFreePath =
+    '/Destiny2/Actions/Items/InsertSocketPlugFree/';
+
 /// Exact apply-path sources (posix-ish relative to packages/app).
 ///
 /// Includes the host Builds mock Apply wiring — the only non-package caller of
@@ -41,13 +56,15 @@ const List<String> kBannedApplyPatterns = <String>[
 /// exact and still bans dismantle/delete/plug/postmaster.
 const List<String> kApplyPathRelativeFiles = <String>[
   'lib/src/equip/apply_to_character.dart',
+  'lib/src/equip/apply_sockets.dart',
+  'lib/src/equip/apply_socket_plan.dart',
   '../bungie/lib/src/write/equip_orchestrator.dart',
   '../bungie/lib/src/write/write_client.dart',
   '../../apps/windows_host/lib/builds_mock/builds_mock_apply.dart',
 ];
 
 void main() {
-  test('apply path sources never reference dismantle/delete/destroy', () {
+  test('apply path sources never reference dismantle/delete/paid plug', () {
     final appRoot = _findAppPackageRoot();
     final violations = <String>[];
     final scanned = <String>[];
@@ -65,6 +82,16 @@ void main() {
         if (text.contains(pattern)) {
           violations.add('${file.path}: contains "$pattern"');
         }
+      }
+      if (kBannedInsertSocketPlugNotFree.hasMatch(text)) {
+        violations.add(
+          '${file.path}: matches InsertSocketPlug(?!Free)',
+        );
+      }
+      if (kBannedInsertSocketPlugMethodNotFree.hasMatch(text)) {
+        violations.add(
+          '${file.path}: matches insertSocketPlug(?!Free)',
+        );
       }
     }
     expect(
@@ -84,7 +111,7 @@ void main() {
     );
   });
 
-  test('BungieWriteClient surface has only transfer/equip/artifact/fashion',
+  test('write client allows InsertSocketPlugFree and bans paid socket-plug',
       () {
     final appRoot = _findAppPackageRoot();
     final file = File(
@@ -94,6 +121,8 @@ void main() {
     expect(text, contains('transferItem'));
     expect(text, contains('equipItem'));
     expect(text, contains('equipItems'));
+    expect(text, contains('insertSocketPlugFree'));
+    expect(text, contains(kAllowedInsertSocketPlugFreePath));
     expect(text, contains('applyArtifactConfig'));
     expect(text, contains('applyFashionSlot'));
     expect(text.contains('dismantleItem'), isFalse);
@@ -101,12 +130,77 @@ void main() {
     expect(text.contains('destroyItem'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/Dismantle'), isFalse);
     expect(text.contains('transferToDelete'), isFalse);
-    expect(text.contains('InsertPlug'), isFalse);
+    // Bare InsertPlug (AWA paid helper name) must not appear; Free method names
+    // use InsertSocketPlugFree and are allowed.
+    expect(
+      RegExp(r'(?<![A-Za-z])InsertPlug(?![A-Za-z])').hasMatch(text),
+      isFalse,
+    );
     expect(text.contains('PullFromPostmaster'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/PullFromPostmaster'), isFalse);
     expect(text.contains('SetLockState'), isFalse);
     expect(text.contains('SetTrackedState'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/SetLockState'), isFalse);
+    expect(kBannedInsertSocketPlugNotFree.hasMatch(text), isFalse);
+    expect(kBannedInsertSocketPlugMethodNotFree.hasMatch(text), isFalse);
+    expect(
+      RegExp(
+        "postJson\\(\\s*['\"]/Destiny2/Actions/Items/InsertSocketPlug/['\"]",
+      ).hasMatch(text),
+      isFalse,
+      reason: 'HttpBungieWriteClient must never POST the paid socket-plug path',
+    );
+  });
+
+  test('paid socket-plug path never appears under packages/*/lib', () {
+    final appRoot = _findAppPackageRoot();
+    final packagesRoot = Directory('${appRoot.path}/..');
+    final violations = <String>[];
+    for (final entity in packagesRoot.listSync(followLinks: false)) {
+      if (entity is! Directory) continue;
+      final libDir = Directory('${entity.path}/lib');
+      if (!libDir.existsSync()) continue;
+      for (final file in libDir.listSync(recursive: true)) {
+        if (file is! File || !file.path.endsWith('.dart')) continue;
+        final text = file.readAsStringSync();
+        if (kBannedInsertSocketPlugNotFree.hasMatch(text) ||
+            kBannedInsertSocketPlugMethodNotFree.hasMatch(text)) {
+          violations.add(file.path.replaceAll('\\', '/'));
+        }
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason: 'paid InsertSocketPlug(?!Free) must not appear in lib/:\n'
+          '${violations.join('\n')}',
+    );
+  });
+
+  test('paid socket-plug path never appears under apps/*/lib', () {
+    final appRoot = _findAppPackageRoot();
+    final appsRoot = Directory('${appRoot.path}/../../apps');
+    expect(appsRoot.existsSync(), isTrue, reason: 'apps/ must exist');
+    final violations = <String>[];
+    for (final entity in appsRoot.listSync(followLinks: false)) {
+      if (entity is! Directory) continue;
+      final libDir = Directory('${entity.path}/lib');
+      if (!libDir.existsSync()) continue;
+      for (final file in libDir.listSync(recursive: true)) {
+        if (file is! File || !file.path.endsWith('.dart')) continue;
+        final text = file.readAsStringSync();
+        if (kBannedInsertSocketPlugNotFree.hasMatch(text) ||
+            kBannedInsertSocketPlugMethodNotFree.hasMatch(text)) {
+          violations.add(file.path.replaceAll('\\', '/'));
+        }
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason: 'paid InsertSocketPlug(?!Free) must not appear in apps/*/lib:\n'
+          '${violations.join('\n')}',
+    );
   });
 }
 

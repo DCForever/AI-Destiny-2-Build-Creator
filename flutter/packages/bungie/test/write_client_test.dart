@@ -119,6 +119,78 @@ void main() {
       expect(results[1].statusText, 'DestinyItemNotFound');
     });
 
+    test('insertSocketPlugFree POSTs Free endpoint body', () async {
+      BungieHttpRequest? seen;
+      final http = BungieHttpClient(
+        apiKey: 'k',
+        transport: (request) async {
+          seen = request;
+          return BungieHttpResponse(statusCode: 200, body: successBody());
+        },
+      );
+      final client = HttpBungieWriteClient(http: http);
+
+      await client.insertSocketPlugFree(
+        ctx,
+        const InsertSocketPlugFreeArgs(
+          itemId: 'i-sub',
+          socketIndex: 3,
+          plugItemHash: 99,
+          characterId: 'char-a',
+        ),
+      );
+
+      expect(
+        seen!.uri.path,
+        contains('/Destiny2/Actions/Items/InsertSocketPlugFree/'),
+      );
+      expect(seen!.uri.path.endsWith('InsertSocketPlugFree/'), isTrue);
+      final body = jsonDecode(seen!.body!) as Map<String, dynamic>;
+      expect(body['itemId'], 'i-sub');
+      expect(body['characterId'], 'char-a');
+      expect(body['membershipType'], 3);
+      final plug = body['plug'] as Map<String, dynamic>;
+      expect(plug['socketIndex'], 3);
+      expect(plug['socketArrayType'], kDestinySocketArrayTypeDefault);
+      expect(plug['plugItemHash'], 99);
+    });
+
+    test('insertSocketPlugFree surfaces Bungie envelope ErrorCode', () async {
+      final http = BungieHttpClient(
+        apiKey: 'k',
+        transport: (_) async => BungieHttpResponse(
+          statusCode: 200,
+          body: jsonEncode({
+            'ErrorCode': 1671,
+            'ErrorStatus': 'DestinyCannotPerformActionAtThisLocation',
+            'Message': 'in activity',
+            'ThrottleSeconds': 0,
+            'Response': 0,
+          }),
+        ),
+      );
+      final client = HttpBungieWriteClient(http: http);
+
+      await expectLater(
+        client.insertSocketPlugFree(
+          ctx,
+          const InsertSocketPlugFreeArgs(
+            itemId: 'i-sub',
+            socketIndex: 0,
+            plugItemHash: 1,
+            characterId: 'char-a',
+          ),
+        ),
+        throwsA(
+          isA<BungiePlatformException>().having(
+            (e) => e.errorCode,
+            'errorCode',
+            1671,
+          ),
+        ),
+      );
+    });
+
     test('applyArtifactConfig throws not fully wired', () async {
       final http = BungieHttpClient(
         apiKey: 'k',

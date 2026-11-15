@@ -1,16 +1,24 @@
-/// DIM-style Apply-to-character: move (sequential) then bulk EquipItems.
+/// DIM-style Apply-to-character: move (sequential) then bulk EquipItems,
+/// then optional subclass equip + InsertSocketPlugFree for abilities /
+/// aspects / fragments / armor mods.
 ///
 /// Pressing Apply plans transfers from vault / other characters onto the
 /// target, runs them immediately with inline per-item progress, then one
 /// EquipItems call (exotics last). Never dismantles. When the target bucket
 /// is full (planner count or Bungie 1642/1637), makes room by transferring one
 /// eligible unequipped non-plan item to the vault (at most 2 attempts per
-/// item), then retries the original move.
+/// item), then retries the original move. Socket phase uses only the Free
+/// plug-insert action (never the paid non-Free variant).
 library;
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 
 import '../presentation/equip_format.dart';
+import 'apply_socket_plan.dart';
+
+export 'apply_socket_plan.dart';
+
+part 'apply_sockets.dart';
 
 /// Per-item apply state shown inline on the build detail card.
 enum ApplyItemState {
@@ -157,6 +165,11 @@ const int kApplyMakeRoomMaxAttempts = 2;
 /// Id prefix for make-room outcome rows (excluded from applied/failed counts).
 const String kApplyMakeRoomRowIdPrefix = 'make-room:';
 
+/// Builds a socket plan from items that actually equipped in this run.
+typedef ApplySocketPlanBuilder = ApplySocketPlan? Function(
+  List<ApplyToCharacterItem> successfullyEquipped,
+);
+
 /// Builds a DIM-style move + equip plan and executes it.
 ///
 /// Apply itself is the confirmation — plans and runs immediately with inline
@@ -167,6 +180,8 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   required String characterId,
   required List<ApplyToCharacterItem> items,
   List<ApplyInventoryItem> inventory = const [],
+  ApplySocketPlan? socketPlan,
+  ApplySocketPlanBuilder? socketPlanBuilder,
   void Function(ApplyToCharacterProgress progress)? onProgress,
   ApplyDelay? delay,
 }) async {
@@ -199,16 +214,26 @@ Future<ApplyToCharacterProgress> applyToCharacter({
     onProgress?.call(snap);
   }
 
+  ApplySocketPlan? resolveSockets(
+    List<ApplyToCharacterItem> equipped,
+  ) {
+    if (socketPlanBuilder != null) return socketPlanBuilder(equipped);
+    return socketPlan;
+  }
+
   if (items.isEmpty) {
-    const empty = ApplyToCharacterProgress(
-      items: [],
-      currentIndex: 0,
-      total: 0,
-      running: false,
-      summary: '0 applied, 0 failed',
-    );
-    onProgress?.call(empty);
-    return empty;
+    final earlySockets = resolveSockets(const []);
+    if (earlySockets == null || !earlySockets.hasWork) {
+      const empty = ApplyToCharacterProgress(
+        items: [],
+        currentIndex: 0,
+        total: 0,
+        running: false,
+        summary: '0 applied, 0 failed',
+      );
+      onProgress?.call(empty);
+      return empty;
+    }
   }
 
   emit(index: 0, running: true);
@@ -241,6 +266,22 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   final sleeper = delay ?? defaultWriteDelay;
   var stopEquips = false;
   var stopReason = kInActivityEquipMessage;
+
+  if (items.isEmpty) {
+    final sockets = resolveSockets(const []);
+    if (sockets != null && sockets.hasWork) {
+      await _runApplySocketPhase(
+        writeClient: writeClient,
+        ctx: ctx,
+        characterId: characterId,
+        plan: sockets,
+        rows: rows,
+        emit: emit,
+        sleeper: sleeper,
+      );
+    }
+    return _finish(rows, onProgress);
+  }
 
   for (final p in plan) {
     final index = p.rowIndex;
@@ -340,6 +381,17 @@ Future<ApplyToCharacterProgress> applyToCharacter({
         p,
   ];
 
+  List<ApplyToCharacterItem> successfullyEquipped() {
+    final byId = <String, ApplyToCharacterItem>{
+      for (final item in items) item.instanceId: item,
+    };
+    return [
+      for (final p in plan)
+        if (rows[p.rowIndex].state == ApplyItemState.done)
+          if (byId[p.instanceId] != null) byId[p.instanceId]!,
+    ];
+  }
+
   if (equipable.isEmpty || stopEquips) {
     if (stopEquips) {
       for (final p in equipable) {
@@ -348,6 +400,19 @@ Future<ApplyToCharacterProgress> applyToCharacter({
           reason: stopReason,
         );
       }
+      return _finish(rows, onProgress);
+    }
+    final sockets = resolveSockets(successfullyEquipped());
+    if (sockets != null && sockets.hasWork) {
+      await _runApplySocketPhase(
+        writeClient: writeClient,
+        ctx: ctx,
+        characterId: characterId,
+        plan: sockets,
+        rows: rows,
+        emit: emit,
+        sleeper: sleeper,
+      );
     }
     return _finish(rows, onProgress);
   }
@@ -359,6 +424,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   });
 
   final itemIds = [for (final p in equipable) p.instanceId];
+  var stopSockets = false;
   try {
     final results = await runWriteWithThrottleBackoff(
       () => writeClient.equipItems(
@@ -396,6 +462,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
       );
       if (isEquipNotPossibleErrorCode(result.equipStatus)) {
         stopReason = reason;
+        stopSockets = true;
         final remaining = equipable.skipWhile((e) => e != p).skip(1);
         for (final later in remaining) {
           if (rows[later.rowIndex].state == ApplyItemState.applying) {
@@ -419,6 +486,24 @@ Future<ApplyToCharacterProgress> applyToCharacter({
           reason: reason,
         );
       }
+    }
+    if (mapped.stopFurtherEquips) {
+      return _finish(rows, onProgress);
+    }
+  }
+
+  if (!stopSockets) {
+    final sockets = resolveSockets(successfullyEquipped());
+    if (sockets != null && sockets.hasWork) {
+      await _runApplySocketPhase(
+        writeClient: writeClient,
+        ctx: ctx,
+        characterId: characterId,
+        plan: sockets,
+        rows: rows,
+        emit: emit,
+        sleeper: sleeper,
+      );
     }
   }
 
