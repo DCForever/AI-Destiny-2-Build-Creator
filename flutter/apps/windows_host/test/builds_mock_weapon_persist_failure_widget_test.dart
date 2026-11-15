@@ -205,6 +205,8 @@ void main() {
         existingPlan: await fiStore.loadForBuild(b.id),
       );
       expect(weaponApplied, isNull);
+      expect(c.error, isNotNull);
+      expect(c.error, isNotEmpty);
       expect(c.canUndo, isTrue);
 
       // Restore writability so Undo can rewrite store files.

@@ -130,17 +130,12 @@ List<BuildsMockWeaponRow> buildsMockWeaponRows({
         final slot = byWire[entry.$1];
         final name = slot?.pieceName.trim() ?? '';
         final empty = name.isEmpty;
-        final isSub = slot?.isSubstitute == true;
-        var note = isSub ? kWeaponOptimizeSubstituteLabel : '';
-        if (!isSub && plan != null) {
-          for (final row in plan.rows) {
-            if (row.slotWire == entry.$1 &&
-                row.state.trim().toLowerCase() == 'proposed') {
-              note = kWeaponOptimizeSubstituteLabel;
-              break;
-            }
-          }
-        }
+        // Substitute tag is session-only ([MockSlotAssignment.isSubstitute]).
+        // Do not infer from plan `proposed` — that state is shared with other
+        // Fill In paths and is not persisted as a substitute flag.
+        final note = slot?.isSubstitute == true
+            ? kWeaponOptimizeSubstituteLabel
+            : '';
         return BuildsMockWeaponRow(
           slotLabel: entry.$2,
           itemName: empty ? 'Not in DIM link' : name,

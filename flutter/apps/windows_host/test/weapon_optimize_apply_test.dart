@@ -130,27 +130,6 @@ void main() {
   );
 
   test(
-    'weaponsPresentInBoth intersects by instance id; empty right → empty',
-    () {
-      final csv = weapons();
-      final live = [
-        csv[0],
-        csv[1],
-        // heavy missing from right-hand list
-      ];
-      final filtered = weaponsPresentInBoth(left: csv, right: live);
-      expect(filtered.map((e) => e.instanceId), ['w-k1', 'w-e1']);
-      expect(filtered.any((e) => e.instanceId == 'w-p1'), isFalse);
-
-      // Empty / missing right-hand list must never passthrough as "verified".
-      expect(
-        weaponsPresentInBoth(left: csv, right: const []),
-        isEmpty,
-      );
-    },
-  );
-
-  test(
     'exotics pinned only in saved plan count toward one-exotic cap',
     () {
       final build = baseBuild();
@@ -263,6 +242,27 @@ void main() {
       if (row.itemName == 'Not in DIM link') continue;
       expect(row.note, kWeaponOptimizeSubstituteLabel);
       expect(row.status, BuildsMockSlotStatus.proposed);
+    }
+
+    // After reload, slots lose isSubstitute — do not invent the tag from
+    // plan `proposed` alone (shared with non-optimize Fill In paths).
+    final reloadedSlots = [
+      for (final s in merged.build.slots)
+        MockSlotAssignment(
+          slot: s.slot,
+          setId: s.setId,
+          pieceName: s.pieceName,
+          isExoticSlot: s.isExoticSlot,
+          filledIn: s.filledIn,
+        ),
+    ];
+    final reloaded = buildsMockWeaponRows(
+      build: merged.build.copyWith(slots: reloadedSlots),
+      plan: merged.plan,
+    );
+    for (final row in reloaded) {
+      if (row.itemName == 'Not in DIM link') continue;
+      expect(row.note, isEmpty);
     }
   });
 }

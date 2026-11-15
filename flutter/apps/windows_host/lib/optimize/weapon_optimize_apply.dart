@@ -63,28 +63,6 @@ Set<String> pinnedWeaponInstanceIds({
   return ids;
 }
 
-/// Pure instance-id intersection of two weapon lists.
-///
-/// Not a live-profile stale check — Optimize page call sites only have the
-/// DIM weapons CSV cache today. Empty [right] yields an empty result (never
-/// "verified" / passthrough of [left]). Live-profile verification of picks
-/// is deferred to Apply to character.
-List<FillInInventoryItem> weaponsPresentInBoth({
-  required Iterable<FillInInventoryItem> left,
-  required Iterable<FillInInventoryItem> right,
-}) {
-  final live = <String>{
-    for (final item in right)
-      if (_isWeaponCombatSlot(item.slot)) item.instanceId,
-  };
-  if (live.isEmpty) return const [];
-  return [
-    for (final item in left)
-      if (_isWeaponCombatSlot(item.slot) && live.contains(item.instanceId))
-        item,
-  ];
-}
-
 /// Build keywords for perk/synergy soft scoring from the mock build.
 List<String> weaponOptimizeKeywordsForBuild(MockBuild build) {
   final out = <String>[];

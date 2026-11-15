@@ -368,10 +368,7 @@ class BuildsOptimizeController extends ChangeNotifier {
   /// Rank weapons after armor confirm/apply. Opens the weapons results panel.
   ///
   /// When Weapons CSV is missing, returns a single substitute combination
-  /// (never labeled optimized) from [cachedInventory] when provided. Does
-  /// **not** claim live-profile stale-pick verification — page callers only
-  /// have the same DIM weapons CSV cache today; verifying picks against the
-  /// live profile is deferred to Apply to character.
+  /// (never labeled optimized) from [cachedInventory] when provided.
   Future<WeaponOptimizeResponse?> prepareWeaponResults({
     required MockBuild build,
     FillInSavedBuildPlan? existingPlan,
