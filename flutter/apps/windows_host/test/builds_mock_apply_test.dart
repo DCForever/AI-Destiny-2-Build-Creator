@@ -31,8 +31,50 @@ void main() {
     displayName: 'Guardian',
   );
 
-  test('F4: host keeps armorModDataKnown false (armor path deferred)', () {
-    expect(kBuildsMockArmorModDataKnown, isFalse);
+  test('F4: armorModDataKnown stays false when socket/energy data missing', () {
+    expect(isArmorModDataKnown(null), isFalse);
+    expect(
+      isArmorModDataKnown(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+        ),
+      ),
+      isFalse,
+    );
+    expect(
+      isArmorModDataKnown(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+          socketCapture: [
+            RawSocketCapture(socketIndex: 0, equippedPlugHash: 10),
+          ],
+          // energyCapacity null → still unknown
+        ),
+      ),
+      isFalse,
+    );
+    expect(
+      isArmorModDataKnown(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+          socketCapture: [
+            RawSocketCapture(socketIndex: 0, equippedPlugHash: 10),
+          ],
+          energyCapacity: 10,
+          energyUsed: 3,
+        ),
+      ),
+      isTrue,
+    );
   });
 
   test('label includes class, light, and last 4 of character id', () {

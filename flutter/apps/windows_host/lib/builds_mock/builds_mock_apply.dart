@@ -283,6 +283,7 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
           liveItems: gated.liveItems,
           successfullyEquipped: equipped,
           manifest: resolvedManifest,
+          unlockedPlugSetPlugHashes: gated.unlockedPlugSetPlugHashes,
         );
       },
       onProgress: (progress) {
@@ -312,6 +313,7 @@ class _GatedApplyItems {
     required this.items,
     required this.inventory,
     this.liveItems = const [],
+    this.unlockedPlugSetPlugHashes = const {},
   });
 
   final List<ApplyToCharacterItem> items;
@@ -319,6 +321,9 @@ class _GatedApplyItems {
 
   /// Raw profile rows (plugHashes) for socket planning.
   final List<RawInventoryItem> liveItems;
+
+  /// Profile (104) + character (105) plug-set hashes (read-only ownership).
+  final Set<int> unlockedPlugSetPlugHashes;
 }
 
 /// Reads live inventory once. Returns present items + snapshot, or `null` when
@@ -350,7 +355,12 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   }
 
   if (!isMounted()) {
-    return const _GatedApplyItems(items: [], inventory: [], liveItems: []);
+    return const _GatedApplyItems(
+      items: [],
+      inventory: [],
+      liveItems: [],
+      unlockedPlugSetPlugHashes: {},
+    );
   }
 
   final inventoryIncomplete = parsed == null ||
@@ -447,23 +457,29 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
     items: present,
     inventory: snapshot,
     liveItems: liveItems,
+    unlockedPlugSetPlugHashes: parsed.unlockedPlugSetPlugHashes,
   );
 }
 
-/// Host never claims armor mod ownership/energy/allowed plugs are known (F4).
+/// True when live socket + energy data is present for armor mod planning.
 ///
-/// TODO(skeptic-yellow): enabling armor mods requires per-piece usedSockets
-/// plus running energy (two head mods on one piece), loaded under existing
-/// read scopes only.
-const bool kBuildsMockArmorModDataKnown = false;
+/// F4: stays false when capture or energy is missing so the planner emits the
+/// fixed skip row instead of guessing.
+bool isArmorModDataKnown(RawInventoryItem? live) {
+  if (live == null) return false;
+  final capture = live.socketCapture;
+  if (capture == null || capture.isEmpty) return false;
+  // energyCapacity null ⇒ instance energy block absent / not parsed.
+  if (live.energyCapacity == null) return false;
+  return true;
+}
 
 /// Builds an [ApplySocketPlan] from items that actually equipped this run.
 ///
-/// Armor mod ownership / energy / allowed-plug sets are not available on host
-/// inventory rows with current read scopes, so every instance keeps
-/// [ApplyInstanceSocketState.armorModDataKnown] false and the planner emits a
-/// single fixed skip row instead of guessing. Subclass plug ownership is
-/// likewise unknown unless reusable/unlocked plugs are present on capture.
+/// Armor mods enable only when [isArmorModDataKnown] is true for every equipped
+/// armor piece (socket capture 305/310 + instance energy). Subclass ownership
+/// uses reusable plugs (310) plus optional profile/character plug sets
+/// (104/105); unknown ownership still SKIPs.
 ApplySocketPlan? _socketPlanForApplySync({
   required CachedDimLoadout? loadout,
   required String characterId,
@@ -471,6 +487,7 @@ ApplySocketPlan? _socketPlanForApplySync({
   required List<RawInventoryItem> liveItems,
   required List<ApplyToCharacterItem> successfullyEquipped,
   required ApplySocketManifestLookup? manifest,
+  Set<int> unlockedPlugSetPlugHashes = const {},
 }) {
   if (loadout == null) return null;
   final hasPlugs =
@@ -507,7 +524,18 @@ ApplySocketPlan? _socketPlanForApplySync({
       () {
         final live = byId[row.instanceId];
         final keyed = _equippedPlugsKeyedBySocket(live);
-        final owned = _ownedPlugsFromCapture(live);
+        final fromCapture = _ownedPlugsFromCapture(live);
+        final isSubclass = isSubclassBucketHash(row.bucketHash);
+        // Subclass ownership: 310 reusable + 104/105 plug sets. Armor: 310 only.
+        final owned = <int>{
+          if (fromCapture != null) ...fromCapture,
+          if (isSubclass) ...unlockedPlugSetPlugHashes,
+        };
+        final ownershipKnown = isSubclass
+            ? owned.isNotEmpty
+            : (fromCapture != null && fromCapture.isNotEmpty);
+        final allowed = _allowedPlugsBySocket(live);
+        final emptyPlugs = _emptyPlugHashesBySocket(live, resolved);
         return ApplyInstanceSocketState(
           instanceId: row.instanceId,
           itemHash: row.itemHash,
@@ -515,12 +543,13 @@ ApplySocketPlan? _socketPlanForApplySync({
           characterId: row.characterId,
           location: row.location,
           equippedPlugBySocket: keyed ?? const {},
-          ownedPlugHashes: owned ?? const {},
-          energyCapacity: 0,
-          energyUsed: 0,
-          allowedPlugHashesBySocket: const {},
-          armorModDataKnown: kBuildsMockArmorModDataKnown,
-          subclassPlugOwnershipKnown: owned != null && owned.isNotEmpty,
+          ownedPlugHashes: owned,
+          energyCapacity: live?.energyCapacity ?? 0,
+          energyUsed: live?.energyUsed ?? 0,
+          emptyPlugHashBySocket: emptyPlugs,
+          allowedPlugHashesBySocket: allowed,
+          armorModDataKnown: isArmorModDataKnown(live),
+          subclassPlugOwnershipKnown: ownershipKnown,
           unlockedSocketIndexes: keyed?.keys.toSet(),
           socketDataKnown: keyed != null,
         );
@@ -530,15 +559,28 @@ ApplySocketPlan? _socketPlanForApplySync({
   final armorPins = <ApplyArmorPin>[
     for (final item in successfullyEquipped)
       if (_isArmorSlotWire(item.slot))
-        ApplyArmorPin(
-          id: item.id,
-          label: item.label,
-          itemHash: item.itemHash,
-          instanceId: item.instanceId,
-          // TODO(skeptic-yellow): map exotic_armor wire slot to a concrete
-          // armor piece slot when enabling armor mods.
-          slot: item.slot,
-        ),
+        () {
+          final live = byId[item.instanceId];
+          final invBucket = () {
+            for (final row in inventory) {
+              if (row.instanceId == item.instanceId) return row.bucketHash;
+            }
+            return null;
+          }();
+          final resolvedSlot = resolveArmorSlot(
+            wireSlot: item.slot,
+            bucketHash: live?.bucketHash ?? invBucket,
+          );
+          return ApplyArmorPin(
+            id: item.id,
+            label: item.label,
+            itemHash: item.itemHash,
+            instanceId: item.instanceId,
+            slot: resolvedSlot == null
+                ? item.slot
+                : armorSlotToWire(resolvedSlot),
+          );
+        }(),
   ];
 
   return planApplySockets(
@@ -595,6 +637,10 @@ Map<int, int>? _equippedPlugsKeyedBySocket(RawInventoryItem? live) {
 }
 
 /// Unlocked/reusable plugs from socketCapture when present (existing read data).
+///
+/// Component 310 reusable plugs are filtered at parse to `canInsert != false`
+/// and `enabled != false` — Bungie treats those as insertable/usable; DIM uses
+/// the same flags when building plug options.
 Set<int>? _ownedPlugsFromCapture(RawInventoryItem? live) {
   final capture = live?.socketCapture;
   if (capture == null || capture.isEmpty) return null;
@@ -604,6 +650,50 @@ Set<int>? _ownedPlugsFromCapture(RawInventoryItem? live) {
     owned.addAll(sock.reusablePlugHashes.where((h) => h != 0));
   }
   return owned.isEmpty ? null : owned;
+}
+
+/// Per-socket reusable whitelist from capture (allowed inserts).
+Map<int, Set<int>> _allowedPlugsBySocket(RawInventoryItem? live) {
+  final capture = live?.socketCapture;
+  if (capture == null || capture.isEmpty) return const {};
+  final out = <int, Set<int>>{};
+  for (final sock in capture) {
+    final hashes = <int>{
+      if (sock.equippedPlugHash != 0) sock.equippedPlugHash,
+      ...sock.reusablePlugHashes.where((h) => h != 0),
+    };
+    if (hashes.isNotEmpty) out[sock.socketIndex] = hashes;
+  }
+  return out;
+}
+
+/// Empty-plug hashes for energy clears from reusable/equipped zero-cost plugs.
+///
+/// Never invents a hash — if no zero-cost plug is known for a socket, clears
+/// for that socket are not planned (insert still may fit without a clear).
+Map<int, int> _emptyPlugHashesBySocket(
+  RawInventoryItem? live,
+  ApplySocketManifestLookup manifest,
+) {
+  final capture = live?.socketCapture;
+  if (capture == null || capture.isEmpty) return const {};
+  final out = <int, int>{};
+  for (final sock in capture) {
+    int? empty;
+    final candidates = <int>[
+      ...sock.reusablePlugHashes.where((h) => h != 0),
+      if (sock.equippedPlugHash != 0) sock.equippedPlugHash,
+    ];
+    for (final hash in candidates) {
+      final def = manifest.plugDef(hash);
+      if (def != null && def.energyCost <= 0) {
+        empty = hash;
+        break;
+      }
+    }
+    if (empty != null) out[sock.socketIndex] = empty;
+  }
+  return out;
 }
 
 ApplyManifestItemDef conventionalArmorItemDef({
