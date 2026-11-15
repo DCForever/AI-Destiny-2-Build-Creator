@@ -176,6 +176,8 @@ void main() {
             ],
           },
         },
+        'characterInventories': {'data': <String, Object?>{}},
+        'characterEquipment': {'data': <String, Object?>{}},
         'itemComponents': {
           'instances': {
             'data': {
@@ -193,6 +195,18 @@ void main() {
       expect(result.diagnostics.dropped.unknownBucket, 1);
       expect(result.diagnostics.dropped.missingInstanceId, 1);
       expect(result.diagnostics.parsed.total, 1);
+      expect(result.diagnostics.inventorySectionsComplete, isTrue);
+    });
+
+    test('privacy-blocked inventory section marks sections incomplete', () {
+      final result = parseFullInventoryResponse({
+        'profileInventory': {'privacy': 2},
+        'characterInventories': {'data': <String, Object?>{}},
+        'characterEquipment': {'data': <String, Object?>{}},
+      }, membership);
+
+      expect(result.diagnostics.inventorySectionsComplete, isFalse);
+      expect(result.items, isEmpty);
     });
 
     test('parses armor named stats', () {

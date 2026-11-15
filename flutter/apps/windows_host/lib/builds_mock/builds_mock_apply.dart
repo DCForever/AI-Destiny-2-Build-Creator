@@ -270,18 +270,24 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
   required bool Function() isMounted,
 }) async {
   final profile = ports.resolvedProfile;
-  List<RawInventoryItem>? inventory;
+  FullInventoryParseResult? parsed;
   if (profile != null) {
     try {
-      inventory = await profile.getFullInventory(accessToken, membership);
+      // Diagnostics distinguish partial profiles (missing component `data`)
+      // from a complete read where some instances are simply absent.
+      parsed =
+          await profile.getFullInventoryWithDiagnostics(accessToken, membership);
     } catch (_) {
-      inventory = null;
+      parsed = null;
     }
   }
 
   if (!isMounted()) return const [];
 
-  if (inventory == null || inventory.isEmpty) {
+  final inventoryIncomplete = parsed == null ||
+      !parsed.diagnostics.inventorySectionsComplete ||
+      parsed.items.isEmpty;
+  if (inventoryIncomplete) {
     for (var i = 0; i < rows.length; i++) {
       rows[i] = rows[i].copyWith(
         state: ApplyItemState.failed,
@@ -292,6 +298,7 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
     return null;
   }
 
+  final inventory = parsed.items;
   final liveIds = <String>{
     for (final item in inventory)
       if (item.instanceId.isNotEmpty) item.instanceId,

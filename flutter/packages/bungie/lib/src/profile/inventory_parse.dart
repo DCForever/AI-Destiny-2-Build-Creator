@@ -43,11 +43,15 @@ FullInventoryParseResult parseFullInventoryResponse(
   final instancesMap = _extractInstancesMap(res['itemComponents']);
   final reusablePlugsMap = _extractReusablePlugsMap(res['itemComponents']);
   final items = <RawInventoryItem>[];
+  final sectionsComplete = _sectionHasData(res['profileInventory']) &&
+      _sectionHasData(res['characterInventories']) &&
+      _sectionHasData(res['characterEquipment']);
   final diagnostics = InventoryParseDiagnostics(
     membership: membership,
     raw: InventoryRawCounts(),
     parsed: InventoryParsedCounts(),
     dropped: InventoryDroppedCounts(),
+    inventorySectionsComplete: sectionsComplete,
   );
 
   final vaultItems = _extractItemList(res['profileInventory']);
@@ -312,6 +316,13 @@ _ParseAttempt _parseItemAttempt(
     ),
     dropReason: null,
   );
+}
+
+/// True when a GetProfile component section has a `data` object (even empty).
+/// Privacy-blocked / omitted sections lack `data` and count as incomplete.
+bool _sectionHasData(Object? section) {
+  if (section is! Map) return false;
+  return _asStringKeyedMap(section)['data'] is Map;
 }
 
 List<Object?> _extractItemList(Object? section) {

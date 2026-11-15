@@ -21,6 +21,23 @@ Map<String, dynamic> rawTokenResponse({
       'membership_id': membershipId,
     };
 
+class _CorruptThrowingStore implements TokenStore {
+  bool cleared = false;
+
+  @override
+  Future<BungieTokens?> read() async {
+    throw const TokenStoreCorruptException();
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {}
+
+  @override
+  Future<void> clear() async {
+    cleared = true;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -312,6 +329,32 @@ void main() {
       expect(session.isSignedIn, isTrue);
       expect(session.tokens!.accessToken, 'acc-new');
       expect((await store.read())!.accessToken, 'acc-new');
+    });
+
+    test('corrupt secure store restores as signed out with safe message',
+        () async {
+      final store = _CorruptThrowingStore();
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: store,
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+      );
+
+      await session.restore();
+      expect(session.isSignedIn, isFalse);
+      expect(session.status, OAuthSessionStatus.signedOut);
+      expect(
+        session.errorMessage,
+        'Sign-in data could not be read - please sign in again',
+      );
+      expect(session.errorMessage, isNot(contains('SECRET')));
+      expect(store.cleared, isTrue);
     });
 
     test('missing client id is not configured', () async {

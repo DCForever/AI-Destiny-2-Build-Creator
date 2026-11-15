@@ -25,6 +25,13 @@ class BungieTokens {
 
   final String bungieMembershipId;
 
+  /// Never include access/refresh token material in logs or UI.
+  @override
+  String toString() =>
+      'BungieTokens(membershipId: $bungieMembershipId, '
+      'accessToken: [redacted], refreshToken: [redacted], '
+      'expiresAt: $expiresAt, refreshExpiresAt: $refreshExpiresAt)';
+
   BungieTokens copyWith({
     String? accessToken,
     String? refreshToken,

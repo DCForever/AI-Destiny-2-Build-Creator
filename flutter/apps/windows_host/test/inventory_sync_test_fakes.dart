@@ -13,6 +13,7 @@ class FakeProfileClient implements BungieProfileClient {
     Object? characterLoadoutsProfile,
     this.throwOnInventory = false,
     this.inventoryDelay,
+    this.inventorySectionsComplete = true,
   })  : memberships = memberships ??
             const [
               DestinyMembership(
@@ -31,6 +32,8 @@ class FakeProfileClient implements BungieProfileClient {
   Object? characterLoadoutsProfile;
   final bool throwOnInventory;
   final Duration? inventoryDelay;
+  /// When false, simulates a partial GetProfile (missing component `data`).
+  final bool inventorySectionsComplete;
   int inventoryCalls = 0;
   int membershipCalls = 0;
   int characterCalls = 0;
@@ -151,6 +154,7 @@ class FakeProfileClient implements BungieProfileClient {
         equipmentTotal: items.length,
       ),
       dropped: InventoryDroppedCounts(),
+      inventorySectionsComplete: inventorySectionsComplete,
     );
     return FullInventoryParseResult(items: items, diagnostics: diagnostics);
   }

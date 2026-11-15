@@ -124,8 +124,8 @@ class HostBootstrap {
         ? kDefaultWindowsRedirectUri
         : redirectUri;
 
-    // Prefer OS secure storage + application-support file mirror so cold starts
-    // do not force re-auth when Credential Locker misses a key.
+    // Credential Locker only (fixed key). Legacy plaintext sidecar is
+    // migrate-once into secure storage, then deleted — never rewritten.
     final store = tokenStore ??
         DualTokenStore(
           primary: SecureTokenStore(),
