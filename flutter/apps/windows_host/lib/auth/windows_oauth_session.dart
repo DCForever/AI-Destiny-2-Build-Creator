@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,34 @@ enum OAuthSessionStatus {
   signingIn,
   signedIn,
   error,
+}
+
+/// Known Public+PKCE sign-in failure categories (safe for UI mapping).
+enum OAuthSignInFailureKind {
+  /// Bungie `access_denied` / user cancelled the authorize page.
+  cancelled,
+
+  /// CSRF state mismatch between authorize and callback.
+  stateMismatch,
+
+  /// Timed out waiting for the loopback redirect.
+  callbackTimeout,
+
+  /// Token endpoint HTTP / exchange failure (no raw body in UI).
+  tokenExchangeFailed,
+
+  /// Local network unreachable / socket failures.
+  networkUnreachable,
+}
+
+/// Typed sign-in failure — [kind] only; never carries secret-bearing text.
+class OAuthSignInFailure implements Exception {
+  const OAuthSignInFailure(this.kind);
+
+  final OAuthSignInFailureKind kind;
+
+  @override
+  String toString() => 'OAuthSignInFailure($kind)';
 }
 
 /// Sign-in / sign-out orchestration for Flutter Windows (DART-023).
@@ -30,12 +59,14 @@ class WindowsOAuthSession extends ChangeNotifier {
     LoopbackCallbackServer? loopbackServer,
     Future<LoopbackCallbackResult> Function()? waitForCallbackOverride,
     Duration loopbackTimeout = const Duration(minutes: 5),
+    void Function(String message)? log,
   })  : _tokenStore = tokenStore,
         _oauthClient = oauthClient,
         _browser = browserLauncher ?? const UrlLauncherBrowser(),
         _loopback = loopbackServer ?? LoopbackCallbackServer(),
         _waitForCallbackOverride = waitForCallbackOverride,
-        _loopbackTimeout = loopbackTimeout;
+        _loopbackTimeout = loopbackTimeout,
+        _log = log ?? _defaultLog;
 
   final String clientId;
   final String redirectUri;
@@ -46,6 +77,12 @@ class WindowsOAuthSession extends ChangeNotifier {
   final LoopbackCallbackServer _loopback;
   final Future<LoopbackCallbackResult> Function()? _waitForCallbackOverride;
   final Duration _loopbackTimeout;
+  final void Function(String message) _log;
+
+  static void _defaultLog(String message) {
+    // ignore: avoid_print
+    print(message);
+  }
 
   OAuthSessionStatus _status = OAuthSessionStatus.signedOut;
   BungieTokens? _tokens;
@@ -75,13 +112,11 @@ class WindowsOAuthSession extends ChangeNotifier {
         _tokens = null;
         _status = OAuthSessionStatus.signedOut;
         _errorMessage = null;
-        // ignore: avoid_print
-        print('OAuth: restore — no stored tokens');
+        _log('OAuth: restore — no stored tokens');
         return;
       }
 
-      // ignore: avoid_print
-      print(
+      _log(
         'OAuth: restore — loaded membership=${existing.bungieMembershipId} '
         'accessLen=${existing.accessToken.length} '
         'refreshLen=${existing.refreshToken.length} '
@@ -93,16 +128,14 @@ class WindowsOAuthSession extends ChangeNotifier {
         _tokens = existing;
         _status = OAuthSessionStatus.signedIn;
         _errorMessage = null;
-        // ignore: avoid_print
-        print('OAuth: restore — signed in (access still valid)');
+        _log('OAuth: restore — signed in (access still valid)');
         return;
       }
 
       // Access expired (or inside safety margin).
       if (existing.refreshToken.isEmpty) {
         // Access-only session cannot be extended.
-        // ignore: avoid_print
-        print(
+        _log(
           'OAuth: restore — access expired and no refresh_token; clearing',
         );
         try {
@@ -116,8 +149,7 @@ class WindowsOAuthSession extends ChangeNotifier {
       }
 
       if (isSessionExpired(existing)) {
-        // ignore: avoid_print
-        print('OAuth: restore — refresh token expired; clearing');
+        _log('OAuth: restore — refresh token expired; clearing');
         try {
           await _tokenStore.clearSecureOnly();
         } catch (_) {}
@@ -127,8 +159,7 @@ class WindowsOAuthSession extends ChangeNotifier {
         return;
       }
 
-      // ignore: avoid_print
-      print('OAuth: restore — refreshing access token…');
+      _log('OAuth: restore — refreshing access token…');
       try {
         final refreshed = await _oauthClient.refreshTokens(existing).timeout(
               const Duration(seconds: 45),
@@ -140,8 +171,7 @@ class WindowsOAuthSession extends ChangeNotifier {
         _tokens = refreshed;
         _status = OAuthSessionStatus.signedIn;
         _errorMessage = null;
-        // ignore: avoid_print
-        print(
+        _log(
           'OAuth: restore — refresh OK membership=${refreshed.bungieMembershipId} '
           'refreshLen=${refreshed.refreshToken.length}',
         );
@@ -152,8 +182,7 @@ class WindowsOAuthSession extends ChangeNotifier {
             msg.contains('invalid_token') ||
             (e.statusCode != null &&
                 (e.statusCode == 400 || e.statusCode == 401));
-        // ignore: avoid_print
-        print(
+        _log(
           'OAuth: restore — refresh failed definitive=$definitive '
           'type=${e.runtimeType}',
         );
@@ -176,8 +205,7 @@ class WindowsOAuthSession extends ChangeNotifier {
     } on TokenStoreCorruptException catch (e) {
       // Fail closed: treat as signed out; clear Locker only so a legacy
       // sidecar remains available for a later verified migration.
-      // ignore: avoid_print
-      print('OAuth: restore — corrupt secure store');
+      _log('OAuth: restore — corrupt secure store');
       try {
         await _tokenStore.clearSecureOnly();
       } catch (_) {}
@@ -186,8 +214,7 @@ class WindowsOAuthSession extends ChangeNotifier {
       _errorMessage = e.message;
     } catch (e, _) {
       // Type only — exception message/stack must never carry token material.
-      // ignore: avoid_print
-      print('OAuth: restore failed (keeping store): ${e.runtimeType}');
+      _log('OAuth: restore failed (keeping store): ${e.runtimeType}');
       // Never wipe storage on unexpected I/O errors — that forces re-auth.
       _tokens = null;
       _status = OAuthSessionStatus.error;
@@ -218,9 +245,12 @@ class WindowsOAuthSession extends ChangeNotifier {
     notifyListeners();
 
     OAuthPendingAuth? pending;
+    var loopbackStarted = false;
     try {
-      // ignore: avoid_print
-      print('OAuth: starting sign-in redirectUri=$redirectUri clientIdLen=${clientId.length}');
+      _log(
+        'OAuth: starting sign-in redirectUri=$redirectUri '
+        'clientIdLen=${clientId.length}',
+      );
       final pkce = generatePkcePair();
       final state = generateOAuthState();
       pending = OAuthPendingAuth(
@@ -235,8 +265,7 @@ class WindowsOAuthSession extends ChangeNotifier {
         codeChallenge: pkce.codeChallenge,
       );
       final authUri = Uri.parse(authorizeUrl);
-      // ignore: avoid_print
-      print(
+      _log(
         'OAuth: authorize URL built (len=${authorizeUrl.length}) '
         'params=${authUri.queryParameters.keys.toList()} '
         'redirect_uri=${authUri.queryParameters['redirect_uri']} '
@@ -252,113 +281,147 @@ class WindowsOAuthSession extends ChangeNotifier {
           callbackPath: loopback.path,
           useTls: loopback.useTls,
         );
-        // ignore: avoid_print
-        print(
+        loopbackStarted = true;
+        _log(
           'OAuth: loopback listening on '
           '${loopback.useTls ? 'https' : 'http'}://'
           '${loopback.host}:${loopback.port}${loopback.path}',
         );
       }
 
-      try {
-        await _browser.open(authorizeUrl);
-        // ignore: avoid_print
-        print('OAuth: browser opened; waiting for callback…');
+      await _browser.open(authorizeUrl);
+      _log('OAuth: browser opened; waiting for callback…');
 
+      final LoopbackCallbackResult callback;
+      try {
         final waitOverride = _waitForCallbackOverride;
-        final LoopbackCallbackResult callback = waitOverride != null
+        callback = waitOverride != null
             ? await waitOverride()
             : await _loopback.waitForCallback(timeout: _loopbackTimeout);
+      } on TimeoutException {
+        throw const OAuthSignInFailure(OAuthSignInFailureKind.callbackTimeout);
+      } catch (e) {
+        if (_isNetworkFailure(e)) {
+          throw const OAuthSignInFailure(
+            OAuthSignInFailureKind.networkUnreachable,
+          );
+        }
+        rethrow;
+      } finally {
+        // Stop loopback before token exchange / Locker write so a stop()
+        // failure cannot reach the outer catch and clear a good write.
+        if (loopbackStarted) {
+          try {
+            await _loopback.stop();
+          } catch (_) {}
+          loopbackStarted = false;
+        }
+      }
 
-        // ignore: avoid_print
-        print(
-          'OAuth: callback received hasCode=${callback.hasCode} '
-          'hasError=${callback.hasError} error=${callback.error}',
+      // Path + flags only — never log raw OAuth error / description values.
+      _log(
+        'OAuth: callback received hasCode=${callback.hasCode} '
+        'hasError=${callback.hasError}',
+      );
+
+      if (callback.hasError) {
+        final err = (callback.error ?? '').toLowerCase();
+        if (err == 'access_denied') {
+          throw const OAuthSignInFailure(OAuthSignInFailureKind.cancelled);
+        }
+        // Other provider errors: fixed category, no raw error string.
+        throw const OAuthSignInFailure(
+          OAuthSignInFailureKind.tokenExchangeFailed,
         );
+      }
+      if (!callback.hasCode) {
+        throw const OAuthSignInFailure(
+          OAuthSignInFailureKind.tokenExchangeFailed,
+        );
+      }
+      final returnedState = callback.state ?? '';
+      if (!validateOAuthState(
+        expected: pending.state,
+        actual: returnedState,
+      )) {
+        throw const OAuthSignInFailure(OAuthSignInFailureKind.stateMismatch);
+      }
 
-        if (callback.hasError) {
-          final desc = callback.errorDescription;
-          throw BungieOAuthException(
-            (desc != null && desc.isNotEmpty)
-                ? desc
-                : 'Authorization failed (${callback.error})',
-          );
-        }
-        if (!callback.hasCode) {
-          throw const BungieOAuthException(
-            'Authorization callback missing code',
-          );
-        }
-        final returnedState = callback.state ?? '';
-        if (!validateOAuthState(
-          expected: pending.state,
-          actual: returnedState,
-        )) {
-          throw const BungieOAuthException(
-            'OAuth state mismatch (CSRF validation failed)',
-          );
-        }
-
-        // ignore: avoid_print
-        print('OAuth: exchanging code for tokens…');
-        final tokens = await _oauthClient
+      _log('OAuth: exchanging code for tokens…');
+      final BungieTokens tokens;
+      try {
+        tokens = await _oauthClient
             .exchangeCode(
               code: callback.code!,
               codeVerifier: pending.codeVerifier,
             )
             .timeout(
               const Duration(seconds: 45),
-              onTimeout: () => throw const BungieOAuthException(
-                'Token exchange timed out after 45s (network or Bungie token endpoint)',
+              onTimeout: () => throw const OAuthSignInFailure(
+                OAuthSignInFailureKind.tokenExchangeFailed,
               ),
             );
-        // ignore: avoid_print
-        print(
-          'OAuth: token exchange OK accessLen=${tokens.accessToken.length} '
-          'refreshLen=${tokens.refreshToken.length} '
-          'membership=${tokens.bungieMembershipId}; writing secure storage…',
+      } on OAuthSignInFailure {
+        rethrow;
+      } on BungieOAuthException {
+        throw const OAuthSignInFailure(
+          OAuthSignInFailureKind.tokenExchangeFailed,
         );
-        if (tokens.refreshToken.isEmpty) {
-          // Bungie portal docs: Public clients are not issued refresh_token.
-          // Confidential (Next) gets ~90d refresh. Live API re-auth ~hourly;
-          // local inventory browse must not depend on this (see OwnedCatalogBridge).
-          // ignore: avoid_print
-          print(
-            'OAuth: empty refresh_token (Bungie Public clients do not receive one) — '
-            'live access lasts ~1h; re-sign-in only required for Sync/API, not local Owned',
+      } catch (e) {
+        if (_isNetworkFailure(e)) {
+          throw const OAuthSignInFailure(
+            OAuthSignInFailureKind.networkUnreachable,
           );
         }
-        await _tokenStore.write(tokens).timeout(
-              const Duration(seconds: 15),
-              onTimeout: () => throw const BungieOAuthException(
-                'Secure token storage write timed out',
-              ),
-            );
-        final verified = await _tokenStore.read();
-        if (verified == null ||
-            verified.accessToken != tokens.accessToken ||
-            verified.bungieMembershipId != tokens.bungieMembershipId) {
-          throw const BungieOAuthException(
-            'Secure token storage write did not persist (read-back failed)',
-          );
-        }
-        _tokens = tokens;
-        _status = OAuthSessionStatus.signedIn;
-        _errorMessage = null;
-        // ignore: avoid_print
-        print(
-          'OAuth: signed in membership=${tokens.bungieMembershipId} '
-          'stored refreshLen=${verified.refreshToken.length}',
+        throw const OAuthSignInFailure(
+          OAuthSignInFailureKind.tokenExchangeFailed,
         );
-      } finally {
-        if (_waitForCallbackOverride == null) {
-          await _loopback.stop();
-        }
       }
+
+      _log(
+        'OAuth: token exchange OK accessLen=${tokens.accessToken.length} '
+        'refreshLen=${tokens.refreshToken.length} '
+        'membership=${tokens.bungieMembershipId}; writing secure storage…',
+      );
+      if (tokens.refreshToken.isEmpty) {
+        // Bungie portal docs: Public clients are not issued refresh_token.
+        // Confidential (Next) gets ~90d refresh. Live API re-auth ~hourly;
+        // local inventory browse must not depend on this (see OwnedCatalogBridge).
+        _log(
+          'OAuth: empty refresh_token (Bungie Public clients do not receive one) — '
+          'live access lasts ~1h; re-sign-in only required for Sync/API, not local Owned',
+        );
+      }
+      await _tokenStore.write(tokens).timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw const BungieOAuthException(
+              'Secure token storage write timed out',
+            ),
+          );
+      final verified = await _tokenStore.read();
+      if (verified == null ||
+          verified.accessToken != tokens.accessToken ||
+          verified.bungieMembershipId != tokens.bungieMembershipId) {
+        throw const BungieOAuthException(
+          'Secure token storage write did not persist (read-back failed)',
+        );
+      }
+
+      // Verified Locker write — drop any leftover plaintext sidecar.
+      try {
+        await _tokenStore.deleteLegacySidecarIfPresent();
+      } catch (_) {}
+
+      _tokens = tokens;
+      _status = OAuthSessionStatus.signedIn;
+      _errorMessage = null;
+      _log(
+        'OAuth: signed in membership=${tokens.bungieMembershipId} '
+        'stored refreshLen=${verified.refreshToken.length}',
+      );
     } catch (e, _) {
       // Type only — never log exception message/stack (may carry secrets).
-      // ignore: avoid_print
-      print('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
+      _log('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       debugPrint('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       _tokens = null;
       _status = OAuthSessionStatus.error;
@@ -367,6 +430,12 @@ class WindowsOAuthSession extends ChangeNotifier {
       try {
         await _tokenStore.clearSecureOnly();
       } catch (_) {}
+    } finally {
+      if (loopbackStarted) {
+        try {
+          await _loopback.stop();
+        } catch (_) {}
+      }
     }
     notifyListeners();
   }
@@ -394,9 +463,38 @@ class WindowsOAuthSession extends ChangeNotifier {
     }
   }
 
-  /// Fixed copy + exception type only — never echo exception message text
-  /// (may contain tokens, auth codes, or Bungie error bodies).
+  /// Friendly fixed copy for known failures; unknown → type only.
+  ///
+  /// Never echoes exception message text (tokens, auth codes, provider bodies).
   static String _safeErrorMessage(Object e) {
+    if (e is OAuthSignInFailure) {
+      return switch (e.kind) {
+        OAuthSignInFailureKind.cancelled =>
+          'Sign-in was cancelled. Try again when ready.',
+        OAuthSignInFailureKind.stateMismatch =>
+          'Sign-in could not be verified. Please try again.',
+        OAuthSignInFailureKind.callbackTimeout =>
+          'Sign-in timed out waiting for Bungie. Please try again.',
+        OAuthSignInFailureKind.tokenExchangeFailed =>
+          'Could not complete sign-in with Bungie. Please try again.',
+        OAuthSignInFailureKind.networkUnreachable =>
+          'Network unavailable. Check your connection and try again.',
+      };
+    }
+    if (e is TimeoutException) {
+      return 'Sign-in timed out waiting for Bungie. Please try again.';
+    }
+    if (_isNetworkFailure(e)) {
+      return 'Network unavailable. Check your connection and try again.';
+    }
     return 'Sign-in failed (${e.runtimeType}). Try again.';
+  }
+
+  static bool _isNetworkFailure(Object e) {
+    return e is SocketException ||
+        e is HandshakeException ||
+        e is HttpException ||
+        e is TlsException ||
+        e is OSError;
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -45,6 +46,9 @@ class _CorruptThrowingStore implements TokenStore {
   Future<void> clearSecureOnly() async {
     clearedSecureOnly = true;
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 /// Corrupt Locker payload without using FlutterSecureStorage.
@@ -79,6 +83,9 @@ class _CorruptRawPrimary implements TokenStore {
     clearSecureOnlyCalls += 1;
     raw = null;
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 /// In-memory primary for DualTokenStore session tests.
@@ -105,6 +112,9 @@ class _MemoryPrimary implements TokenStore {
   Future<void> clearSecureOnly() async {
     raw = null;
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 /// First migration write leaves Locker empty (null read-back); later writes stick.
@@ -133,6 +143,50 @@ class _FailOnceThenOkPrimary implements TokenStore {
   @override
   Future<void> clearSecureOnly() async {
     _tokens = null;
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
+}
+
+/// Fake loopback for stop()-isolation tests (no real HTTP bind).
+class FakeLoopbackCallbackServer extends LoopbackCallbackServer {
+  FakeLoopbackCallbackServer({
+    required this.onWait,
+    this.stopThrows = false,
+  });
+
+  final Future<LoopbackCallbackResult> Function() onWait;
+  final bool stopThrows;
+  bool started = false;
+  bool stopCalled = false;
+
+  @override
+  Future<void> start({
+    String host = '127.0.0.1',
+    required int port,
+    String callbackPath = '/callback',
+    bool useTls = false,
+  }) async {
+    started = true;
+  }
+
+  @override
+  bool get isRunning => started;
+
+  @override
+  Future<LoopbackCallbackResult> waitForCallback({
+    Duration timeout = const Duration(minutes: 5),
+  }) =>
+      onWait();
+
+  @override
+  Future<void> stop() async {
+    stopCalled = true;
+    started = false;
+    if (stopThrows) {
+      throw StateError('loopback stop failed');
+    }
   }
 }
 
@@ -222,14 +276,18 @@ void main() {
 
       expect(session.isSignedIn, isFalse);
       expect(session.status, OAuthSessionStatus.error);
-      // Fixed UI copy + type only (no raw exception / CSRF detail text).
-      expect(session.errorMessage, 'Sign-in failed (BungieOAuthException). Try again.');
+      expect(
+        session.errorMessage,
+        'Sign-in could not be verified. Please try again.',
+      );
+      expect(session.errorMessage, isNot(contains('CSRF')));
       expect(await store.read(), isNull);
     });
 
     test('Bungie error query leaves signed-out', () async {
       final store = MemoryTokenStore();
       final browser = FakeBrowserLauncher();
+      final logs = <String>[];
       final oauth = BungieOAuthClient(
         clientId: clientId,
         redirectUri: redirectUri,
@@ -242,9 +300,10 @@ void main() {
         tokenStore: store,
         oauthClient: oauth,
         browserLauncher: browser,
+        log: logs.add,
         waitForCallbackOverride: () async => const LoopbackCallbackResult(
           error: 'access_denied',
-          errorDescription: 'User denied',
+          errorDescription: 'User denied SECRET-should-not-leak',
           state: 'ignored',
         ),
       );
@@ -252,17 +311,251 @@ void main() {
       await session.signIn();
       expect(session.isSignedIn, isFalse);
       expect(session.status, OAuthSessionStatus.error);
-      expect(session.errorMessage, 'Sign-in failed (BungieOAuthException). Try again.');
+      expect(
+        session.errorMessage,
+        'Sign-in was cancelled. Try again when ready.',
+      );
       expect(session.errorMessage, isNot(contains('User denied')));
+      expect(session.errorMessage, isNot(contains('SECRET')));
       expect(await store.read(), isNull);
+      // (d) callback log has flags only — no raw error value.
+      final callbackLogs =
+          logs.where((l) => l.contains('callback received')).toList();
+      expect(callbackLogs, isNotEmpty);
+      for (final line in callbackLogs) {
+        expect(line, contains('hasError=true'));
+        expect(line, isNot(contains('access_denied')));
+        expect(line, isNot(contains('User denied')));
+        expect(line, isNot(contains('SECRET')));
+      }
+    });
+
+    test('(a) access_denied maps to friendly cancelled text', () async {
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: MemoryTokenStore(),
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+        waitForCallbackOverride: () async => const LoopbackCallbackResult(
+          error: 'access_denied',
+          errorDescription: 'raw provider text must not appear',
+        ),
+      );
+      await session.signIn();
+      expect(
+        session.errorMessage,
+        'Sign-in was cancelled. Try again when ready.',
+      );
+      expect(session.errorMessage, isNot(contains('raw provider')));
+    });
+
+    test('(a) state mismatch maps to friendly verified text', () async {
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: MemoryTokenStore(),
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+        waitForCallbackOverride: () async => const LoopbackCallbackResult(
+          code: 'code',
+          state: 'wrong-state',
+        ),
+      );
+      await session.signIn();
+      expect(
+        session.errorMessage,
+        'Sign-in could not be verified. Please try again.',
+      );
+    });
+
+    test('(a) callback timeout maps to friendly timeout text', () async {
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: MemoryTokenStore(),
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+        waitForCallbackOverride: () async {
+          throw TimeoutException('OAuth loopback callback timed out');
+        },
+      );
+      await session.signIn();
+      expect(
+        session.errorMessage,
+        'Sign-in timed out waiting for Bungie. Please try again.',
+      );
+      expect(session.errorMessage, isNot(contains('timed out after')));
+    });
+
+    test('(a) token exchange HTTP failure maps to friendly exchange text',
+        () async {
+      String? capturedState;
+      final browser = FakeBrowserLauncher();
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: MemoryTokenStore(),
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => const BungieHttpResponse(
+            statusCode: 500,
+            body: '{"error":"server_error","error_description":"SECRET-body"}',
+          ),
+        ),
+        browserLauncher: browser,
+        waitForCallbackOverride: () async {
+          capturedState =
+              Uri.parse(browser.opened.single).queryParameters['state'];
+          return LoopbackCallbackResult(
+            code: 'auth-code',
+            state: capturedState,
+          );
+        },
+      );
+      await session.signIn();
+      expect(
+        session.errorMessage,
+        'Could not complete sign-in with Bungie. Please try again.',
+      );
+      expect(session.errorMessage, isNot(contains('SECRET')));
+      expect(session.errorMessage, isNot(contains('server_error')));
+    });
+
+    test('(a) network unreachable maps to friendly network text', () async {
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: MemoryTokenStore(),
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+        waitForCallbackOverride: () async {
+          throw const SocketException('Network is unreachable');
+        },
+      );
+      await session.signIn();
+      expect(
+        session.errorMessage,
+        'Network unavailable. Check your connection and try again.',
+      );
+      expect(session.errorMessage, isNot(contains('unreachable')));
+    });
+
+    test('(a) unknown failure stays Sign-in failed (<ExceptionType>)', () async {
+      const leaked = 'access-token-SECRET-ui-leak-xyz';
+      final session = WindowsOAuthSession(
+        clientId: clientId,
+        redirectUri: redirectUri,
+        tokenStore: MemoryTokenStore(),
+        oauthClient: BungieOAuthClient(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          transport: (_) async => throw StateError('unused'),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+        waitForCallbackOverride: () async {
+          throw Exception(leaked);
+        },
+      );
+      await session.signIn();
+      expect(session.errorMessage, isNot(contains('SECRET')));
+      expect(session.errorMessage, isNot(contains(leaked)));
+      expect(
+        session.errorMessage,
+        matches(RegExp(r'^Sign-in failed \(.+\)\. Try again\.$')),
+      );
     });
 
     test(
-      'token-like string inside an exception never reaches the UI message',
+      '(b) verified sign-in deletes leftover plaintext sidecar',
       () async {
-        const leaked =
-            'access-token-SECRET-ui-leak-xyz refresh-token-SECRET-ui-leak-uvw';
+        final dir = await Directory.systemTemp.createTemp('oauth_signin_side_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+        final primary = _MemoryPrimary();
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final now = DateTime.now().toUtc();
+        await secondary.write(
+          BungieTokens(
+            accessToken: 'old-sidecar-SECRET',
+            refreshToken: 'old-sidecar-ref-SECRET',
+            expiresAt: now.add(const Duration(hours: 1)),
+            refreshExpiresAt: now.add(const Duration(days: 1)),
+            bungieMembershipId: 'old-memb',
+          ),
+        );
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        expect(await sidecar.exists(), isTrue);
+
+        final dual = DualTokenStore(primary: primary, secondary: secondary);
+        final browser = FakeBrowserLauncher();
+        String? capturedState;
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: dual,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => BungieHttpResponse(
+              statusCode: 200,
+              body: jsonEncode(rawTokenResponse()),
+            ),
+          ),
+          browserLauncher: browser,
+          waitForCallbackOverride: () async {
+            capturedState =
+                Uri.parse(browser.opened.single).queryParameters['state'];
+            return LoopbackCallbackResult(
+              code: 'auth-code-xyz',
+              state: capturedState,
+            );
+          },
+        );
+
+        await session.signIn();
+        expect(session.isSignedIn, isTrue);
+        expect((await primary.read())?.accessToken, 'acc-secret-111');
+        expect(await sidecar.exists(), isFalse);
+      },
+    );
+
+    test(
+      '(c) loopback.stop() throw after verified write does not clear Locker',
+      () async {
         final store = MemoryTokenStore();
+        final browser = FakeBrowserLauncher();
+        String? capturedState;
+        final loopback = FakeLoopbackCallbackServer(
+          stopThrows: true,
+          onWait: () async {
+            capturedState =
+                Uri.parse(browser.opened.single).queryParameters['state'];
+            return LoopbackCallbackResult(
+              code: 'auth-code-xyz',
+              state: capturedState,
+            );
+          },
+        );
+
         final session = WindowsOAuthSession(
           clientId: clientId,
           redirectUri: redirectUri,
@@ -270,24 +563,20 @@ void main() {
           oauthClient: BungieOAuthClient(
             clientId: clientId,
             redirectUri: redirectUri,
-            transport: (_) async => throw StateError('unused'),
+            transport: (_) async => BungieHttpResponse(
+              statusCode: 200,
+              body: jsonEncode(rawTokenResponse()),
+            ),
           ),
-          browserLauncher: FakeBrowserLauncher(),
-          waitForCallbackOverride: () async {
-            throw Exception(leaked);
-          },
+          browserLauncher: browser,
+          loopbackServer: loopback,
         );
 
         await session.signIn();
-        expect(session.status, OAuthSessionStatus.error);
-        expect(session.errorMessage, isNotNull);
-        expect(session.errorMessage, isNot(contains('SECRET')));
-        expect(session.errorMessage, isNot(contains(leaked)));
-        expect(
-          session.errorMessage,
-          matches(RegExp(r'^Sign-in failed \(.+\)\. Try again\.$')),
-        );
-        expect(session.errorMessage, contains('Exception'));
+        expect(loopback.stopCalled, isTrue);
+        expect(session.isSignedIn, isTrue);
+        expect(session.status, OAuthSessionStatus.signedIn);
+        expect((await store.read())?.accessToken, 'acc-secret-111');
       },
     );
 

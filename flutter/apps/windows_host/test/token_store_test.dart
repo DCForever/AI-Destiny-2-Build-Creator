@@ -57,6 +57,9 @@ class InMemorySecureStore implements TokenStore {
     clearSecureOnlyCalls += 1;
     raw = null;
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 /// Empty until written; then read-back returns different secrets (verify fail).
@@ -88,6 +91,9 @@ class MismatchReadBackStore implements TokenStore {
     clearSecureOnlyCalls += 1;
     _written = false;
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 enum _ReadBackFailMode { nullValue, corrupt, throwIo }
@@ -128,6 +134,9 @@ class ScriptedFailReadBackStore implements TokenStore {
     clearSecureOnlyCalls += 1;
     _written = false;
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 void main() {
