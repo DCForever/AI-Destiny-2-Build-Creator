@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_windows_host/auth/browser_launcher.dart';
 import 'package:destiny2_windows_host/auth/loopback_callback_server.dart';
+import 'package:destiny2_windows_host/auth/token_codec.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/auth/windows_oauth_session.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 Map<String, dynamic> rawTokenResponse({
   String access = 'acc-secret-111',
@@ -23,6 +26,7 @@ Map<String, dynamic> rawTokenResponse({
 
 class _CorruptThrowingStore implements TokenStore {
   bool cleared = false;
+  bool clearedSecureOnly = false;
 
   @override
   Future<BungieTokens?> read() async {
@@ -35,6 +39,45 @@ class _CorruptThrowingStore implements TokenStore {
   @override
   Future<void> clear() async {
     cleared = true;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearedSecureOnly = true;
+  }
+}
+
+/// Corrupt Locker payload without using FlutterSecureStorage.
+class _CorruptRawPrimary implements TokenStore {
+  _CorruptRawPrimary(this.raw);
+
+  String? raw;
+  int clearSecureOnlyCalls = 0;
+  int clearCalls = 0;
+
+  @override
+  Future<BungieTokens?> read() async {
+    if (raw == null || raw!.trim().isEmpty) return null;
+    final decoded = decodeBungieTokens(raw);
+    if (decoded == null) throw const TokenStoreCorruptException();
+    return decoded;
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    raw = encodeBungieTokens(tokens);
+  }
+
+  @override
+  Future<void> clear() async {
+    clearCalls += 1;
+    raw = null;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
+    raw = null;
   }
 }
 
@@ -354,8 +397,61 @@ void main() {
         'Sign-in data could not be read - please sign in again',
       );
       expect(session.errorMessage, isNot(contains('SECRET')));
-      expect(store.cleared, isTrue);
+      // Skeptic fix 2: corrupt path clears Locker only.
+      expect(store.clearedSecureOnly, isTrue);
+      expect(store.cleared, isFalse);
     });
+
+    test(
+      '(2) corrupt Locker on restore leaves the sidecar file in place',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('oauth_corrupt_side_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+
+        final primary = _CorruptRawPrimary('{not-valid-json}');
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final now = DateTime.now().toUtc();
+        await secondary.write(
+          BungieTokens(
+            accessToken: 'sidecar-acc-SECRET',
+            refreshToken: 'sidecar-ref-SECRET',
+            expiresAt: now.add(const Duration(hours: 1)),
+            refreshExpiresAt: now.add(const Duration(days: 1)),
+            bungieMembershipId: 'mem-sidecar',
+          ),
+        );
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        expect(await sidecar.exists(), isTrue);
+
+        final dual = DualTokenStore(primary: primary, secondary: secondary);
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: dual,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+        );
+
+        await session.restore();
+        expect(session.isSignedIn, isFalse);
+        expect(session.status, OAuthSessionStatus.signedOut);
+        expect(
+          session.errorMessage,
+          'Sign-in data could not be read - please sign in again',
+        );
+        expect(primary.clearSecureOnlyCalls, 1);
+        expect(primary.clearCalls, 0);
+        expect(primary.raw, isNull);
+        expect(await sidecar.exists(), isTrue);
+        expect((await secondary.read())?.accessToken, 'sidecar-acc-SECRET');
+      },
+    );
 
     test('missing client id is not configured', () async {
       final session = WindowsOAuthSession(

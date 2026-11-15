@@ -113,8 +113,9 @@ class LoopbackCallbackServer {
         final expectedPath = path.endsWith('/') && path.length > 1
             ? path.substring(0, path.length - 1)
             : path;
+        // Path only — query may contain auth code / state / error_description.
         // ignore: avoid_print
-        print('OAuth loopback request: ${uri.path}?${uri.query}');
+        print('OAuth loopback request: ${uri.path}');
 
         if (requestPath != expectedPath) {
           request.response.statusCode = HttpStatus.notFound;
