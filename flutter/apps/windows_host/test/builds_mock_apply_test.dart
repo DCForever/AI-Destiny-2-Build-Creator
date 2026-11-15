@@ -73,8 +73,15 @@ void main() {
   test('apply uses the resolved target character id (not a re-pick)', () async {
     final equippedIds = <String>[];
     final writeClient = createMockWriteClient(
-      equipItem: (ctx, args) async {
+      equipItems: (ctx, args) async {
         equippedIds.add(args.characterId);
+        return [
+          for (final id in args.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
       },
     );
 
@@ -164,12 +171,19 @@ void main() {
   // --- Live-profile instance gate (PR1) ------------------------------------
 
   test(
-    '(1) missing live instance skips equipItem and shows inventory reason',
+    '(1) missing live instance skips equipItems and shows inventory reason',
     () async {
       final equipped = <String>[];
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -222,8 +236,15 @@ void main() {
   test('(2) present live instances are still equipped', () async {
     final equipped = <String>[];
     final writeClient = createMockWriteClient(
-      equipItem: (ctx, args) async {
-        equipped.add(args.instanceId);
+      equipItems: (ctx, args) async {
+        equipped.addAll(args.itemIds);
+        return [
+          for (final id in args.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
       },
     );
     final session = await _signedInSession();
@@ -279,12 +300,19 @@ void main() {
   });
 
   test(
-    '(3a) inventory read failure makes zero equipItem calls and shows reason',
+    '(3a) inventory read failure makes zero equipItems calls and shows reason',
     () async {
       final equipped = <String>[];
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -323,12 +351,19 @@ void main() {
   );
 
   test(
-    '(3b) empty live inventory makes zero equipItem calls and shows reason',
+    '(3b) empty live inventory makes zero equipItems calls and shows reason',
     () async {
       final equipped = <String>[];
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -370,8 +405,15 @@ void main() {
     () async {
       final equipped = <String>[];
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -426,9 +468,18 @@ void main() {
   test('(B2) vault instance counts as present for the live-inventory gate',
       () async {
     final equipped = <String>[];
+    final transfers = <TransferItemArgs>[];
     final writeClient = createMockWriteClient(
-      equipItem: (ctx, args) async {
-        equipped.add(args.instanceId);
+      transferItem: (ctx, args) async => transfers.add(args),
+      equipItems: (ctx, args) async {
+        equipped.addAll(args.itemIds);
+        return [
+          for (final id in args.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
       },
     );
     final session = await _signedInSession();
@@ -446,7 +497,7 @@ void main() {
             RawInventoryItem(
               instanceId: 'inst-vault-1',
               itemHash: 1001,
-              bucketHash: 138197802, // vault general
+              bucketHash: 3448274439, // equipment bucket (resolved)
               location: 'vault',
             ),
           ],
@@ -458,10 +509,13 @@ void main() {
         character: warlockA,
       ),
       isMounted: () => true,
+      confirmMoves: (_) async => true,
       onProgress: (_) {},
     );
 
     expect(outcome.error, isNull);
+    expect(transfers, hasLength(1));
+    expect(transfers.single.transferToVault, isFalse);
     expect(equipped, ['inst-vault-1']);
     expect(outcome.progress!.appliedCount, 1);
     expect(outcome.progress!.failedCount, 0);
