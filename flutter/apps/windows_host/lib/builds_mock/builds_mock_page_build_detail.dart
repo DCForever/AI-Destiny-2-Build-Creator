@@ -250,6 +250,16 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                         onCancel: () => _optimize.closeWeaponPanel(),
                       ),
                     ],
+                    if (_optimize.armorAppliedBuild != null &&
+                        _optimize.weaponCombinations.isEmpty &&
+                        (_optimize.weaponsCsvReason ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _optimize.weaponsCsvReason!,
+                        key: const Key('builds_weapon_optimize_empty_reason'),
+                        style: neonMono(color: palette.muted, fontSize: 11),
+                      ),
+                    ],
                     if (plan != null) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -413,6 +423,10 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
         // applySelectedWeaponResult already set error on persist failure.
         persistOk = false;
       }
+    } else if ((_optimize.weaponsCsvReason ?? '').isNotEmpty &&
+        !_optimize.hasWeaponsCsv) {
+      // Empty substitute pool — visible reason on controller; never blank slots.
+      persistOk = true;
     } else {
       // No empty slots from optimizer — keep legacy headless path for pins.
       final weaponResult = await applyWeaponFillInAfterOptimize(
@@ -501,6 +515,17 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     );
     if (!mounted) return;
     if (_optimize.weaponCombinations.isEmpty) {
+      final emptyReason = _optimize.weaponsCsvReason?.trim() ?? '';
+      if (emptyReason.isNotEmpty) {
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            key: const Key('builds_weapon_optimize_empty_toast'),
+            content: Text(emptyReason),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
       _showOptimizeToast(messenger, index + 1);
     }
   }

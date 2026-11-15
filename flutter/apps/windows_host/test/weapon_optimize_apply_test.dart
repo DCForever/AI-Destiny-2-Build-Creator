@@ -1,7 +1,9 @@
 import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_fixture.dart';
+import 'package:destiny2_windows_host/builds_mock/builds_mock_gear_tables.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
+import 'package:destiny2_windows_host/builds_mock/builds_mock_presentation.dart';
 import 'package:destiny2_windows_host/optimize/weapon_optimize_apply.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -127,20 +129,97 @@ void main() {
     },
   );
 
-  test('(c) stale CSV picks absent from cached inventory are dropped', () {
-    final csv = weapons();
-    final live = [
-      csv[0],
-      csv[1],
-      // heavy missing from live cache
-    ];
-    final filtered = filterWeaponsPresentInCache(
-      csvWeapons: csv,
-      cachedInventory: live,
-    );
-    expect(filtered.map((e) => e.instanceId), ['w-k1', 'w-e1']);
-    expect(filtered.any((e) => e.instanceId == 'w-p1'), isFalse);
-  });
+  test(
+    'weaponsPresentInBoth intersects by instance id; empty right → empty',
+    () {
+      final csv = weapons();
+      final live = [
+        csv[0],
+        csv[1],
+        // heavy missing from right-hand list
+      ];
+      final filtered = weaponsPresentInBoth(left: csv, right: live);
+      expect(filtered.map((e) => e.instanceId), ['w-k1', 'w-e1']);
+      expect(filtered.any((e) => e.instanceId == 'w-p1'), isFalse);
+
+      // Empty / missing right-hand list must never passthrough as "verified".
+      expect(
+        weaponsPresentInBoth(left: csv, right: const []),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'exotics pinned only in saved plan count toward one-exotic cap',
+    () {
+      final build = baseBuild();
+      final plan = FillInSavedBuildPlan(
+        buildId: build.id,
+        missing: const [],
+        applied: const [
+          FillInAppliedSlot(
+            slotWire: 'primary',
+            label: 'Exotic Scout',
+            originalLabel: '',
+            instanceId: 'ex-pin',
+            itemHash: 777,
+          ),
+        ],
+        rows: const [
+          FillInSavedSlotRow(
+            slotWire: 'primary',
+            slotLabel: 'Exotic Kinetic',
+            state: 'filled',
+            itemName: 'Exotic Scout',
+          ),
+        ],
+      );
+      expect(
+        countWeaponExoticsAlreadyOnBuild(build: build, plan: plan),
+        1,
+      );
+
+      final response = runWeaponOptimizeForBuild(
+        build: build,
+        weaponInventory: [
+          const FillInInventoryItem(
+            instanceId: 'ex-open',
+            itemHash: 778,
+            name: 'Another Exotic',
+            slot: EquipmentSlot.special,
+            isExotic: true,
+            weaponType: 'Fusion Rifle',
+            damageType: 'Solar',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'leg-e',
+            itemHash: 779,
+            name: 'Legendary Fusion',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            weaponType: 'Fusion Rifle',
+            damageType: 'Solar',
+          ),
+          const FillInInventoryItem(
+            instanceId: 'leg-p',
+            itemHash: 780,
+            name: 'Legendary Rocket',
+            slot: EquipmentSlot.heavy,
+            isExotic: false,
+            weaponType: 'Rocket Launcher',
+            damageType: 'Solar',
+          ),
+        ],
+        hasWeaponsCsv: true,
+        plan: plan,
+      );
+      expect(response.combinations, isNotEmpty);
+      for (final pick in response.combinations.first.picks) {
+        expect(pick.item.isExotic, isFalse);
+      }
+    },
+  );
 
   test('(d) substitute kit never labeled optimized; reason set', () {
     final build = baseBuild();
@@ -172,6 +251,18 @@ void main() {
           row.slotWire == 'heavy') {
         expect(row.state, 'proposed');
       }
+    }
+    for (final s in merged.build.slots) {
+      if (s.slot == 'primary' || s.slot == 'special' || s.slot == 'heavy') {
+        expect(s.isSubstitute, isTrue);
+        expect(s.filledIn, isTrue);
+      }
+    }
+    final rows = buildsMockWeaponRows(build: merged.build, plan: merged.plan);
+    for (final row in rows) {
+      if (row.itemName == 'Not in DIM link') continue;
+      expect(row.note, kWeaponOptimizeSubstituteLabel);
+      expect(row.status, BuildsMockSlotStatus.proposed);
     }
   });
 }

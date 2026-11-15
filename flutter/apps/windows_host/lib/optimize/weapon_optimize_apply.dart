@@ -63,26 +63,23 @@ Set<String> pinnedWeaponInstanceIds({
   return ids;
 }
 
-/// Drop CSV rows whose instance id is absent from [cachedInventory].
+/// Pure instance-id intersection of two weapon lists.
 ///
-/// Stale import protection — read-only; never equips / deletes.
-List<FillInInventoryItem> filterWeaponsPresentInCache({
-  required Iterable<FillInInventoryItem> csvWeapons,
-  required Iterable<FillInInventoryItem> cachedInventory,
+/// Not a live-profile stale check — Optimize page call sites only have the
+/// DIM weapons CSV cache today. Empty [right] yields an empty result (never
+/// "verified" / passthrough of [left]). Live-profile verification of picks
+/// is deferred to Apply to character.
+List<FillInInventoryItem> weaponsPresentInBoth({
+  required Iterable<FillInInventoryItem> left,
+  required Iterable<FillInInventoryItem> right,
 }) {
   final live = <String>{
-    for (final item in cachedInventory)
+    for (final item in right)
       if (_isWeaponCombatSlot(item.slot)) item.instanceId,
   };
-  if (live.isEmpty) {
-    // No separate live cache — treat CSV itself as the offline store.
-    return [
-      for (final item in csvWeapons)
-        if (_isWeaponCombatSlot(item.slot)) item,
-    ];
-  }
+  if (live.isEmpty) return const [];
   return [
-    for (final item in csvWeapons)
+    for (final item in left)
       if (_isWeaponCombatSlot(item.slot) && live.contains(item.instanceId))
         item,
   ];
@@ -100,6 +97,57 @@ List<String> weaponOptimizeKeywordsForBuild(MockBuild build) {
     if (t.isNotEmpty) out.add(t);
   }
   return out;
+}
+
+/// Exotic weapons already on the build **or** pinned only in [plan].
+///
+/// Counts slot flags, plan row labels (`Exotic …`), plan applied pins that
+/// match exotic inventory rows / [MockBuild.exoticWeapon], and a named
+/// [MockBuild.exoticWeapon] with no slot yet.
+int countWeaponExoticsAlreadyOnBuild({
+  required MockBuild build,
+  FillInSavedBuildPlan? plan,
+  Iterable<FillInInventoryItem> weaponInventory = const [],
+}) {
+  final exoticWires = <String>{};
+  for (final s in build.slots) {
+    if (!_isWeaponWire(s.slot)) continue;
+    if (s.isExoticSlot) exoticWires.add(s.slot);
+  }
+
+  final exoticByInstance = <String>{
+    for (final item in weaponInventory)
+      if (item.isExotic && _isWeaponCombatSlot(item.slot)) item.instanceId,
+  };
+  final exoticName = build.exoticWeapon.trim().toLowerCase();
+
+  if (plan != null) {
+    for (final row in plan.rows) {
+      if (!_isWeaponWire(row.slotWire)) continue;
+      final state = row.state.trim().toLowerCase();
+      if (state != 'filled' && state != 'proposed' && state != 'held') {
+        continue;
+      }
+      if (row.slotLabel.trim().toLowerCase().startsWith('exotic')) {
+        exoticWires.add(row.slotWire);
+      }
+    }
+    for (final a in plan.applied) {
+      if (!_isWeaponWire(a.slotWire)) continue;
+      if (exoticWires.contains(a.slotWire)) continue;
+      final id = a.instanceId?.trim() ?? '';
+      final fromInv = id.isNotEmpty && exoticByInstance.contains(id);
+      final fromName = exoticName.isNotEmpty &&
+          a.label.trim().toLowerCase() == exoticName;
+      if (fromInv || fromName) {
+        exoticWires.add(a.slotWire);
+      }
+    }
+  }
+
+  if (exoticWires.isNotEmpty) return exoticWires.length;
+  if (exoticName.isNotEmpty) return 1;
+  return 0;
 }
 
 /// Merge a [WeaponOptimizeCombination] into [build] + Fill In plan.
@@ -126,6 +174,7 @@ WeaponOptimizeApplyResult applyWeaponOptimizeCombination({
   };
 
   var working = build;
+  final isSubstitute = combination.isSubstitute;
   for (final pick in combination.picks) {
     final wire = pick.slot.wireName;
     final label = (pick.item.name ?? '').trim();
@@ -172,12 +221,11 @@ WeaponOptimizeApplyResult applyWeaponOptimizeCombination({
       pieceName: label,
       isExoticSlot: isExotic,
       statTotal: existingSlot?.statTotal,
-      // Substitute fills are Fill In activity; optimized fills too — but
-      // MockBuild.isOptimized stays armor-only (never set from substitute).
       filledIn: true,
+      isSubstitute: isSubstitute,
     );
 
-    final state = combination.isSubstitute ? 'proposed' : 'filled';
+    final state = isSubstitute ? 'proposed' : 'filled';
     rowsByWire[wire] = FillInSavedSlotRow(
       slotWire: wire,
       slotLabel: fillInMissingSlotLabel(slot: pick.slot, isExotic: isExotic),
@@ -186,10 +234,9 @@ WeaponOptimizeApplyResult applyWeaponOptimizeCombination({
     );
   }
 
+  // Weapon apply never flips [MockBuild.isOptimized] (armor-only flag).
   working = working.copyWith(
     slots: List<MockSlotAssignment>.unmodifiable(slotByWire.values),
-    // Never mark the build optimized from a substitute weapon kit.
-    isOptimized: combination.isSubstitute ? working.isOptimized : working.isOptimized,
   );
 
   final plan = FillInSavedBuildPlan(
@@ -228,14 +275,11 @@ WeaponOptimizeResponse runWeaponOptimizeForBuild({
   if (empty.isEmpty) {
     return const WeaponOptimizeResponse(combinations: []);
   }
-  var exoticCount = 0;
-  for (final s in build.slots) {
-    if (!_isWeaponWire(s.slot)) continue;
-    if (s.isExoticSlot) exoticCount += 1;
-  }
-  if (exoticCount == 0 && build.exoticWeapon.trim().isNotEmpty) {
-    exoticCount = 1;
-  }
+  final exoticCount = countWeaponExoticsAlreadyOnBuild(
+    build: build,
+    plan: plan,
+    weaponInventory: weaponInventory,
+  );
   return optimizeWeapons(
     WeaponOptimizeRequest(
       emptySlots: empty,

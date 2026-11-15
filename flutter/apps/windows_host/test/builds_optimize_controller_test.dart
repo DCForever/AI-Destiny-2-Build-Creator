@@ -868,6 +868,42 @@ void main() {
       expect(merged.build.isOptimized, armorApplied.isOptimized);
     },
   );
+
+  test(
+    'no weapons CSV and empty substitute pool surfaces visible reason',
+    () async {
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        loadWeaponItems: () async => null,
+        optimizeRunner: fakeResponse,
+      );
+      await c.refreshArmorCsv();
+      await c.refreshWeaponsCsv();
+      expect(c.hasWeaponsCsv, isFalse);
+
+      final armorApplied = await c.runOptimize(
+        build: build(),
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(armorApplied, isNotNull);
+
+      final response = await c.prepareWeaponResults(
+        build: armorApplied!,
+        cachedInventory: const [],
+        openPanel: true,
+      );
+      expect(response, isNotNull);
+      expect(response!.combinations, isEmpty);
+      expect(c.weaponCombinations, isEmpty);
+      expect(c.weaponPanelOpen, isFalse);
+      expect(
+        c.weaponsCsvReason,
+        kWeaponOptimizeEmptySubstitutePoolReason,
+      );
+      expect(c.error, kWeaponOptimizeEmptySubstitutePoolReason);
+      expect(c.armorAppliedBuild, isNotNull);
+    },
+  );
 }
 
 /// Optimize store that throws on the Nth [loadForBuild] (1-based).

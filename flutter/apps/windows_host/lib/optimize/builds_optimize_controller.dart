@@ -368,8 +368,10 @@ class BuildsOptimizeController extends ChangeNotifier {
   /// Rank weapons after armor confirm/apply. Opens the weapons results panel.
   ///
   /// When Weapons CSV is missing, returns a single substitute combination
-  /// (never labeled optimized). Stale CSV rows absent from [cachedInventory]
-  /// are dropped when that list is provided.
+  /// (never labeled optimized) from [cachedInventory] when provided. Does
+  /// **not** claim live-profile stale-pick verification — page callers only
+  /// have the same DIM weapons CSV cache today; verifying picks against the
+  /// live profile is deferred to Apply to character.
   Future<WeaponOptimizeResponse?> prepareWeaponResults({
     required MockBuild build,
     FillInSavedBuildPlan? existingPlan,
@@ -382,12 +384,7 @@ class BuildsOptimizeController extends ChangeNotifier {
     }
     var inventory = List<FillInInventoryItem>.from(_weaponItems);
     final hasCsv = _hasWeaponsCsv && inventory.isNotEmpty;
-    if (hasCsv && cachedInventory != null) {
-      inventory = filterWeaponsPresentInCache(
-        csvWeapons: inventory,
-        cachedInventory: cachedInventory,
-      );
-    } else if (!hasCsv && cachedInventory != null) {
+    if (!hasCsv && cachedInventory != null) {
       // No Weapons CSV import — substitute from offline cached inventory only.
       inventory = [
         for (final item in cachedInventory)
@@ -409,6 +406,11 @@ class BuildsOptimizeController extends ChangeNotifier {
     _weaponSelectedIndex = 0;
     _armorAppliedBuild = build;
     _planAfterArmor = plan;
+    if (response.combinations.isEmpty && !hasCsv) {
+      // Never leave blank weapon slots silently when the substitute pool is empty.
+      _weaponsCsvReason = kWeaponOptimizeEmptySubstitutePoolReason;
+      _error = kWeaponOptimizeEmptySubstitutePoolReason;
+    }
     _weaponPanelOpen =
         openPanel && response.combinations.isNotEmpty;
     notifyListeners();

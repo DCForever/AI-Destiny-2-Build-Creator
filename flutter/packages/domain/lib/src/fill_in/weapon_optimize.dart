@@ -14,6 +14,12 @@ const int kWeaponOptimizeLegendaryPreferredPoints = 10;
 /// Reason when Optimize falls back to random Fill In substitute (no CSV).
 const String kWeaponOptimizeNoCsvReason = 'No weapons CSV imported';
 
+/// Visible reason when CSV is missing and no held weapons can substitute.
+///
+/// Never leave Kinetic/Energy/Power blank silently in this case.
+const String kWeaponOptimizeEmptySubstitutePoolReason =
+    'No weapons CSV imported; no held weapons available to substitute';
+
 /// Label for a random Fill In substitute — never "optimized".
 const String kWeaponOptimizeSubstituteLabel = 'substitute';
 
