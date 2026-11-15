@@ -651,11 +651,10 @@ void main() {
   );
 
   test(
-    'to-vault hop then 1642 with no evictee: make-room still-full message',
+    'to-vault hop then 1642 with no evictee: stranded vault message (R1/R2b)',
     () async {
-      // CHANGED: previously surfaced kMovedToVaultStuckMessage on the first
-      // 1642 after vault hop. Make-room tries to free a slot; with none
-      // eligible it fails with the fixed still-full text (no raw exception).
+      // RESTORED (PR55): after a successful hop to vault, make-room failure
+      // must still say the item is in the vault — not generic still-full.
       var hop = 0;
       final client = createMockWriteClient(
         transferItem: (c, a) async {
@@ -698,10 +697,62 @@ void main() {
 
       expect(hop, 2);
       expect(result.items.first.state, ApplyItemState.failed);
-      expect(
-        result.items.first.reason,
-        kMakeRoomStillFullMessage('Synthoceps'),
+      expect(result.items.first.reason, kMovedToVaultStuckMessage);
+    },
+  );
+
+  test(
+    'full bucket, vault room, nothing evictable: No room on character, 0 transfers (R2a)',
+    () async {
+      var transferCalls = 0;
+      final client = createMockWriteClient(
+        transferItem: (c, a) async => transferCalls += 1,
+        equipItems: (c, a) async => const [],
       );
+
+      final inventory = <ApplyInventoryItem>[
+        const ApplyInventoryItem(
+          instanceId: 'vault-1',
+          itemHash: 1,
+          location: 'vault',
+          bucketHash: helmetBucket,
+        ),
+        // 10 slots: all equipped or locked / non-transferable → no evictee.
+        const ApplyInventoryItem(
+          instanceId: 'eq',
+          itemHash: 10,
+          location: 'equipped',
+          bucketHash: helmetBucket,
+          characterId: target,
+        ),
+        for (var i = 0; i < 9; i++)
+          ApplyInventoryItem(
+            instanceId: 'locked-$i',
+            itemHash: 100 + i,
+            location: 'character',
+            bucketHash: helmetBucket,
+            characterId: target,
+            isLocked: true,
+          ),
+      ];
+
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: 1,
+            instanceId: 'vault-1',
+          ),
+        ],
+        inventory: inventory,
+      );
+
+      expect(transferCalls, 0);
+      expect(result.items.single.reason, kNoRoomOnCharacterMessage);
     },
   );
 
@@ -1301,6 +1352,321 @@ void main() {
     expect(result.items[0].label, 'Exotic weapon');
     expect(result.items[1].label, 'Briarbinds (Exotic armor)');
     expect(result.items[2].label, 'Barrow-Dyad (Exotic weapon)');
+  });
+
+  test(
+    'planned make-room counts toward 2-attempt limit (R3): at most 2 evictions',
+    () async {
+      final transfers = <TransferItemArgs>[];
+      final client = createMockWriteClient(
+        transferItem: (c, a) async {
+          transfers.add(a);
+          if (!a.transferToVault && a.instanceId == 'vault-1') {
+            throw const BungiePlatformException(
+              'Bungie API error: No room',
+              errorCode: kDestinyNoRoomInDestination,
+              errorStatus: 'DestinyNoRoomInDestination',
+            );
+          }
+        },
+        equipItems: (c, a) async => const [],
+      );
+
+      // Full bucket → planner schedules 1 eviction (counts as attempt 1).
+      // Runtime 1642 allows one more eviction (attempt 2), then stops.
+      final inventory = <ApplyInventoryItem>[
+        const ApplyInventoryItem(
+          instanceId: 'vault-1',
+          itemHash: 1,
+          location: 'vault',
+          bucketHash: helmetBucket,
+          name: 'Target',
+        ),
+        const ApplyInventoryItem(
+          instanceId: 'eq',
+          itemHash: 10,
+          location: 'equipped',
+          bucketHash: helmetBucket,
+          characterId: target,
+          power: 200,
+        ),
+        for (var i = 0; i < 9; i++)
+          ApplyInventoryItem(
+            instanceId: 'fill-$i',
+            itemHash: 50 + i,
+            location: 'character',
+            bucketHash: helmetBucket,
+            characterId: target,
+            power: i,
+            name: 'Filler $i',
+          ),
+      ];
+
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'helmet',
+            label: 'Target Helm',
+            itemHash: 1,
+            instanceId: 'vault-1',
+            slot: 'helmet',
+          ),
+        ],
+        inventory: inventory,
+      );
+
+      final evictions =
+          transfers.where((t) => t.transferToVault).map((t) => t.instanceId);
+      expect(evictions.length, 2);
+      expect(evictions, ['fill-0', 'fill-1']);
+      expect(result.items.first.state, ApplyItemState.failed);
+      expect(
+        result.items.first.reason,
+        kMakeRoomStillFullMessage('Target Helm'),
+      );
+    },
+  );
+
+  test('TransferItem 1637 at run time: make-room then retry succeeds', () async {
+    final transfers = <TransferItemArgs>[];
+    var vaultPullAttempts = 0;
+    final client = createMockWriteClient(
+      transferItem: (c, a) async {
+        transfers.add(a);
+        if (!a.transferToVault && a.instanceId == 'vault-1') {
+          vaultPullAttempts += 1;
+          if (vaultPullAttempts == 1) {
+            throw const BungiePlatformException(
+              'Bungie API error: Inventory full',
+              errorCode: kDestinyInventoryFull,
+              errorStatus: 'DestinyInventoryFull',
+            );
+          }
+        }
+      },
+      equipItems: (c, a) async => [
+            for (final id in a.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ],
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-1',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+        name: 'Lustrous Boots',
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'eq',
+        itemHash: 10,
+        location: 'equipped',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 200,
+      ),
+      for (var i = 0; i < 8; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 50 + i,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+          power: 10 + i,
+          name: 'Filler $i',
+        ),
+    ];
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'boots',
+          label: 'Lustrous Boots',
+          itemHash: 1,
+          instanceId: 'vault-1',
+          slot: 'legs',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    expect(transfers.map((t) => t.instanceId).toList(), [
+      'vault-1',
+      'fill-0',
+      'vault-1',
+    ]);
+    expect(result.appliedCount, 1);
+  });
+
+  test('never evicts an item on another character in the same bucket', () async {
+    final transfers = <TransferItemArgs>[];
+    final client = createMockWriteClient(
+      transferItem: (c, a) async => transfers.add(a),
+      equipItems: (c, a) async => [
+            for (final id in a.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ],
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-1',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'eq',
+        itemHash: 10,
+        location: 'equipped',
+        bucketHash: helmetBucket,
+        characterId: target,
+      ),
+      // Lowest power overall — but on another character → must not be picked.
+      const ApplyInventoryItem(
+        instanceId: 'other-junk',
+        itemHash: 99,
+        location: 'character',
+        bucketHash: helmetBucket,
+        characterId: 'char-other',
+        power: 1,
+        name: 'Other Char Junk',
+      ),
+      for (var i = 0; i < 9; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 50 + i,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+          power: 50 + i,
+          name: 'Filler $i',
+        ),
+    ];
+
+    await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Helmet',
+          itemHash: 1,
+          instanceId: 'vault-1',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    final evicted = transfers.where((t) => t.transferToVault).toList();
+    expect(evicted, isNotEmpty);
+    expect(evicted.any((t) => t.instanceId == 'other-junk'), isFalse);
+    expect(evicted.first.instanceId, 'fill-0');
+  });
+
+  test('never evicts locked, postmaster, or non-transferable items', () async {
+    final transfers = <TransferItemArgs>[];
+    final client = createMockWriteClient(
+      transferItem: (c, a) async => transfers.add(a),
+      equipItems: (c, a) async => [
+            for (final id in a.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ],
+    );
+
+    final inventory = <ApplyInventoryItem>[
+      const ApplyInventoryItem(
+        instanceId: 'vault-1',
+        itemHash: 1,
+        location: 'vault',
+        bucketHash: helmetBucket,
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'eq',
+        itemHash: 10,
+        location: 'equipped',
+        bucketHash: helmetBucket,
+        characterId: target,
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'locked-low',
+        itemHash: 11,
+        location: 'character',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 1,
+        isLocked: true,
+        name: 'Locked',
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'no-xfer',
+        itemHash: 12,
+        location: 'character',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 2,
+        isTransferable: false,
+        name: 'Bound',
+      ),
+      const ApplyInventoryItem(
+        instanceId: 'pm',
+        itemHash: 13,
+        location: 'postmaster',
+        bucketHash: helmetBucket,
+        characterId: target,
+        power: 3,
+        name: 'Postmaster',
+      ),
+      for (var i = 0; i < 7; i++)
+        ApplyInventoryItem(
+          instanceId: 'fill-$i',
+          itemHash: 50 + i,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: target,
+          power: 100 + i,
+          name: 'Filler $i',
+        ),
+    ];
+
+    await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Helmet',
+          itemHash: 1,
+          instanceId: 'vault-1',
+        ),
+      ],
+      inventory: inventory,
+    );
+
+    final evictedIds =
+        transfers.where((t) => t.transferToVault).map((t) => t.instanceId);
+    expect(evictedIds, isNot(contains('locked-low')));
+    expect(evictedIds, isNot(contains('no-xfer')));
+    expect(evictedIds, isNot(contains('pm')));
+    expect(evictedIds.first, 'fill-0');
   });
 }
 

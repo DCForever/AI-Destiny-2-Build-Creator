@@ -59,6 +59,9 @@ const String kInActivityEquipMessage =
 const String kNoRoomOnCharacterMessage = 'No room on character';
 
 /// Vault cannot accept another transfer (including make-room eviction).
+///
+/// Capacity gate uses [kApplyVaultCapacity] in the app package (Bungie vault
+/// size as of Update 9.7.0 — see that constant's doc comment).
 const String kNoRoomInVaultMessage = 'No room in vault';
 
 /// To-vault hop succeeded but vault→character failed after make-room attempts.

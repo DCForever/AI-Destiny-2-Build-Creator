@@ -257,7 +257,10 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
     if (!isMounted()) {
       return const BuildsMockApplyOutcome(finished: true);
     }
-    return BuildsMockApplyOutcome(error: e.toString(), finished: true);
+    return const BuildsMockApplyOutcome(
+      error: kGenericApplyFailureMessage,
+      finished: true,
+    );
   }
 }
 
@@ -331,12 +334,16 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
         ApplyInventoryItem(
           instanceId: item.instanceId,
           itemHash: item.itemHash,
-          location: item.location,
+          location: item.bucketHash == kPostmasterBucketHash
+              ? 'postmaster'
+              : item.location,
           bucketHash: item.bucketHash,
           characterId: item.characterId,
           isExotic: item.isExotic || exoticHashes.contains(item.itemHash),
           power: item.power,
           name: nameByHash[item.itemHash] ?? '',
+          isLocked: item.isLocked,
+          isTransferable: item.isTransferable,
         ),
   ];
   final liveByInstance = <String, ApplyInventoryItem>{

@@ -310,6 +310,11 @@ _ParseAttempt _parseItemAttempt(
   final socketCapture = isWeapon || isTransfer
       ? _parseSocketCapture(instanceId, sockets, reusablePlugsMap)
       : null;
+  final itemState = _asInt(item['state']) ?? 0;
+  final isLocked = (itemState & kDestinyItemStateLocked) != 0;
+  final transferStatus = _asInt(item['transferStatus']) ??
+      kDestinyTransferStatusCanTransfer;
+  final isTransferable = transferStatus == kDestinyTransferStatusCanTransfer;
 
   return _ParseAttempt(
     item: RawInventoryItem(
@@ -326,6 +331,8 @@ _ParseAttempt _parseItemAttempt(
       gearTier: gearTier,
       tierType: tierType,
       socketCapture: socketCapture,
+      isLocked: isLocked,
+      isTransferable: isTransferable,
     ),
     dropReason: null,
   );

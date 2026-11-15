@@ -111,12 +111,14 @@ class ApplyInventoryItem {
     this.isExotic = false,
     this.power = 0,
     this.name = '',
+    this.isLocked = false,
+    this.isTransferable = true,
   });
 
   final String instanceId;
   final int itemHash;
 
-  /// `vault` | `character` | `equipped`.
+  /// `vault` | `character` | `equipped` | `postmaster`.
   final String location;
   final int bucketHash;
   final String? characterId;
@@ -127,6 +129,12 @@ class ApplyInventoryItem {
 
   /// Display name when known (make-room outcome rows).
   final String name;
+
+  /// Destiny ItemState Locked bit — never make-room-evict locked items.
+  final bool isLocked;
+
+  /// False when DestinyTransferStatus is not CanTransfer.
+  final bool isTransferable;
 }
 
 /// Optional delay injector (tests record throttle sleeps).
@@ -136,7 +144,12 @@ typedef ApplyDelay = Future<void> Function(Duration delay);
 const int kApplyCharacterBucketCapacity = 10;
 
 /// Vault capacity (all vault items). Make-room refuses when vault is full.
-const int kApplyVaultCapacity = 600;
+///
+/// Bungie vault size as of Destiny 2 Update 9.7.0 (Monument of Triumph): 1300
+/// slots. Prior: help.bungie.net listed 600; Update 9.5.0 added +300 → 1000
+/// (bungie.net News `destiny_update_9_5_0`); 9.7.0 expanded to 1300
+/// (titanquisitor.com / community patch notes for 9.7.0).
+const int kApplyVaultCapacity = 1300;
 
 /// Max make-room eviction attempts per planned item (then fixed-text failure).
 const int kApplyMakeRoomMaxAttempts = 2;
@@ -287,9 +300,14 @@ Future<ApplyToCharacterProgress> applyToCharacter({
         onReachedVault: () => reachedVault = true,
       );
       if (transferResult != null) {
+        // After a successful hop onto the vault, always tell Daniel the item
+        // is stranded there (PR55) — do not replace with generic still-full.
+        final reason = reachedVault
+            ? kMovedToVaultStuckMessage
+            : transferResult;
         rows[index] = rows[index].copyWith(
           state: ApplyItemState.failed,
-          reason: transferResult,
+          reason: reason,
         );
         emit(index: index, running: true);
         continue;
@@ -539,6 +557,9 @@ _ApplyItemPlan _planItem({
   final dequips = <EquipItemArgs>[];
   final transfers = <TransferItemArgs>[];
 
+  // Pick a make-room candidate early, but only reserve after every refusal
+  // check for this item has passed (so a later refuse does not consume a slot).
+  ApplyInventoryItem? plannedEvictee;
   final needsCharacterSlot = onOther || inVault;
   if (needsCharacterSlot) {
     final occupied = _bucketCount(inventory, characterId, live.bucketHash) +
@@ -557,13 +578,13 @@ _ApplyItemPlan _planItem({
           refusalReason: kNoRoomInVaultMessage,
         );
       }
-      final evictee = _pickMakeRoomEvictee(
+      plannedEvictee = _pickMakeRoomEvictee(
         inventory: inventory,
         characterId: characterId,
         bucketHash: live.bucketHash,
         excludeIds: {...plannedIds, ...reservedEvicteeIds},
       );
-      if (evictee == null) {
+      if (plannedEvictee == null) {
         return _ApplyItemPlan(
           rowIndex: rowIndex,
           instanceId: item.instanceId,
@@ -575,24 +596,15 @@ _ApplyItemPlan _planItem({
           refusalReason: kNoRoomOnCharacterMessage,
         );
       }
-      transfers.add(
-        TransferItemArgs(
-          itemHash: evictee.itemHash,
-          instanceId: evictee.instanceId,
-          characterId: characterId,
-          transferToVault: true,
-        ),
-      );
-      reservedEvicteeIds.add(evictee.instanceId);
-      // Mutate working inventory so later plan rows see the freed slot and
-      // vault occupancy; do not also bump vaultReserved (would double-count).
-      _markInventoryMovedToVault(inventory, evictee.instanceId);
     }
   }
 
   if (onOther) {
-    final vaultOccupied = _vaultCount(inventory) + vaultReserved();
-    if (vaultOccupied >= kApplyVaultCapacity) {
+    // Eviction (if any) also needs a vault slot before the hop.
+    final vaultForHop = _vaultCount(inventory) +
+        vaultReserved() +
+        (plannedEvictee != null ? 1 : 0);
+    if (vaultForHop >= kApplyVaultCapacity) {
       return _ApplyItemPlan(
         rowIndex: rowIndex,
         instanceId: item.instanceId,
@@ -632,6 +644,20 @@ _ApplyItemPlan _planItem({
         characterId: live.characterId!,
       ),
     );
+  }
+
+  // All refusal checks passed — commit make-room reservation now.
+  if (plannedEvictee != null) {
+    transfers.add(
+      TransferItemArgs(
+        itemHash: plannedEvictee.itemHash,
+        instanceId: plannedEvictee.instanceId,
+        characterId: characterId,
+        transferToVault: true,
+      ),
+    );
+    reservedEvicteeIds.add(plannedEvictee.instanceId);
+    _markInventoryMovedToVault(inventory, plannedEvictee.instanceId);
   }
 
   if (onOther) {
@@ -707,8 +733,9 @@ Future<String?> _runTransfersWithMakeRoom({
   required void Function(String message, String evicteeId) onMakeRoom,
   required void Function() onReachedVault,
 }) async {
-  var makeRoomAttempts = 0;
+  // Planned make-room transfers count toward the per-item limit of 2.
   final steps = List<TransferItemArgs>.from(plan.transferSteps);
+  var makeRoomAttempts = _plannedMakeRoomCount(plan);
 
   for (var i = 0; i < steps.length; i++) {
     final step = steps[i];
@@ -717,7 +744,7 @@ Future<String?> _runTransfersWithMakeRoom({
         () => writeClient.transferItem(ctx, step),
         delay: sleeper,
       );
-      if (step.transferToVault) {
+      if (step.transferToVault && step.instanceId == plan.instanceId) {
         onReachedVault();
       }
       if (step.instanceId != plan.instanceId && step.transferToVault) {
@@ -730,6 +757,8 @@ Future<String?> _runTransfersWithMakeRoom({
         rethrow;
       }
       if (step.transferToVault) {
+        // Eviction or hop-to-vault failed for space — surface vault-full text
+        // (caller maps to stranded-vault when the pin itself reached vault).
         return kNoRoomInVaultMessage;
       }
       // Destination character bucket full — make room, then retry this step.
@@ -804,11 +833,20 @@ bool _isNoRoomError(Object error) {
   return false;
 }
 
+int _plannedMakeRoomCount(_ApplyItemPlan plan) {
+  var n = 0;
+  for (final step in plan.transferSteps) {
+    if (step.instanceId != plan.instanceId && step.transferToVault) n += 1;
+  }
+  return n;
+}
+
 /// Pick an unequipped non-plan item to move to vault.
 ///
 /// Rule (deterministic): same character + bucketHash, location == `character`
-/// (never equipped), not excluded; prefer non-exotic, then lowest power, then
-/// lowest instanceId. TransferItem only — never lock-state changes.
+/// (never equipped / postmaster), not locked, transferable, not excluded;
+/// prefer non-exotic, then lowest power, then lowest instanceId.
+/// TransferItem only — never lock-state changes.
 ApplyInventoryItem? _pickMakeRoomEvictee({
   required List<ApplyInventoryItem> inventory,
   required String characterId,
@@ -820,6 +858,12 @@ ApplyInventoryItem? _pickMakeRoomEvictee({
     if (row.characterId != characterId) continue;
     if (row.bucketHash != bucketHash) continue;
     if (row.location != 'character') continue;
+    if (row.location == 'postmaster' ||
+        row.bucketHash == kPostmasterBucketHash) {
+      continue;
+    }
+    if (row.isLocked) continue;
+    if (!row.isTransferable) continue;
     if (excludeIds.contains(row.instanceId)) continue;
     if (best == null) {
       best = row;
@@ -868,6 +912,8 @@ void _markInventoryMovedToVault(
       isExotic: row.isExotic,
       power: row.power,
       name: row.name,
+      isLocked: row.isLocked,
+      isTransferable: row.isTransferable,
     );
     return;
   }
