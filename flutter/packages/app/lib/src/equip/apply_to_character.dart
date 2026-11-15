@@ -165,6 +165,11 @@ const int kApplyMakeRoomMaxAttempts = 2;
 /// Id prefix for make-room outcome rows (excluded from applied/failed counts).
 const String kApplyMakeRoomRowIdPrefix = 'make-room:';
 
+/// Builds a socket plan from items that actually equipped in this run.
+typedef ApplySocketPlanBuilder = ApplySocketPlan? Function(
+  List<ApplyToCharacterItem> successfullyEquipped,
+);
+
 /// Builds a DIM-style move + equip plan and executes it.
 ///
 /// Apply itself is the confirmation — plans and runs immediately with inline
@@ -176,6 +181,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   required List<ApplyToCharacterItem> items,
   List<ApplyInventoryItem> inventory = const [],
   ApplySocketPlan? socketPlan,
+  ApplySocketPlanBuilder? socketPlanBuilder,
   void Function(ApplyToCharacterProgress progress)? onProgress,
   ApplyDelay? delay,
 }) async {
@@ -208,17 +214,26 @@ Future<ApplyToCharacterProgress> applyToCharacter({
     onProgress?.call(snap);
   }
 
-  final sockets = socketPlan;
-  if (items.isEmpty && (sockets == null || !sockets.hasWork)) {
-    const empty = ApplyToCharacterProgress(
-      items: [],
-      currentIndex: 0,
-      total: 0,
-      running: false,
-      summary: '0 applied, 0 failed',
-    );
-    onProgress?.call(empty);
-    return empty;
+  ApplySocketPlan? resolveSockets(
+    List<ApplyToCharacterItem> equipped,
+  ) {
+    if (socketPlanBuilder != null) return socketPlanBuilder(equipped);
+    return socketPlan;
+  }
+
+  if (items.isEmpty) {
+    final earlySockets = resolveSockets(const []);
+    if (earlySockets == null || !earlySockets.hasWork) {
+      const empty = ApplyToCharacterProgress(
+        items: [],
+        currentIndex: 0,
+        total: 0,
+        running: false,
+        summary: '0 applied, 0 failed',
+      );
+      onProgress?.call(empty);
+      return empty;
+    }
   }
 
   emit(index: 0, running: true);
@@ -253,6 +268,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   var stopReason = kInActivityEquipMessage;
 
   if (items.isEmpty) {
+    final sockets = resolveSockets(const []);
     if (sockets != null && sockets.hasWork) {
       await _runApplySocketPhase(
         writeClient: writeClient,
@@ -365,6 +381,17 @@ Future<ApplyToCharacterProgress> applyToCharacter({
         p,
   ];
 
+  List<ApplyToCharacterItem> successfullyEquipped() {
+    final byId = <String, ApplyToCharacterItem>{
+      for (final item in items) item.instanceId: item,
+    };
+    return [
+      for (final p in plan)
+        if (rows[p.rowIndex].state == ApplyItemState.done)
+          if (byId[p.instanceId] != null) byId[p.instanceId]!,
+    ];
+  }
+
   if (equipable.isEmpty || stopEquips) {
     if (stopEquips) {
       for (final p in equipable) {
@@ -375,6 +402,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
       }
       return _finish(rows, onProgress);
     }
+    final sockets = resolveSockets(successfullyEquipped());
     if (sockets != null && sockets.hasWork) {
       await _runApplySocketPhase(
         writeClient: writeClient,
@@ -464,16 +492,19 @@ Future<ApplyToCharacterProgress> applyToCharacter({
     }
   }
 
-  if (!stopSockets && sockets != null && sockets.hasWork) {
-    await _runApplySocketPhase(
-      writeClient: writeClient,
-      ctx: ctx,
-      characterId: characterId,
-      plan: sockets,
-      rows: rows,
-      emit: emit,
-      sleeper: sleeper,
-    );
+  if (!stopSockets) {
+    final sockets = resolveSockets(successfullyEquipped());
+    if (sockets != null && sockets.hasWork) {
+      await _runApplySocketPhase(
+        writeClient: writeClient,
+        ctx: ctx,
+        characterId: characterId,
+        plan: sockets,
+        rows: rows,
+        emit: emit,
+        sleeper: sleeper,
+      );
+    }
   }
 
   return _finish(rows, onProgress);

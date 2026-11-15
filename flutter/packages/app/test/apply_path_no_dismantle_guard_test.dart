@@ -5,12 +5,12 @@ import 'package:test/test.dart';
 /// Apply-to-character path must never reference dismantle/delete/destroy,
 /// paid insert-plug, InsertPlug, or pull-from-postmaster APIs.
 ///
-/// CHANGED (InsertSocketPlugFree): the previous ban on the substring
-/// `InsertSocketPlug` / `/Destiny2/Actions/Items/InsertSocketPlug` also
-/// matched the Free endpoint. Guard now allows exactly
-/// `/Destiny2/Actions/Items/InsertSocketPlugFree/` and still bans the paid
-/// `/Destiny2/Actions/Items/InsertSocketPlug/` (and InsertPlug / dismantle /
-/// delete / postmaster / lock / track).
+/// CHANGED (InsertSocketPlugFree + Skeptic RED R5): ban regexes
+/// `InsertSocketPlug(?!Free)` and `insertSocketPlug(?!Free)` as substrings in
+/// every scanned file so a missing trailing slash, a string built in pieces,
+/// or an `insertSocketPlug(` method cannot slip through. The previous
+/// `/InsertSocketPlug/` + Free-suffix loophole is removed. Free remains
+/// allowed only as `InsertSocketPlugFree` / `insertSocketPlugFree`.
 const List<String> kBannedApplyPatterns = <String>[
   'dismantleItem',
   'DismantleItem',
@@ -29,7 +29,6 @@ const List<String> kBannedApplyPatterns = <String>[
   'PullFromPostmaster',
   'pullFromPostmaster',
   '/Destiny2/Actions/Items/PullFromPostmaster',
-  '/Destiny2/Actions/Items/InsertSocketPlug/',
   'SetLockState',
   'setLockState',
   '/Destiny2/Actions/Items/SetLockState',
@@ -39,13 +38,15 @@ const List<String> kBannedApplyPatterns = <String>[
   '/Destiny2/Actions/Items/SetTrackedState',
 ];
 
+/// Paid / incomplete InsertSocketPlug identifiers (R5). Negative lookahead
+/// keeps `InsertSocketPlugFree` / `insertSocketPlugFree` allowed.
+final RegExp kBannedInsertSocketPlugNotFree = RegExp(r'InsertSocketPlug(?!Free)');
+final RegExp kBannedInsertSocketPlugMethodNotFree =
+    RegExp(r'insertSocketPlug(?!Free)');
+
 /// Exact Free endpoint that Apply may call (must appear when Free is wired).
 const String kAllowedInsertSocketPlugFreePath =
     '/Destiny2/Actions/Items/InsertSocketPlugFree/';
-
-/// Exact paid endpoint that must never appear anywhere under packages/*/lib.
-const String kBannedPaidInsertSocketPlugPath =
-    '/Destiny2/Actions/Items/InsertSocketPlug/';
 
 /// Exact apply-path sources (posix-ish relative to packages/app).
 ///
@@ -78,9 +79,19 @@ void main() {
       scanned.add(file.path.replaceAll('\\', '/'));
       final text = file.readAsStringSync();
       for (final pattern in kBannedApplyPatterns) {
-        if (_containsBannedPattern(text, pattern)) {
+        if (text.contains(pattern)) {
           violations.add('${file.path}: contains "$pattern"');
         }
+      }
+      if (kBannedInsertSocketPlugNotFree.hasMatch(text)) {
+        violations.add(
+          '${file.path}: matches InsertSocketPlug(?!Free)',
+        );
+      }
+      if (kBannedInsertSocketPlugMethodNotFree.hasMatch(text)) {
+        violations.add(
+          '${file.path}: matches insertSocketPlug(?!Free)',
+        );
       }
     }
     expect(
@@ -100,7 +111,7 @@ void main() {
     );
   });
 
-  test('write client allows InsertSocketPlugFree and bans paid InsertSocketPlug',
+  test('write client allows InsertSocketPlugFree and bans paid socket-plug',
       () {
     final appRoot = _findAppPackageRoot();
     final file = File(
@@ -130,18 +141,18 @@ void main() {
     expect(text.contains('SetLockState'), isFalse);
     expect(text.contains('SetTrackedState'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/SetLockState'), isFalse);
-    // Paid path string may appear only inside a ban/comment about never calling
-    // it; the POST path must be Free. Fail if a postJson targets the paid path.
+    expect(kBannedInsertSocketPlugNotFree.hasMatch(text), isFalse);
+    expect(kBannedInsertSocketPlugMethodNotFree.hasMatch(text), isFalse);
     expect(
       RegExp(
         "postJson\\(\\s*['\"]/Destiny2/Actions/Items/InsertSocketPlug/['\"]",
       ).hasMatch(text),
       isFalse,
-      reason: 'HttpBungieWriteClient must never POST the paid InsertSocketPlug',
+      reason: 'HttpBungieWriteClient must never POST the paid socket-plug path',
     );
   });
 
-  test('paid InsertSocketPlug path never appears under packages/*/lib', () {
+  test('paid socket-plug path never appears under packages/*/lib', () {
     final appRoot = _findAppPackageRoot();
     final packagesRoot = Directory('${appRoot.path}/..');
     final violations = <String>[];
@@ -152,7 +163,8 @@ void main() {
       for (final file in libDir.listSync(recursive: true)) {
         if (file is! File || !file.path.endsWith('.dart')) continue;
         final text = file.readAsStringSync();
-        if (_containsPaidInsertSocketPlugCall(text)) {
+        if (kBannedInsertSocketPlugNotFree.hasMatch(text) ||
+            kBannedInsertSocketPlugMethodNotFree.hasMatch(text)) {
           violations.add(file.path.replaceAll('\\', '/'));
         }
       }
@@ -160,36 +172,10 @@ void main() {
     expect(
       violations,
       isEmpty,
-      reason: 'paid InsertSocketPlug must not appear in lib/:\n'
+      reason: 'paid InsertSocketPlug(?!Free) must not appear in lib/:\n'
           '${violations.join('\n')}',
     );
   });
-}
-
-/// True when [text] contains [pattern], except the paid InsertSocketPlug path
-/// is allowed only as a documented ban (never as a postJson target). Free
-/// endpoint containing the paid prefix is not a hit for the paid pattern.
-bool _containsBannedPattern(String text, String pattern) {
-  if (pattern != kBannedPaidInsertSocketPlugPath) {
-    return text.contains(pattern);
-  }
-  return _containsPaidInsertSocketPlugCall(text);
-}
-
-/// Paid path hits that are not the Free endpoint suffix.
-bool _containsPaidInsertSocketPlugCall(String text) {
-  var start = 0;
-  while (true) {
-    final idx = text.indexOf(kBannedPaidInsertSocketPlugPath, start);
-    if (idx < 0) return false;
-    final after = idx + kBannedPaidInsertSocketPlugPath.length;
-    // Free path is `...InsertSocketPlug/` + `Free/` — skip those.
-    if (after + 4 <= text.length && text.substring(after, after + 4) == 'Free') {
-      start = after;
-      continue;
-    }
-    return true;
-  }
 }
 
 Directory _findAppPackageRoot() {

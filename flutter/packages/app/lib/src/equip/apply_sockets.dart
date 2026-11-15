@@ -25,7 +25,6 @@ Future<bool> _runApplySocketPhase({
       ),
     );
     emit(index: rows.length - 1, running: true);
-    // Skip subclass plugs only; armor mods may still apply.
     final stopped = await _runPlugSteps(
       writeClient: writeClient,
       ctx: ctx,
@@ -155,6 +154,8 @@ Future<bool> _runPlugSteps({
       emit,
   required ApplyDelay sleeper,
 }) async {
+  final completedClears = <String, ApplyPlugStep>{};
+
   for (var i = 0; i < steps.length; i++) {
     final step = steps[i];
     final rowIndex = rows.length;
@@ -204,6 +205,9 @@ Future<bool> _runPlugSteps({
         ),
         delay: sleeper,
       );
+      if (step.kind == ApplyPlugKind.armorModClear) {
+        completedClears[step.id] = step;
+      }
       rows[rowIndex] = rows[rowIndex].copyWith(
         state: ApplyItemState.done,
         clearReason: true,
@@ -211,22 +215,57 @@ Future<bool> _runPlugSteps({
       emit(index: rowIndex, running: true);
     } catch (error) {
       final mapped = _mapWriteError(error);
-      final reason =
-          mapped.isInActivity ? kInActivityEquipMessage : mapped.statusText;
+      if (mapped.isInActivity) {
+        rows[rowIndex] = rows[rowIndex].copyWith(
+          state: ApplyItemState.failed,
+          reason: kInActivityEquipMessage,
+        );
+        emit(index: rowIndex, running: true);
+        _appendFailedPlugSteps(
+          rows,
+          steps.sublist(i + 1),
+          reason: kInActivityEquipMessage,
+        );
+        emit(index: rows.length - 1, running: true);
+        return true;
+      }
+
+      // Plug failures: fixed planner text only — never e.toString() / raw Bungie.
+      var reason = kApplySocketChangeFailedMessage;
+      final clearId = step.requiresClearStepId;
+      final clear = clearId == null ? null : completedClears[clearId];
+      final restoreHash = step.restorePlugHash;
+      final restoreSocket = step.restoreSocketIndex;
+      final restoreItem = step.restoreItemInstanceId;
+      if (clear != null &&
+          restoreHash != null &&
+          restoreSocket != null &&
+          restoreItem != null &&
+          restoreItem.isNotEmpty) {
+        try {
+          await runWriteWithThrottleBackoff(
+            () => writeClient.insertSocketPlugFree(
+              ctx,
+              InsertSocketPlugFreeArgs(
+                itemId: restoreItem,
+                socketIndex: restoreSocket,
+                plugItemHash: restoreHash,
+                characterId: characterId,
+              ),
+            ),
+            delay: sleeper,
+          );
+          reason = kApplySocketRestoredMessage;
+        } catch (_) {
+          reason = kApplySocketRestoreFailedMessage;
+        }
+      }
+
       rows[rowIndex] = rows[rowIndex].copyWith(
         state: ApplyItemState.failed,
         reason: reason,
       );
       emit(index: rowIndex, running: true);
-      if (mapped.stopFurtherEquips) {
-        _appendFailedPlugSteps(
-          rows,
-          steps.sublist(i + 1),
-          reason: reason,
-        );
-        emit(index: rows.length - 1, running: true);
-        return true;
-      }
     }
   }
   return false;

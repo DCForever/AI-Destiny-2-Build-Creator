@@ -2,11 +2,11 @@
 ///
 /// Order (DIM-aligned, documented):
 /// 1. Equip subclass item (caller) when not already equipped.
-/// 2. Subclass sockets: super → class ability → movement → melee → grenade →
-///    aspects → fragments (manifest socket-category indexes).
-/// 3. Armor mods on equipped pieces. Before inserting a higher-cost mod set,
-///    clear conflicting plugs first (empty-plug steps precede inserts) so
-///    energy/slot caps are freed — same idea as DIM's clear-then-assign.
+/// 2. Subclass sockets by category: super → class ability → movement → melee →
+///    grenade → aspects → fragments (never a shared first-free ability list).
+/// 3. Armor mods: each mod → exactly one armor piece by slot category; check
+///    allowed plugs; clear only when its matching insert is planned and fits
+///    energy after the clear.
 ///
 /// Never calls the paid non-Free plug-insert action. Skips unowned /
 /// unaffordable / ambiguous names with fixed-text reasons (no guessing).
@@ -20,6 +20,14 @@ const String kApplySubclassNotOnCharacterMessage =
 const String kApplyPlugNotUnlockedPrefix = 'Not unlocked: ';
 const String kApplyPlugNotEnoughEnergyPrefix = 'Not enough armor energy: ';
 const String kApplyPlugUnresolvablePrefix = 'Could not resolve: ';
+const String kApplyPlugDoesNotFitPrefix = 'Does not fit: ';
+const String kArmorModsSkippedUnavailableMessage =
+    'Armor mods skipped: mod data unavailable';
+const String kApplySocketChangeFailedMessage = 'Socket change failed';
+const String kApplySocketRestoredMessage =
+    'Socket change failed; original plug restored';
+const String kApplySocketRestoreFailedMessage =
+    'Socket change failed; could not restore original plug';
 
 /// Kind used for ordering + outcome labels.
 enum ApplyPlugKind {
@@ -31,8 +39,18 @@ enum ApplyPlugKind {
   aspect,
   fragment,
   armorMod,
-  /// Empty-plug clear used before armor mod inserts (energy/slot free-up).
+  /// Empty-plug clear used before armor mod inserts (energy free-up).
   armorModClear,
+}
+
+/// Armor slot used to assign each mod to exactly one piece.
+enum ApplyArmorSlot {
+  helmet,
+  arms,
+  chest,
+  legs,
+  classItem,
+  general,
 }
 
 /// Display prefix for outcome rows (`Aspect: Weaver's Call`).
@@ -75,6 +93,9 @@ String notEnoughArmorEnergyMessage(String name) =>
 String unresolvablePlugMessage(String name) =>
     '$kApplyPlugUnresolvablePrefix${name.trim()}';
 
+String doesNotFitPlugMessage(String name) =>
+    '$kApplyPlugDoesNotFitPrefix${name.trim()}';
+
 /// One resolved (or skipped) plug step for Apply.
 class ApplyPlugStep {
   const ApplyPlugStep({
@@ -86,6 +107,10 @@ class ApplyPlugStep {
     required this.plugItemHash,
     this.currentPlugHash,
     this.skipReason,
+    this.requiresClearStepId,
+    this.restorePlugHash,
+    this.restoreSocketIndex,
+    this.restoreItemInstanceId,
   });
 
   final String id;
@@ -99,6 +124,14 @@ class ApplyPlugStep {
   /// When set, Apply records the row and makes no write call.
   final String? skipReason;
 
+  /// Insert step: id of a preceding clear that must be restored if insert fails.
+  final String? requiresClearStepId;
+
+  /// Original plug to restore on [restoreSocketIndex] after a failed insert.
+  final int? restorePlugHash;
+  final int? restoreSocketIndex;
+  final String? restoreItemInstanceId;
+
   bool get shouldCall {
     if (skipReason != null) return false;
     if (currentPlugHash != null && currentPlugHash == plugItemHash) {
@@ -108,7 +141,7 @@ class ApplyPlugStep {
   }
 }
 
-/// Subclass inventory pin for EquipItem (mirrors ApplyToCharacterItem fields).
+/// Subclass inventory pin for EquipItem.
 class ApplySubclassPin {
   const ApplySubclassPin({
     required this.id,
@@ -130,12 +163,16 @@ class ApplyArmorPin {
     required this.label,
     required this.itemHash,
     required this.instanceId,
+    this.slot,
   });
 
   final String id;
   final String label;
   final int itemHash;
   final String instanceId;
+
+  /// Wire name: helmet / arms / chest / legs / class_item.
+  final String? slot;
 }
 
 /// Subclass + plug plan consumed after gear moves/equips.
@@ -148,18 +185,10 @@ class ApplySocketPlan {
     this.armorMods = const [],
   });
 
-  /// Subclass inventory pin to EquipItem when not already equipped.
   final ApplySubclassPin? subclass;
-
   final bool subclassAlreadyEquipped;
-
-  /// When set, subclass is not on the character — report and skip plug steps.
   final String? subclassMissingReason;
-
-  /// Ordered: super → abilities → aspects → fragments.
   final List<ApplyPlugStep> subclassPlugs;
-
-  /// Ordered after subclass plugs; clears (if any) precede inserts.
   final List<ApplyPlugStep> armorMods;
 
   bool get hasWork =>
@@ -201,11 +230,19 @@ class ApplyManifestItemDef {
     required this.hash,
     required this.name,
     this.socketCategories = const [],
+    this.allowedPlugHashesBySocket = const {},
+    this.socketPlugCategoryHint = const {},
   });
 
   final int hash;
   final String name;
   final List<ApplyManifestSocketCategory> socketCategories;
+
+  /// Reusable / randomized / socketType whitelist per socket index.
+  final Map<int, Set<int>> allowedPlugHashesBySocket;
+
+  /// Optional plugCategoryIdentifier hint per socket (from initial plug).
+  final Map<int, String> socketPlugCategoryHint;
 }
 
 /// Live socket state on an instance (fakeable profile slice).
@@ -221,6 +258,8 @@ class ApplyInstanceSocketState {
     this.energyCapacity = 0,
     this.energyUsed = 0,
     this.emptyPlugHashBySocket = const {},
+    this.allowedPlugHashesBySocket = const {},
+    this.armorModDataKnown = false,
   });
 
   final String instanceId;
@@ -228,11 +267,17 @@ class ApplyInstanceSocketState {
   final int bucketHash;
   final String? characterId;
   final String location;
+
+  /// Equipped plug keyed by socket index (never assume flat plugHashes order).
   final Map<int, int> equippedPlugBySocket;
   final Set<int> ownedPlugHashes;
   final int energyCapacity;
   final int energyUsed;
   final Map<int, int> emptyPlugHashBySocket;
+  final Map<int, Set<int>> allowedPlugHashesBySocket;
+
+  /// When false, planner skips all armor-mod steps with fixed text (R3).
+  final bool armorModDataKnown;
 }
 
 /// Manifest + name lookup ports for [planApplySockets].
@@ -245,16 +290,14 @@ class ApplySocketManifestLookup {
 
   final ApplyManifestItemDef? Function(int itemHash) itemDef;
   final ApplyManifestPlugDef? Function(int plugHash) plugDef;
-
-  /// Returns a single hash when [name] resolves uniquely; otherwise null.
   final int? Function(String name) resolveUniquePlugHashByName;
 }
 
 /// Socket category hashes used for subclass plug ordering (DIM / enums).
 const List<int> kApplySuperSocketCategoryHashes = <int>[457473665];
 const List<int> kApplyAbilitySocketCategoryHashes = <int>[
-  309722977, // Abilities_Abilities
-  3218807805, // Abilities_Abilities_Ikora
+  309722977,
+  3218807805,
 ];
 const List<int> kApplyAspectSocketCategoryHashes = <int>[
   2047681910,
@@ -269,7 +312,7 @@ const List<int> kApplyFragmentSocketCategoryHashes = <int>[
   2819965312,
 ];
 const List<int> kApplyArmorModSocketCategoryHashes = <int>[
-  590099826, // ArmorMods
+  590099826,
 ];
 
 /// Named plug from build detail / DIM cache (hash optional until resolved).
@@ -294,8 +337,6 @@ class ApplyBuildSocketInputs {
 
   final int? subclassHash;
   final String subclassName;
-
-  /// Display order from detail; planner reorders by kind.
   final List<ApplyNamedPlug> subclassPlugs;
   final List<ApplyNamedPlug> armorMods;
 }
@@ -326,7 +367,6 @@ ApplySocketPlan planApplySockets({
       manifest: manifest,
     );
     if (subclassState.missingReason != null) {
-      // Still plan armor mods; report subclass miss separately.
       subclassMissingReason = subclassState.missingReason;
     } else {
       subclassItem = subclassState.item;
@@ -346,22 +386,12 @@ ApplySocketPlan planApplySockets({
     }
   }
 
-  final armorSteps = <ApplyPlugStep>[];
-  for (final armor in equippedArmor) {
-    final live = _instanceById(instances, armor.instanceId);
-    if (live == null) continue;
-    final def = manifest.itemDef(armor.itemHash);
-    if (def == null) continue;
-    armorSteps.addAll(
-      _planArmorModsForPiece(
-        targets: build.armorMods,
-        armor: armor,
-        instance: live,
-        itemDef: def,
-        manifest: manifest,
-      ),
-    );
-  }
+  final armorSteps = _planArmorMods(
+    targets: build.armorMods,
+    equippedArmor: equippedArmor,
+    instances: instances,
+    manifest: manifest,
+  );
 
   return ApplySocketPlan(
     subclass: subclassItem,
@@ -386,6 +416,7 @@ class _SubclassLocate {
   final String? missingReason;
 }
 
+/// Exact hash or exact non-empty name only; never vault (null characterId).
 _SubclassLocate _findSubclass({
   required String characterId,
   required int? subclassHash,
@@ -394,22 +425,24 @@ _SubclassLocate _findSubclass({
   required ApplySocketManifestLookup manifest,
 }) {
   ApplyInstanceSocketState? match;
-  for (final row in instances) {
-    if (row.bucketHash != kSubclassBucketHash) continue;
-    if (row.characterId != null && row.characterId != characterId) continue;
-    if (subclassHash != null && row.itemHash == subclassHash) {
-      match = row;
-      break;
-    }
-  }
-  if (match == null && subclassName.trim().isNotEmpty) {
-    final needle = subclassName.trim().toLowerCase();
+  if (subclassHash != null) {
     for (final row in instances) {
       if (row.bucketHash != kSubclassBucketHash) continue;
-      if (row.characterId != null && row.characterId != characterId) continue;
+      if (row.characterId == null || row.characterId != characterId) continue;
+      if (row.itemHash == subclassHash) {
+        match = row;
+        break;
+      }
+    }
+  }
+  final needle = subclassName.trim().toLowerCase();
+  if (match == null && needle.isNotEmpty) {
+    for (final row in instances) {
+      if (row.bucketHash != kSubclassBucketHash) continue;
+      if (row.characterId == null || row.characterId != characterId) continue;
       final def = manifest.itemDef(row.itemHash);
       final name = (def?.name ?? '').trim().toLowerCase();
-      if (name == needle || name.contains(needle) || needle.contains(name)) {
+      if (name.isNotEmpty && name == needle) {
         match = row;
         break;
       }
@@ -453,12 +486,13 @@ List<int> _indexesForCategories(
   ApplyManifestItemDef itemDef,
   List<int> categoryHashes,
 ) {
+  final out = <int>[];
   for (final cat in itemDef.socketCategories) {
     if (categoryHashes.contains(cat.socketCategoryHash)) {
-      return cat.socketIndexes;
+      out.addAll(cat.socketIndexes);
     }
   }
-  return const [];
+  return out;
 }
 
 ApplyPlugKind? _kindFromPlugCategory(String cat) {
@@ -483,6 +517,49 @@ ApplyPlugKind? _kindFromPlugCategory(String cat) {
   }
   if (cat.startsWith('enhancements.')) return ApplyPlugKind.armorMod;
   return null;
+}
+
+ApplyArmorSlot? armorSlotFromPlugCategory(String cat) {
+  if (RegExp(r'enhancements\.(v2_)?head').hasMatch(cat)) {
+    return ApplyArmorSlot.helmet;
+  }
+  if (RegExp(r'enhancements\.(v2_)?arms').hasMatch(cat)) {
+    return ApplyArmorSlot.arms;
+  }
+  if (RegExp(r'enhancements\.(v2_)?chest').hasMatch(cat)) {
+    return ApplyArmorSlot.chest;
+  }
+  if (RegExp(r'enhancements\.(v2_)?legs').hasMatch(cat)) {
+    return ApplyArmorSlot.legs;
+  }
+  if (RegExp(r'enhancements\.(v2_)?class').hasMatch(cat)) {
+    return ApplyArmorSlot.classItem;
+  }
+  if (cat.contains('tuning') ||
+      RegExp(r'enhancements\.(v2_)?general').hasMatch(cat) ||
+      cat.contains('enhancements.universal')) {
+    return ApplyArmorSlot.general;
+  }
+  return null;
+}
+
+ApplyArmorSlot? armorSlotFromWire(String? slot) {
+  switch ((slot ?? '').trim().toLowerCase()) {
+    case 'helmet':
+      return ApplyArmorSlot.helmet;
+    case 'arms':
+    case 'gauntlets':
+      return ApplyArmorSlot.arms;
+    case 'chest':
+      return ApplyArmorSlot.chest;
+    case 'legs':
+      return ApplyArmorSlot.legs;
+    case 'class_item':
+    case 'classitem':
+      return ApplyArmorSlot.classItem;
+    default:
+      return null;
+  }
 }
 
 int _kindOrder(ApplyPlugKind kind) {
@@ -528,22 +605,82 @@ int _kindOrder(ApplyPlugKind kind) {
   return (hash: resolved, skip: null);
 }
 
+List<int> _indexesForKind(ApplyManifestItemDef itemDef, ApplyPlugKind kind) {
+  switch (kind) {
+    case ApplyPlugKind.superAbility:
+      return _indexesForCategories(itemDef, kApplySuperSocketCategoryHashes);
+    case ApplyPlugKind.classAbility:
+    case ApplyPlugKind.movement:
+    case ApplyPlugKind.melee:
+    case ApplyPlugKind.grenade:
+      return _indexesForCategories(itemDef, kApplyAbilitySocketCategoryHashes);
+    case ApplyPlugKind.aspect:
+      return _indexesForCategories(itemDef, kApplyAspectSocketCategoryHashes);
+    case ApplyPlugKind.fragment:
+      return _indexesForCategories(itemDef, kApplyFragmentSocketCategoryHashes);
+    case ApplyPlugKind.armorMod:
+    case ApplyPlugKind.armorModClear:
+      return _indexesForCategories(itemDef, kApplyArmorModSocketCategoryHashes);
+  }
+}
+
+bool _socketAllowsPlug({
+  required ApplyManifestItemDef itemDef,
+  required ApplyInstanceSocketState instance,
+  required int socketIndex,
+  required int plugHash,
+  required ApplyPlugKind kind,
+}) {
+  final liveAllowed = instance.allowedPlugHashesBySocket[socketIndex];
+  final defAllowed = itemDef.allowedPlugHashesBySocket[socketIndex];
+  final allowed = liveAllowed ?? defAllowed;
+  if (allowed != null && allowed.isNotEmpty) {
+    return allowed.contains(plugHash);
+  }
+  final hint = itemDef.socketPlugCategoryHint[socketIndex];
+  if (hint != null && hint.isNotEmpty) {
+    final hintKind = _kindFromPlugCategory(hint);
+    return hintKind == kind;
+  }
+  // Aspects/fragments are interchangeable within their category when no
+  // whitelist is present. Ability/super sockets require a match.
+  return kind == ApplyPlugKind.aspect || kind == ApplyPlugKind.fragment;
+}
+
+int? _pickSocketForKind({
+  required ApplyManifestItemDef itemDef,
+  required ApplyInstanceSocketState instance,
+  required ApplyPlugKind kind,
+  required int plugHash,
+  required Set<int> usedSockets,
+}) {
+  final indexes = _indexesForKind(itemDef, kind);
+  for (final idx in indexes) {
+    if (instance.equippedPlugBySocket[idx] == plugHash) return idx;
+  }
+  for (final idx in indexes) {
+    if (usedSockets.contains(idx)) continue;
+    if (_socketAllowsPlug(
+      itemDef: itemDef,
+      instance: instance,
+      socketIndex: idx,
+      plugHash: plugHash,
+      kind: kind,
+    )) {
+      return idx;
+    }
+  }
+  return null;
+}
+
 List<ApplyPlugStep> _planSubclassPlugs({
   required List<ApplyNamedPlug> plugs,
   required ApplyInstanceSocketState instance,
   required ApplyManifestItemDef itemDef,
   required ApplySocketManifestLookup manifest,
 }) {
-  final abilityIndexes = [
-    ..._indexesForCategories(itemDef, kApplySuperSocketCategoryHashes),
-    ..._indexesForCategories(itemDef, kApplyAbilitySocketCategoryHashes),
-  ];
-  final aspectIndexes =
-      _indexesForCategories(itemDef, kApplyAspectSocketCategoryHashes);
-  final fragmentIndexes =
-      _indexesForCategories(itemDef, kApplyFragmentSocketCategoryHashes);
-
-  final resolved = <({ApplyPlugKind kind, int hash, String name, String? skip})>[];
+  final resolved =
+      <({ApplyPlugKind kind, int hash, String name, String? skip})>[];
   for (final plug in plugs) {
     final r = _resolvePlugHash(plug, manifest);
     final name = plug.name.trim().isNotEmpty
@@ -603,8 +740,8 @@ List<ApplyPlugStep> _planSubclassPlugs({
       );
       continue;
     }
-    if (!instance.ownedPlugHashes.contains(row.hash) &&
-        instance.ownedPlugHashes.isNotEmpty) {
+    if (instance.ownedPlugHashes.isNotEmpty &&
+        !instance.ownedPlugHashes.contains(row.hash)) {
       steps.add(
         ApplyPlugStep(
           id: id,
@@ -619,33 +756,13 @@ List<ApplyPlugStep> _planSubclassPlugs({
       continue;
     }
 
-    final indexes = switch (row.kind) {
-      ApplyPlugKind.superAbility ||
-      ApplyPlugKind.classAbility ||
-      ApplyPlugKind.movement ||
-      ApplyPlugKind.melee ||
-      ApplyPlugKind.grenade =>
-        abilityIndexes,
-      ApplyPlugKind.aspect => aspectIndexes,
-      ApplyPlugKind.fragment => fragmentIndexes,
-      _ => const <int>[],
-    };
-
-    int? socketIndex;
-    // Prefer a socket that already has this plug (no-op), else first free slot.
-    for (final idx in indexes) {
-      if (instance.equippedPlugBySocket[idx] == row.hash) {
-        socketIndex = idx;
-        break;
-      }
-    }
-    if (socketIndex == null) {
-      for (final idx in indexes) {
-        if (usedSockets.contains(idx)) continue;
-        socketIndex = idx;
-        break;
-      }
-    }
+    final socketIndex = _pickSocketForKind(
+      itemDef: itemDef,
+      instance: instance,
+      kind: row.kind,
+      plugHash: row.hash,
+      usedSockets: usedSockets,
+    );
     if (socketIndex == null) {
       steps.add(
         ApplyPlugStep(
@@ -655,7 +772,7 @@ List<ApplyPlugStep> _planSubclassPlugs({
           itemInstanceId: instance.instanceId,
           socketIndex: 0,
           plugItemHash: row.hash,
-          skipReason: unresolvablePlugMessage(row.name),
+          skipReason: doesNotFitPlugMessage(row.name),
         ),
       );
       continue;
@@ -677,151 +794,231 @@ List<ApplyPlugStep> _planSubclassPlugs({
   return steps;
 }
 
-List<ApplyPlugStep> _planArmorModsForPiece({
+List<ApplyPlugStep> _planArmorMods({
   required List<ApplyNamedPlug> targets,
-  required ApplyArmorPin armor,
-  required ApplyInstanceSocketState instance,
-  required ApplyManifestItemDef itemDef,
+  required List<ApplyArmorPin> equippedArmor,
+  required List<ApplyInstanceSocketState> instances,
   required ApplySocketManifestLookup manifest,
 }) {
-  final modIndexes =
-      _indexesForCategories(itemDef, kApplyArmorModSocketCategoryHashes);
-  if (modIndexes.isEmpty) return const [];
+  if (targets.isEmpty || equippedArmor.isEmpty) return const [];
 
-  final wanted = <({int hash, String name, int cost, String? skip})>[];
+  for (final armor in equippedArmor) {
+    final live = _instanceById(instances, armor.instanceId);
+    if (live == null || !live.armorModDataKnown) {
+      return [
+        const ApplyPlugStep(
+          id: 'armor-mods:skipped',
+          label: 'Mods',
+          kind: ApplyPlugKind.armorMod,
+          itemInstanceId: '',
+          socketIndex: 0,
+          plugItemHash: 0,
+          skipReason: kArmorModsSkippedUnavailableMessage,
+        ),
+      ];
+    }
+  }
+
+  final steps = <ApplyPlugStep>[];
+  final generalAssigned = <int>{};
+  var n = 0;
+
   for (final plug in targets) {
+    n += 1;
     final r = _resolvePlugHash(plug, manifest);
     final name = plug.name.trim();
     if (r.skip != null || r.hash == null) {
-      wanted.add((
-        hash: 0,
-        name: name,
-        cost: 0,
-        skip: r.skip ?? unresolvablePlugMessage(name),
-      ));
+      steps.add(
+        ApplyPlugStep(
+          id: 'armor-mod:skip:$n',
+          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, name),
+          kind: ApplyPlugKind.armorMod,
+          itemInstanceId: '',
+          socketIndex: 0,
+          plugItemHash: r.hash ?? 0,
+          skipReason: r.skip ?? unresolvablePlugMessage(name),
+        ),
+      );
       continue;
     }
     final def = manifest.plugDef(r.hash!);
-    if (def == null || _kindFromPlugCategory(def.plugCategoryIdentifier) !=
-        ApplyPlugKind.armorMod) {
-      // Not an armor mod — ignore for this piece (mods list is global).
+    if (def == null ||
+        _kindFromPlugCategory(def.plugCategoryIdentifier) !=
+            ApplyPlugKind.armorMod) {
       continue;
     }
-    // Slot filter: only mods that match this armor piece via category when known.
-    wanted.add((
-      hash: r.hash!,
-      name: name.isNotEmpty ? name : def.name,
+    final modSlot = armorSlotFromPlugCategory(def.plugCategoryIdentifier);
+    if (modSlot == null) {
+      steps.add(
+        ApplyPlugStep(
+          id: 'armor-mod:skip:$n',
+          label: formatApplyPlugOutcomeLabel(
+            ApplyPlugKind.armorMod,
+            name.isNotEmpty ? name : def.name,
+          ),
+          kind: ApplyPlugKind.armorMod,
+          itemInstanceId: '',
+          socketIndex: 0,
+          plugItemHash: r.hash!,
+          skipReason: doesNotFitPlugMessage(name.isNotEmpty ? name : def.name),
+        ),
+      );
+      continue;
+    }
+
+    // General/tuning: exactly one piece (first that accepts the plug).
+    if (modSlot == ApplyArmorSlot.general) {
+      if (generalAssigned.contains(r.hash!)) continue;
+      final placed = _planOneArmorModOnMatchingPiece(
+        idPrefix: 'armor-mod:$n',
+        plugHash: r.hash!,
+        plugName: name.isNotEmpty ? name : def.name,
+        cost: def.energyCost,
+        modSlot: modSlot,
+        anyPiece: true,
+        equippedArmor: equippedArmor,
+        instances: instances,
+        manifest: manifest,
+      );
+      if (placed != null) {
+        generalAssigned.add(r.hash!);
+        steps.addAll(placed);
+      }
+      continue;
+    }
+
+    final placed = _planOneArmorModOnMatchingPiece(
+      idPrefix: 'armor-mod:$n',
+      plugHash: r.hash!,
+      plugName: name.isNotEmpty ? name : def.name,
       cost: def.energyCost,
-      skip: null,
-    ));
+      modSlot: modSlot,
+      anyPiece: false,
+      equippedArmor: equippedArmor,
+      instances: instances,
+      manifest: manifest,
+    );
+    if (placed != null) steps.addAll(placed);
   }
-  if (wanted.isEmpty) return const [];
+  return steps;
+}
 
-  final steps = <ApplyPlugStep>[];
-  var energyUsed = instance.energyUsed;
-  final capacity = instance.energyCapacity;
-  final usedSockets = <int>{};
-  var n = 0;
+List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({
+  required String idPrefix,
+  required int plugHash,
+  required String plugName,
+  required int cost,
+  required ApplyArmorSlot modSlot,
+  required bool anyPiece,
+  required List<ApplyArmorPin> equippedArmor,
+  required List<ApplyInstanceSocketState> instances,
+  required ApplySocketManifestLookup manifest,
+}) {
+  for (final armor in equippedArmor) {
+    final pieceSlot = armorSlotFromWire(armor.slot);
+    if (!anyPiece) {
+      if (pieceSlot == null || pieceSlot != modSlot) continue;
+    }
+    final live = _instanceById(instances, armor.instanceId);
+    if (live == null) continue;
+    final def = manifest.itemDef(armor.itemHash);
+    if (def == null) continue;
 
-  // DIM-style: clear plugs on sockets we will overwrite when energy is tight.
-  for (final row in wanted) {
-    n += 1;
-    final id = 'armor-mod:${armor.instanceId}:$n';
-    if (row.skip != null) {
-      steps.add(
+    if (live.ownedPlugHashes.isNotEmpty &&
+        !live.ownedPlugHashes.contains(plugHash)) {
+      return [
         ApplyPlugStep(
-          id: id,
-          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, row.name),
+          id: idPrefix,
+          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
           kind: ApplyPlugKind.armorMod,
           itemInstanceId: armor.instanceId,
           socketIndex: 0,
-          plugItemHash: row.hash,
-          skipReason: row.skip,
+          plugItemHash: plugHash,
+          skipReason: notUnlockedPlugMessage(plugName),
         ),
-      );
-      continue;
-    }
-    if (!instance.ownedPlugHashes.contains(row.hash) &&
-        instance.ownedPlugHashes.isNotEmpty) {
-      steps.add(
-        ApplyPlugStep(
-          id: id,
-          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, row.name),
-          kind: ApplyPlugKind.armorMod,
-          itemInstanceId: armor.instanceId,
-          socketIndex: 0,
-          plugItemHash: row.hash,
-          skipReason: notUnlockedPlugMessage(row.name),
-        ),
-      );
-      continue;
+      ];
     }
 
+    final modIndexes =
+        _indexesForCategories(def, kApplyArmorModSocketCategoryHashes);
     int? socketIndex;
     for (final idx in modIndexes) {
-      if (instance.equippedPlugBySocket[idx] == row.hash) {
+      if (live.equippedPlugBySocket[idx] == plugHash) {
         socketIndex = idx;
         break;
       }
     }
     socketIndex ??= () {
       for (final idx in modIndexes) {
-        if (usedSockets.contains(idx)) continue;
-        return idx;
+        if (_socketAllowsPlug(
+          itemDef: def,
+          instance: live,
+          socketIndex: idx,
+          plugHash: plugHash,
+          kind: ApplyPlugKind.armorMod,
+        )) {
+          return idx;
+        }
       }
       return null;
     }();
+
     if (socketIndex == null) {
-      steps.add(
+      if (anyPiece) continue;
+      return [
         ApplyPlugStep(
-          id: id,
-          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, row.name),
+          id: idPrefix,
+          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
           kind: ApplyPlugKind.armorMod,
           itemInstanceId: armor.instanceId,
           socketIndex: 0,
-          plugItemHash: row.hash,
-          skipReason: unresolvablePlugMessage(row.name),
+          plugItemHash: plugHash,
+          skipReason: doesNotFitPlugMessage(plugName),
         ),
-      );
-      continue;
+      ];
     }
 
-    final current = instance.equippedPlugBySocket[socketIndex];
-    if (current == row.hash) {
-      usedSockets.add(socketIndex);
-      steps.add(
+    final current = live.equippedPlugBySocket[socketIndex];
+    if (current == plugHash) {
+      return [
         ApplyPlugStep(
-          id: id,
-          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, row.name),
+          id: idPrefix,
+          label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
           kind: ApplyPlugKind.armorMod,
           itemInstanceId: armor.instanceId,
           socketIndex: socketIndex,
-          plugItemHash: row.hash,
+          plugItemHash: plugHash,
           currentPlugHash: current,
         ),
-      );
-      continue;
+      ];
     }
 
-    final currentCost = current == null
-        ? 0
-        : (manifest.plugDef(current)?.energyCost ?? 0);
-    final projected = energyUsed - currentCost + row.cost;
+    final currentCost =
+        current == null ? 0 : (manifest.plugDef(current)?.energyCost ?? 0);
+    var energyUsed = live.energyUsed;
+    final capacity = live.energyCapacity;
+    final projected = energyUsed - currentCost + cost;
+
+    final clearSteps = <ApplyPlugStep>[];
+    String? clearId;
+    int? restoreHash;
+    int? restoreSocket;
     if (capacity > 0 && projected > capacity) {
-      // Clear other non-target sockets first to free energy (DIM order).
-      var freed = false;
+      // Tentative clears — only keep them if the insert fits afterward.
+      var tentativeEnergy = energyUsed;
+      final tentative = <ApplyPlugStep>[];
       for (final idx in modIndexes) {
         if (idx == socketIndex) continue;
-        if (usedSockets.contains(idx)) continue;
-        final equipped = instance.equippedPlugBySocket[idx];
+        final equipped = live.equippedPlugBySocket[idx];
         if (equipped == null) continue;
-        final empty = instance.emptyPlugHashBySocket[idx];
+        final empty = live.emptyPlugHashBySocket[idx];
         if (empty == null) continue;
         final eqCost = manifest.plugDef(equipped)?.energyCost ?? 0;
         if (eqCost <= 0) continue;
-        steps.add(
+        final tentativeClearId = '$idPrefix:clear:$idx';
+        tentative.add(
           ApplyPlugStep(
-            id: '$id:clear:$idx',
+            id: tentativeClearId,
             label: formatApplyPlugOutcomeLabel(
               ApplyPlugKind.armorModClear,
               manifest.plugDef(equipped)?.name ?? 'mod',
@@ -833,53 +1030,57 @@ List<ApplyPlugStep> _planArmorModsForPiece({
             currentPlugHash: equipped,
           ),
         );
-        energyUsed -= eqCost;
-        freed = true;
-        if (energyUsed - currentCost + row.cost <= capacity) break;
+        tentativeEnergy -= eqCost;
+        clearId = tentativeClearId;
+        restoreHash = equipped;
+        restoreSocket = idx;
+        if (tentativeEnergy - currentCost + cost <= capacity) break;
       }
-      if (!freed && energyUsed - currentCost + row.cost > capacity) {
-        steps.add(
+      if (tentativeEnergy - currentCost + cost > capacity) {
+        // Insert cannot fit — never clear without a planned insert.
+        return [
           ApplyPlugStep(
-            id: id,
-            label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, row.name),
+            id: idPrefix,
+            label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
             kind: ApplyPlugKind.armorMod,
             itemInstanceId: armor.instanceId,
             socketIndex: socketIndex,
-            plugItemHash: row.hash,
-            skipReason: notEnoughArmorEnergyMessage(row.name),
+            plugItemHash: plugHash,
+            skipReason: notEnoughArmorEnergyMessage(plugName),
           ),
-        );
-        continue;
+        ];
       }
-      if (energyUsed - currentCost + row.cost > capacity) {
-        steps.add(
-          ApplyPlugStep(
-            id: id,
-            label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, row.name),
-            kind: ApplyPlugKind.armorMod,
-            itemInstanceId: armor.instanceId,
-            socketIndex: socketIndex,
-            plugItemHash: row.hash,
-            skipReason: notEnoughArmorEnergyMessage(row.name),
-          ),
-        );
-        continue;
-      }
+      clearSteps.addAll(tentative);
     }
 
-    usedSockets.add(socketIndex);
-    energyUsed = energyUsed - currentCost + row.cost;
-    steps.add(
+    return [
+      ...clearSteps,
       ApplyPlugStep(
-        id: id,
-        label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, row.name),
+        id: idPrefix,
+        label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
         kind: ApplyPlugKind.armorMod,
         itemInstanceId: armor.instanceId,
         socketIndex: socketIndex,
-        plugItemHash: row.hash,
+        plugItemHash: plugHash,
         currentPlugHash: current,
+        requiresClearStepId: clearId,
+        restorePlugHash: restoreHash,
+        restoreSocketIndex: restoreSocket,
+        restoreItemInstanceId:
+            restoreHash == null ? null : armor.instanceId,
       ),
-    );
+    ];
   }
-  return steps;
+
+  return [
+    ApplyPlugStep(
+      id: idPrefix,
+      label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
+      kind: ApplyPlugKind.armorMod,
+      itemInstanceId: '',
+      socketIndex: 0,
+      plugItemHash: plugHash,
+      skipReason: doesNotFitPlugMessage(plugName),
+    ),
+  ];
 }

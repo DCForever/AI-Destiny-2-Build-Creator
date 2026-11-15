@@ -242,15 +242,22 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
       );
     }
 
-    final resolvedSockets = socketPlan ??
-        await _socketPlanForApply(
-          ports: ports,
-          loadout: loadout,
-          characterId: target.characterId,
-          inventory: gated.inventory,
-          liveItems: gated.liveItems,
-          appliedItems: gated.items,
-        );
+    ApplySocketManifestLookup? resolvedManifest = ports.socketManifest;
+    if (socketPlan == null && resolvedManifest == null && loadout != null) {
+      final subclassHashes = <int>{
+        if (loadout.subclass != null) loadout.subclass!.hash,
+        for (final row in gated.inventory)
+          if (row.bucketHash == kSubclassBucketHash) row.itemHash,
+      };
+      resolvedManifest = await _buildSocketManifestLookup(
+        ports,
+        subclassItemHashes: subclassHashes,
+      );
+    }
+    if (!isMounted()) {
+      return const BuildsMockApplyOutcome(finished: true);
+    }
+
     final result = await applyToCharacter(
       writeClient: writeClient,
       ctx: WriteClientContext(
@@ -260,7 +267,17 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
       characterId: target.characterId,
       items: gated.items,
       inventory: gated.inventory,
-      socketPlan: resolvedSockets,
+      socketPlan: socketPlan,
+      socketPlanBuilder: socketPlan != null
+          ? null
+          : (equipped) => _socketPlanForApplySync(
+                loadout: loadout,
+                characterId: target.characterId,
+                inventory: gated.inventory,
+                liveItems: gated.liveItems,
+                successfullyEquipped: equipped,
+                manifest: resolvedManifest,
+              ),
       onProgress: (progress) {
         if (!isMounted()) return;
         onProgress(_mergeApplyProgress(rows, progress));
@@ -426,38 +443,45 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   );
 }
 
-/// Builds an [ApplySocketPlan] from the build-detail DIM loadout when possible.
-Future<ApplySocketPlan?> _socketPlanForApply({
-  required BuildsMockApplyPorts ports,
+/// Builds an [ApplySocketPlan] from items that actually equipped this run.
+///
+/// Armor mod ownership / energy / allowed-plug sets are not available on host
+/// inventory rows with current read scopes, so every instance keeps
+/// [ApplyInstanceSocketState.armorModDataKnown] false and the planner emits a
+/// single fixed skip row (R3) instead of guessing ownership or energy.
+ApplySocketPlan? _socketPlanForApplySync({
   required CachedDimLoadout? loadout,
   required String characterId,
   required List<ApplyInventoryItem> inventory,
   required List<RawInventoryItem> liveItems,
-  required List<ApplyToCharacterItem> appliedItems,
-}) async {
+  required List<ApplyToCharacterItem> successfullyEquipped,
+  required ApplySocketManifestLookup? manifest,
+}) {
   if (loadout == null) return null;
   final hasPlugs =
       loadout.subclassPlugs.isNotEmpty || loadout.mods.isNotEmpty;
   final hasSubclass = loadout.subclass != null;
   if (!hasPlugs && !hasSubclass) return null;
 
-  final subclassHashes = <int>{
-    if (loadout.subclass != null) loadout.subclass!.hash,
-    for (final row in inventory)
-      if (row.bucketHash == kSubclassBucketHash) row.itemHash,
-  };
-
-  final manifest = ports.socketManifest ??
-      await _buildSocketManifestLookup(
-        ports,
-        subclassItemHashes: subclassHashes,
-      );
-  if (manifest == null) return null;
-
   final byId = <String, RawInventoryItem>{
     for (final row in liveItems)
       if (row.instanceId.isNotEmpty) row.instanceId: row,
   };
+
+  final resolved = manifest ??
+      ApplySocketManifestLookup(
+        itemDef: (hash) {
+          final name = loadout.subclass?.hash == hash
+              ? (loadout.subclass?.name ?? 'Subclass')
+              : 'Item';
+          if (loadout.subclass?.hash == hash) {
+            return conventionalSubclassItemDef(hash: hash, name: name);
+          }
+          return conventionalArmorItemDef(hash: hash, name: name);
+        },
+        plugDef: (_) => null,
+        resolveUniquePlugHashByName: (_) => null,
+      );
 
   final instances = <ApplyInstanceSocketState>[
     for (final row in inventory)
@@ -467,21 +491,24 @@ Future<ApplySocketPlan?> _socketPlanForApply({
         bucketHash: row.bucketHash,
         characterId: row.characterId,
         location: row.location,
-        equippedPlugBySocket: _equippedPlugsByIndex(byId[row.instanceId]),
+        equippedPlugBySocket: _equippedPlugsKeyedBySocket(byId[row.instanceId]),
         ownedPlugHashes: const {},
         energyCapacity: 0,
         energyUsed: 0,
+        allowedPlugHashesBySocket: const {},
+        armorModDataKnown: false,
       ),
   ];
 
   final armorPins = <ApplyArmorPin>[
-    for (final item in appliedItems)
+    for (final item in successfullyEquipped)
       if (_isArmorSlotWire(item.slot))
         ApplyArmorPin(
           id: item.id,
           label: item.label,
           itemHash: item.itemHash,
           instanceId: item.instanceId,
+          slot: item.slot,
         ),
   ];
 
@@ -499,7 +526,7 @@ Future<ApplySocketPlan?> _socketPlanForApply({
           ApplyNamedPlug(name: p.name, hash: p.hash),
       ],
     ),
-    manifest: manifest,
+    manifest: resolved,
     instances: instances,
     equippedArmor: armorPins,
   );
@@ -521,8 +548,23 @@ bool _isArmorSlotWire(String? slot) {
   }
 }
 
-Map<int, int> _equippedPlugsByIndex(RawInventoryItem? live) {
+/// Equipped plugs keyed by socket index from live sockets / socketCapture.
+/// Never assumes a flat plugHashes list is aligned without capture indexes.
+Map<int, int> _equippedPlugsKeyedBySocket(RawInventoryItem? live) {
   if (live == null) return const {};
+  final fromCapture = <int, int>{};
+  final capture = live.socketCapture;
+  if (capture != null) {
+    for (final sock in capture) {
+      if (sock.equippedPlugHash != 0) {
+        fromCapture[sock.socketIndex] = sock.equippedPlugHash;
+      }
+    }
+  }
+  if (fromCapture.isNotEmpty) return fromCapture;
+  // Fallback: profile plugHashes are emitted in socket-array order (index i →
+  // socket i) by inventory_parse — still keyed by socket index, not by a
+  // separate plug list from build detail.
   final out = <int, int>{};
   for (var i = 0; i < live.plugHashes.length; i++) {
     final h = live.plugHashes[i];
@@ -557,6 +599,22 @@ ApplyManifestItemDef conventionalSubclassItemDef({
         socketIndexes: [7, 8, 9, 10, 11],
       ),
     ],
+    // Per-socket plug-category hints so ability plugs map by kind (R2) instead
+    // of a shared first-free ability index list.
+    socketPlugCategoryHint: const {
+      0: 'shared.supers',
+      1: 'shared.class_abilities',
+      2: 'shared.movement',
+      3: 'shared.melee',
+      4: 'shared.grenades',
+      5: 'shared.aspects',
+      6: 'shared.aspects',
+      7: 'shared.fragments',
+      8: 'shared.fragments',
+      9: 'shared.fragments',
+      10: 'shared.fragments',
+      11: 'shared.fragments',
+    },
   );
 }
 

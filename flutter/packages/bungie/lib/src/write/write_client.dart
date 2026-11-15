@@ -150,7 +150,7 @@ abstract class BungieWriteClient {
   /// Free socket plug insert (subclass abilities/aspects/fragments, armor mods).
   ///
   /// Must POST only `/Destiny2/Actions/Items/InsertSocketPlugFree/` — never the
-  /// paid non-Free InsertSocketPlug action.
+  /// paid non-Free socket-plug action.
   Future<void> insertSocketPlugFree(
     WriteClientContext ctx,
     InsertSocketPlugFreeArgs args,
