@@ -14,11 +14,12 @@ String successBody([Object? response]) => jsonEncode({
 String platformErrorBody({
   int errorCode = 99,
   String message = 'Access Denied',
+  String errorStatus = 'Failure',
   int throttleSeconds = 0,
 }) =>
     jsonEncode({
       'ErrorCode': errorCode,
-      'ErrorStatus': 'Failure',
+      'ErrorStatus': errorStatus,
       'Message': message,
       'ThrottleSeconds': throttleSeconds,
       'Response': null,
@@ -143,6 +144,31 @@ void main() {
         expect(e.statusCode, 503);
         expect(e.bodySnippet, contains('unavailable'));
         expect(e, isNot(isA<BungiePlatformException>()));
+      }
+    });
+
+    test('HTTP 500 with Bungie envelope throws BungiePlatformException',
+        () async {
+      final client = BungieHttpClient(
+        apiKey: 'k',
+        transport: (_) async => BungieHttpResponse(
+          statusCode: 500,
+          body: platformErrorBody(
+            errorCode: 1623,
+            errorStatus: 'DestinyItemNotFound',
+            message: 'Item Not Found',
+          ),
+        ),
+      );
+
+      try {
+        await client.postJson('/Destiny2/Actions/Items/EquipItem/');
+        fail('expected exception');
+      } on BungiePlatformException catch (e) {
+        expect(e.statusCode, 500);
+        expect(e.errorCode, 1623);
+        expect(e.errorStatus, 'DestinyItemNotFound');
+        expect(e.message, contains('Item Not Found'));
       }
     });
 

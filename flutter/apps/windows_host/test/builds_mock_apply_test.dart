@@ -73,8 +73,15 @@ void main() {
   test('apply uses the resolved target character id (not a re-pick)', () async {
     final equippedIds = <String>[];
     final writeClient = createMockWriteClient(
-      equipItem: (ctx, args) async {
+      equipItems: (ctx, args) async {
         equippedIds.add(args.characterId);
+        return [
+          for (final id in args.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
       },
     );
 
@@ -164,12 +171,19 @@ void main() {
   // --- Live-profile instance gate (PR1) ------------------------------------
 
   test(
-    '(1) missing live instance skips equipItem and shows inventory reason',
+    '(1) missing live instance skips equipItems and shows inventory reason',
     () async {
       final equipped = <String>[];
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -222,8 +236,15 @@ void main() {
   test('(2) present live instances are still equipped', () async {
     final equipped = <String>[];
     final writeClient = createMockWriteClient(
-      equipItem: (ctx, args) async {
-        equipped.add(args.instanceId);
+      equipItems: (ctx, args) async {
+        equipped.addAll(args.itemIds);
+        return [
+          for (final id in args.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
       },
     );
     final session = await _signedInSession();
@@ -279,12 +300,22 @@ void main() {
   });
 
   test(
-    '(3a) inventory read failure makes zero equipItem calls and shows reason',
+    '(3a) inventory read failure makes zero equipItems/transferItem calls '
+    'and shows reason',
     () async {
       final equipped = <String>[];
+      var transferCalls = 0;
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        transferItem: (ctx, args) async => transferCalls += 1,
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -312,6 +343,7 @@ void main() {
 
       expect(outcome.error, isNull);
       expect(equipped, isEmpty);
+      expect(transferCalls, 0);
       expect(outcome.progress!.failedCount, 1);
       expect(outcome.progress!.appliedCount, 0);
       expect(
@@ -323,12 +355,22 @@ void main() {
   );
 
   test(
-    '(3b) empty live inventory makes zero equipItem calls and shows reason',
+    '(3b) empty live inventory makes zero equipItems/transferItem calls '
+    'and shows reason',
     () async {
       final equipped = <String>[];
+      var transferCalls = 0;
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        transferItem: (ctx, args) async => transferCalls += 1,
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -356,6 +398,7 @@ void main() {
 
       expect(outcome.error, isNull);
       expect(equipped, isEmpty);
+      expect(transferCalls, 0);
       expect(outcome.progress!.failedCount, 1);
       expect(
         outcome.progress!.items.single.reason,
@@ -366,12 +409,21 @@ void main() {
 
   test(
     '(B1) partial profile (missing component section) is read failure, '
-    'not re-import DIM CSV',
+    'not re-import DIM CSV; zero transferItem',
     () async {
       final equipped = <String>[];
+      var transferCalls = 0;
       final writeClient = createMockWriteClient(
-        equipItem: (ctx, args) async {
-          equipped.add(args.instanceId);
+        transferItem: (ctx, args) async => transferCalls += 1,
+        equipItems: (ctx, args) async {
+          equipped.addAll(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
         },
       );
       final session = await _signedInSession();
@@ -409,6 +461,7 @@ void main() {
 
       expect(outcome.error, isNull);
       expect(equipped, isEmpty);
+      expect(transferCalls, 0);
       expect(outcome.progress!.failedCount, 1);
       expect(outcome.progress!.appliedCount, 0);
       expect(
@@ -426,9 +479,18 @@ void main() {
   test('(B2) vault instance counts as present for the live-inventory gate',
       () async {
     final equipped = <String>[];
+    final transfers = <TransferItemArgs>[];
     final writeClient = createMockWriteClient(
-      equipItem: (ctx, args) async {
-        equipped.add(args.instanceId);
+      transferItem: (ctx, args) async => transfers.add(args),
+      equipItems: (ctx, args) async {
+        equipped.addAll(args.itemIds);
+        return [
+          for (final id in args.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
       },
     );
     final session = await _signedInSession();
@@ -446,7 +508,7 @@ void main() {
             RawInventoryItem(
               instanceId: 'inst-vault-1',
               itemHash: 1001,
-              bucketHash: 138197802, // vault general
+              bucketHash: 3448274439, // equipment bucket (resolved)
               location: 'vault',
             ),
           ],
@@ -462,11 +524,98 @@ void main() {
     );
 
     expect(outcome.error, isNull);
+    expect(transfers, hasLength(1));
+    expect(transfers.single.transferToVault, isFalse);
     expect(equipped, ['inst-vault-1']);
     expect(outcome.progress!.appliedCount, 1);
     expect(outcome.progress!.failedCount, 0);
     expect(outcome.progress!.items.single.state, ApplyItemState.done);
   });
+
+  test(
+    'exotic weapon via tierType is equipped after legendary (exotics-last)',
+    () async {
+      List<String>? order;
+      final writeClient = createMockWriteClient(
+        equipItems: (ctx, args) async {
+          order = List<String>.from(args.itemIds);
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
+        },
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      final plan = FillInSavedBuildPlan(
+        buildId: build.id,
+        missing: const [],
+        applied: const [
+          FillInAppliedSlot(
+            slotWire: 'kinetic',
+            label: 'Exotic Gun',
+            originalLabel: 'Old',
+            instanceId: 'exo-w',
+            itemHash: 9001,
+          ),
+          FillInAppliedSlot(
+            slotWire: 'energy',
+            label: 'Legendary Gun',
+            originalLabel: 'Old',
+            instanceId: 'leg-w',
+            itemHash: 9002,
+          ),
+        ],
+      );
+
+      const kineticBucket = 1498876634;
+      const energyBucket = 2465295065;
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          profileClient: FakeProfileClient(
+            characters: const [warlockA],
+            items: const [
+              // Weapon: gearTier unset; exotic via definition tierType == 6.
+              RawInventoryItem(
+                instanceId: 'exo-w',
+                itemHash: 9001,
+                bucketHash: kineticBucket,
+                location: 'character',
+                characterId: '2305843009264904821',
+                tierType: 6,
+              ),
+              RawInventoryItem(
+                instanceId: 'leg-w',
+                itemHash: 9002,
+                bucketHash: energyBucket,
+                location: 'character',
+                characterId: '2305843009264904821',
+                tierType: 5,
+              ),
+            ],
+          ),
+          writeClient: writeClient,
+          exoticItemHashes: const {9001},
+        ),
+        target: const BuildsMockApplyTarget(
+          membership: membership,
+          character: warlockA,
+        ),
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(outcome.error, isNull);
+      expect(outcome.progress!.appliedCount, 2);
+      expect(order, ['leg-w', 'exo-w']);
+    },
+  );
 }
 
 Future<WindowsOAuthSession> _signedInSession() async {

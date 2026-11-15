@@ -109,6 +109,7 @@ class RawInventoryItem {
     this.isCrafted = false,
     this.statValues,
     this.gearTier,
+    this.tierType,
     this.socketCapture,
   });
 
@@ -122,10 +123,19 @@ class RawInventoryItem {
   final bool isMasterwork;
   final bool isCrafted;
   final Map<String, Object?>? statValues;
+
+  /// Armor instance gearTier when present (exotic armor often == 6).
   final int? gearTier;
+
+  /// Definition `inventory.tierType` when known (exotic weapons/armor == 6).
+  final int? tierType;
   final List<RawSocketCapture>? socketCapture;
 
-  RawInventoryItem copyWith({int? bucketHash}) {
+  /// Exotic via instance gearTier or definition tierType.
+  bool get isExotic =>
+      gearTier == 6 || tierType == 6;
+
+  RawInventoryItem copyWith({int? bucketHash, int? tierType}) {
     return RawInventoryItem(
       instanceId: instanceId,
       itemHash: itemHash,
@@ -138,6 +148,7 @@ class RawInventoryItem {
       isCrafted: isCrafted,
       statValues: statValues,
       gearTier: gearTier,
+      tierType: tierType ?? this.tierType,
       socketCapture: socketCapture,
     );
   }

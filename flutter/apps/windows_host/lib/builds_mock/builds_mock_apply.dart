@@ -25,12 +25,17 @@ class BuildsMockApplyPorts {
     this.writeClient,
     this.oauthSession,
     this.profileClient,
+    this.exoticItemHashes,
   });
 
   final AppServices? services;
   final BungieWriteClient? writeClient;
   final WindowsOAuthSession? oauthSession;
   final BungieProfileClient? profileClient;
+
+  /// Optional itemHash set known exotic (definition tierType / catalog).
+  /// Merged with OfflineCatalog.isExotic when [services] is present.
+  final Set<int>? exoticItemHashes;
 
   BungieWriteClient? get resolvedWriteClient =>
       writeClient ?? services?.writeClient;
@@ -138,11 +143,12 @@ Future<BuildsMockApplyTargetResolution> resolveBuildsMockApplyTarget(
   }
 }
 
-/// Runs sequential equip for [build] using saved Fill In applied pins.
+/// Runs DIM-style move + bulk equip for [build] using saved Fill In pins.
 ///
 /// [target] must be the same resolved character shown in the Applies-to label.
-/// Calls [onUpdate] as progress changes. Returns a final outcome (never throws
-/// for expected sign-in / empty-plan cases).
+/// Apply itself is the confirmation — moves run immediately with inline
+/// progress. Returns a final outcome (never throws for expected sign-in /
+/// empty-plan cases).
 Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   required MockBuild build,
   required FillInSavedBuildPlan? plan,
@@ -221,7 +227,7 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
         finished: true,
       );
     }
-    if (gated.isEmpty) {
+    if (gated.items.isEmpty) {
       return BuildsMockApplyOutcome(
         progress: _finishedProgress(rows),
         finished: true,
@@ -235,7 +241,8 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
         membershipType: target.membership.membershipType,
       ),
       characterId: target.characterId,
-      items: gated,
+      items: gated.items,
+      inventory: gated.inventory,
       onProgress: (progress) {
         if (!isMounted()) return;
         onProgress(_mergeApplyProgress(rows, progress));
@@ -254,13 +261,24 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   }
 }
 
-/// Reads live inventory once. Returns present items to equip, or `null` when
-/// the read failed / was empty (fail closed — caller must not EquipItem).
+/// Present pins + live inventory snapshot for move planning.
+class _GatedApplyItems {
+  const _GatedApplyItems({
+    required this.items,
+    required this.inventory,
+  });
+
+  final List<ApplyToCharacterItem> items;
+  final List<ApplyInventoryItem> inventory;
+}
+
+/// Reads live inventory once. Returns present items + snapshot, or `null` when
+/// the read failed / was empty (fail closed — caller must not write).
 ///
 /// Missing instances are marked failed on [rows] with
 /// [kApplyLiveInventoryMissingReason]; read failures mark every row with
 /// [kApplyLiveInventoryReadFailedReason].
-Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
+Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   required BuildsMockApplyPorts ports,
   required String accessToken,
   required DestinyMembership membership,
@@ -282,7 +300,9 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
     }
   }
 
-  if (!isMounted()) return const [];
+  if (!isMounted()) {
+    return const _GatedApplyItems(items: [], inventory: []);
+  }
 
   final inventoryIncomplete = parsed == null ||
       !parsed.diagnostics.inventorySectionsComplete ||
@@ -303,6 +323,19 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
     for (final item in inventory)
       if (item.instanceId.isNotEmpty) item.instanceId,
   };
+  final exoticHashes = _exoticHashesForApply(ports);
+  final snapshot = <ApplyInventoryItem>[
+    for (final item in inventory)
+      if (item.instanceId.isNotEmpty)
+        ApplyInventoryItem(
+          instanceId: item.instanceId,
+          itemHash: item.itemHash,
+          location: item.location,
+          bucketHash: item.bucketHash,
+          characterId: item.characterId,
+          isExotic: item.isExotic || exoticHashes.contains(item.itemHash),
+        ),
+  ];
   final present = <ApplyToCharacterItem>[];
   for (var i = 0; i < items.length; i++) {
     if (liveIds.contains(items[i].instanceId)) {
@@ -322,12 +355,10 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
       running: present.isNotEmpty,
       appliedCount: 0,
       failedCount: rows.where((r) => r.state == ApplyItemState.failed).length,
-      summary: present.isEmpty
-          ? _summaryForRows(rows)
-          : null,
+      summary: present.isEmpty ? _summaryForRows(rows) : null,
     ),
   );
-  return present;
+  return _GatedApplyItems(items: present, inventory: snapshot);
 }
 
 ApplyToCharacterProgress _mergeApplyProgress(
@@ -404,4 +435,16 @@ List<ApplyToCharacterItem> itemsForBuildsMockApply(
           slot: slot.slotWire,
         ),
   ];
+}
+
+/// Exotic hashes from inject + OfflineCatalog (definition isExotic / tierType).
+Set<int> _exoticHashesForApply(BuildsMockApplyPorts ports) {
+  final hashes = <int>{...?ports.exoticItemHashes};
+  final catalog = ports.services?.offlineCatalog;
+  if (catalog != null) {
+    for (final item in catalog.baseItems) {
+      if (item.isExotic) hashes.add(item.hash);
+    }
+  }
+  return hashes;
 }

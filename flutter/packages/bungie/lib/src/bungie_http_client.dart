@@ -108,25 +108,34 @@ class BungieHttpClient {
   }) {
     final pathLabel = path.isEmpty ? uri.toString() : path;
 
-    if (raw.statusCode == 429) {
-      final retryAfter = _parseRetryAfterSeconds(raw.headers);
-      final signal = RateLimitSignal(
-        path: pathLabel,
-        source: RateLimitSource.http,
-        throttleSeconds: retryAfter,
-        httpStatus: 429,
-      );
-      _emitRateLimit(signal);
-      throw BungieHttpException(
-        'Bungie Platform returned 429: Too Many Requests',
-        statusCode: 429,
-        bodySnippet: _snippet(raw.body),
-        throttleSeconds: retryAfter,
-        rateLimitSignal: signal,
-      );
-    }
-
     if (raw.statusCode < 200 || raw.statusCode >= 300) {
+      final envelope = _tryParseEnvelope(raw.body);
+      if (envelope != null) {
+        throw _platformFailure(
+          pathLabel: pathLabel,
+          envelope: envelope,
+          httpStatus: raw.statusCode,
+        );
+      }
+
+      if (raw.statusCode == 429) {
+        final retryAfter = _parseRetryAfterSeconds(raw.headers);
+        final signal = RateLimitSignal(
+          path: pathLabel,
+          source: RateLimitSource.http,
+          throttleSeconds: retryAfter,
+          httpStatus: 429,
+        );
+        _emitRateLimit(signal);
+        throw BungieHttpException(
+          'Bungie Platform returned 429: Too Many Requests',
+          statusCode: 429,
+          bodySnippet: _snippet(raw.body),
+          throttleSeconds: retryAfter,
+          rateLimitSignal: signal,
+        );
+      }
+
       throw BungieHttpException(
         'Bungie Platform returned ${raw.statusCode}',
         statusCode: raw.statusCode,
@@ -137,28 +146,10 @@ class BungieHttpClient {
     final envelope = parseBungieEnvelope(raw.body);
 
     if (!envelope.isSuccess) {
-      final isThrottle = envelope.throttleSeconds > 0 ||
-          envelope.errorCode == kBungieThrottleErrorCode;
-      RateLimitSignal? signal;
-      if (isThrottle) {
-        signal = RateLimitSignal(
-          path: pathLabel,
-          source: RateLimitSource.envelope,
-          throttleSeconds:
-              envelope.throttleSeconds > 0 ? envelope.throttleSeconds : null,
-          errorCode: envelope.errorCode,
-          httpStatus: raw.statusCode,
-        );
-        _emitRateLimit(signal);
-      }
-
-      final msg = envelope.message ?? 'Bungie API error';
-      throw BungiePlatformException(
-        'Bungie API error: $msg',
-        errorCode: envelope.errorCode,
-        throttleSeconds: envelope.throttleSeconds,
-        errorStatus: envelope.errorStatus,
-        rateLimitSignal: signal,
+      throw _platformFailure(
+        pathLabel: pathLabel,
+        envelope: envelope,
+        httpStatus: raw.statusCode,
       );
     }
 
@@ -181,6 +172,57 @@ class BungieHttpClient {
 
   void _emitRateLimit(RateLimitSignal signal) {
     onRateLimit?.call(signal);
+  }
+
+  /// Prefer envelope ErrorCode/ErrorStatus on non-2xx when the body is a
+  /// normal Bungie JSON envelope (common for HTTP 500 platform errors).
+  static BungieEnvelope? _tryParseEnvelope(String body) {
+    try {
+      return parseBungieEnvelope(body);
+    } on BungieParseException {
+      return null;
+    }
+  }
+
+  Never _platformFailure({
+    required String pathLabel,
+    required BungieEnvelope envelope,
+    required int httpStatus,
+  }) {
+    final isThrottle = envelope.throttleSeconds > 0 ||
+        envelope.errorCode == kBungieThrottleErrorCode;
+    RateLimitSignal? signal;
+    if (isThrottle) {
+      signal = RateLimitSignal(
+        path: pathLabel,
+        source: RateLimitSource.envelope,
+        throttleSeconds:
+            envelope.throttleSeconds > 0 ? envelope.throttleSeconds : null,
+        errorCode: envelope.errorCode,
+        httpStatus: httpStatus,
+      );
+      _emitRateLimit(signal);
+    } else if (httpStatus == 429) {
+      signal = RateLimitSignal(
+        path: pathLabel,
+        source: RateLimitSource.http,
+        throttleSeconds:
+            envelope.throttleSeconds > 0 ? envelope.throttleSeconds : null,
+        errorCode: envelope.errorCode,
+        httpStatus: 429,
+      );
+      _emitRateLimit(signal);
+    }
+
+    final msg = envelope.message ?? 'Bungie API error';
+    throw BungiePlatformException(
+      'Bungie API error: $msg',
+      errorCode: envelope.errorCode,
+      throttleSeconds: envelope.throttleSeconds,
+      errorStatus: envelope.errorStatus,
+      rateLimitSignal: signal,
+      statusCode: httpStatus,
+    );
   }
 
   Uri _resolveUri(String path, Map<String, String>? queryParameters) {

@@ -82,6 +82,43 @@ void main() {
       expect(body['membershipType'], 3);
     });
 
+    test('equipItems POSTs EquipItems and maps per-item status', () async {
+      BungieHttpRequest? seen;
+      final http = BungieHttpClient(
+        apiKey: 'k',
+        transport: (request) async {
+          seen = request;
+          return BungieHttpResponse(
+            statusCode: 200,
+            body: successBody({
+              'equipResults': [
+                {'itemInstanceId': 'i1', 'equipStatus': 1},
+                {'itemInstanceId': 'i2', 'equipStatus': 1623},
+              ],
+            }),
+          );
+        },
+      );
+      final client = HttpBungieWriteClient(http: http);
+
+      final results = await client.equipItems(
+        ctx,
+        const EquipItemsArgs(
+          characterId: 'char-a',
+          itemIds: ['i1', 'i2'],
+        ),
+      );
+
+      expect(seen!.uri.path, contains('/Destiny2/Actions/Items/EquipItems/'));
+      final body = jsonDecode(seen!.body!) as Map<String, dynamic>;
+      expect(body['itemIds'], ['i1', 'i2']);
+      expect(body['characterId'], 'char-a');
+      expect(results, hasLength(2));
+      expect(results[0].ok, isTrue);
+      expect(results[1].ok, isFalse);
+      expect(results[1].statusText, 'DestinyItemNotFound');
+    });
+
     test('applyArtifactConfig throws not fully wired', () async {
       final http = BungieHttpClient(
         apiKey: 'k',

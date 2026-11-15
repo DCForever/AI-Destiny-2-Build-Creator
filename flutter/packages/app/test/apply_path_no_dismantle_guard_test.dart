@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-/// Apply-to-character path must never reference dismantle/delete/destroy
-/// or transfer-to-delete style APIs. Equip + vault transfer for equip remain OK.
+/// Apply-to-character path must never reference dismantle/delete/destroy,
+/// insert-plug, or pull-from-postmaster APIs. Equip + vault transfer OK.
 const List<String> kBannedApplyPatterns = <String>[
   'dismantleItem',
   'DismantleItem',
@@ -17,12 +17,28 @@ const List<String> kBannedApplyPatterns = <String>[
   'TransferToDelete',
   'transfer_to_delete',
   'TransferToVaultToDelete',
+  'InsertPlug',
+  'insertPlug',
+  'InsertSocketPlug',
+  'PullFromPostmaster',
+  'pullFromPostmaster',
+  '/Destiny2/Actions/Items/PullFromPostmaster',
+  '/Destiny2/Actions/Items/InsertSocketPlug',
+  'SetLockState',
+  'setLockState',
+  '/Destiny2/Actions/Items/SetLockState',
+  'SetTrackedState',
+  'setTrackedState',
+  '/Destiny2/Actions/Items/SetTrackedItem',
+  '/Destiny2/Actions/Items/SetTrackedState',
 ];
 
 /// Exact apply-path sources (posix-ish relative to packages/app).
 ///
 /// Includes the host Builds mock Apply wiring — the only non-package caller of
 /// a Bungie write. Exact list (not a glob) so a missing file fails loudly.
+/// Dry-run confirm dialog was removed (Apply itself confirms); list stays
+/// exact and still bans dismantle/delete/plug/postmaster.
 const List<String> kApplyPathRelativeFiles = <String>[
   'lib/src/equip/apply_to_character.dart',
   '../bungie/lib/src/write/equip_orchestrator.dart',
@@ -77,6 +93,7 @@ void main() {
     final text = file.readAsStringSync();
     expect(text, contains('transferItem'));
     expect(text, contains('equipItem'));
+    expect(text, contains('equipItems'));
     expect(text, contains('applyArtifactConfig'));
     expect(text, contains('applyFashionSlot'));
     expect(text.contains('dismantleItem'), isFalse);
@@ -84,6 +101,12 @@ void main() {
     expect(text.contains('destroyItem'), isFalse);
     expect(text.contains('/Destiny2/Actions/Items/Dismantle'), isFalse);
     expect(text.contains('transferToDelete'), isFalse);
+    expect(text.contains('InsertPlug'), isFalse);
+    expect(text.contains('PullFromPostmaster'), isFalse);
+    expect(text.contains('/Destiny2/Actions/Items/PullFromPostmaster'), isFalse);
+    expect(text.contains('SetLockState'), isFalse);
+    expect(text.contains('SetTrackedState'), isFalse);
+    expect(text.contains('/Destiny2/Actions/Items/SetLockState'), isFalse);
   });
 }
 

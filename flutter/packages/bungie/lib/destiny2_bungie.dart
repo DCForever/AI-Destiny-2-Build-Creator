@@ -40,6 +40,8 @@ export 'src/sync/format_sync_diagnostics.dart';
 export 'src/sync/sync_freshness.dart';
 export 'src/sync/sync_inventory.dart';
 
+export 'src/platform_error_codes.dart';
 export 'src/write/write_client.dart';
+export 'src/write/write_throttle.dart';
 export 'src/write/equip_orchestrator.dart';
 
