@@ -153,7 +153,8 @@ class WindowsOAuthSession extends ChangeNotifier {
                 (e.statusCode == 400 || e.statusCode == 401));
         // ignore: avoid_print
         print(
-          'OAuth: restore — refresh failed definitive=$definitive: $e',
+          'OAuth: restore — refresh failed definitive=$definitive '
+          'type=${e.runtimeType}',
         );
         if (definitive) {
           try {
@@ -172,18 +173,20 @@ class WindowsOAuthSession extends ChangeNotifier {
         }
       }
     } on TokenStoreCorruptException catch (e) {
-      // Fail closed: treat as signed out; never fall back to plaintext.
+      // Fail closed: treat as signed out; clear Locker only so a legacy
+      // sidecar remains available for a later verified migration.
       // ignore: avoid_print
       print('OAuth: restore — corrupt secure store');
       try {
-        await _tokenStore.clear();
+        await _tokenStore.clearSecureOnly();
       } catch (_) {}
       _tokens = null;
       _status = OAuthSessionStatus.signedOut;
       _errorMessage = e.message;
-    } catch (e, st) {
+    } catch (e, _) {
+      // Type only — exception message/stack must never carry token material.
       // ignore: avoid_print
-      print('OAuth: restore failed (keeping store): $e\n$st');
+      print('OAuth: restore failed (keeping store): ${e.runtimeType}');
       // Never wipe storage on unexpected I/O errors — that forces re-auth.
       _tokens = null;
       _status = OAuthSessionStatus.error;
@@ -351,10 +354,11 @@ class WindowsOAuthSession extends ChangeNotifier {
           await _loopback.stop();
         }
       }
-    } catch (e, st) {
+    } catch (e, _) {
+      // Type only — never log exception message/stack (may carry secrets).
       // ignore: avoid_print
-      print('WindowsOAuthSession.signIn failed: $e\n$st');
-      debugPrint('WindowsOAuthSession.signIn failed: $e\n$st');
+      print('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
+      debugPrint('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       _tokens = null;
       _status = OAuthSessionStatus.error;
       _errorMessage = _safeErrorMessage(e);

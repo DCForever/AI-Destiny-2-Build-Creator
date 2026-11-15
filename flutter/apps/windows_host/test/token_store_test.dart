@@ -6,6 +6,9 @@ import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/auth/token_codec.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
+import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -27,6 +30,7 @@ BungieTokens sampleTokens({
 /// Mirrors [SecureTokenStore] corrupt/empty behavior without Credential Locker.
 class InMemorySecureStore implements TokenStore {
   String? raw;
+  int clearSecureOnlyCalls = 0;
 
   @override
   Future<BungieTokens?> read() async {
@@ -47,11 +51,18 @@ class InMemorySecureStore implements TokenStore {
   Future<void> clear() async {
     raw = null;
   }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
+    raw = null;
+  }
 }
 
 /// Empty until written; then read-back returns different secrets (verify fail).
 class MismatchReadBackStore implements TokenStore {
   bool _written = false;
+  int clearSecureOnlyCalls = 0;
 
   @override
   Future<BungieTokens?> read() async {
@@ -69,6 +80,12 @@ class MismatchReadBackStore implements TokenStore {
 
   @override
   Future<void> clear() async {
+    _written = false;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
     _written = false;
   }
 }
@@ -198,39 +215,48 @@ void main() {
       },
     );
 
-    test('(c) read-back mismatch keeps sidecar', () async {
-      final dir = await Directory.systemTemp.createTemp('tok_mig_fail_');
-      addTearDown(() async {
-        if (await dir.exists()) await dir.delete(recursive: true);
-      });
-      final secondary = FileTokenStore(baseDir: dir.path);
-      final tokens = sampleTokens(
-        access: 'keep-acc-SECRET',
-        refresh: 'keep-ref-SECRET',
-      );
-      await secondary.write(tokens);
-      final sidecar = File(p.join(dir.path, kBungieTokenFileName));
-      expect(await sidecar.exists(), isTrue);
+    test(
+      '(c)/(1) read-back mismatch clears Locker entry and keeps sidecar',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('tok_mig_fail_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final tokens = sampleTokens(
+          access: 'keep-acc-SECRET',
+          refresh: 'keep-ref-SECRET',
+        );
+        await secondary.write(tokens);
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        expect(await sidecar.exists(), isTrue);
 
-      final reports = <String>[];
-      final dual = DualTokenStore(
-        primary: MismatchReadBackStore(),
-        secondary: secondary,
-        report: reports.add,
-      );
-      final recovered = await dual.read();
-      expect(recovered, isNull);
-      expect(await sidecar.exists(), isTrue);
-      expect(await secondary.read(), isNotNull);
-      expect(
-        reports.any((m) => m.contains('verify failed') && m.contains('sidecar kept')),
-        isTrue,
-      );
-      for (final msg in reports) {
-        expect(msg.contains('keep-acc-SECRET'), isFalse);
-        expect(msg.contains('keep-ref-SECRET'), isFalse);
-      }
-    });
+        final primary = MismatchReadBackStore();
+        final reports = <String>[];
+        final dual = DualTokenStore(
+          primary: primary,
+          secondary: secondary,
+          report: reports.add,
+        );
+        final recovered = await dual.read();
+        expect(recovered, isNull);
+        expect(await sidecar.exists(), isTrue);
+        expect(await secondary.read(), isNotNull);
+        // Skeptic fix 1: remove the just-written Locker payload.
+        expect(primary.clearSecureOnlyCalls, 1);
+        expect(await primary.read(), isNull);
+        expect(
+          reports.any(
+            (m) => m.contains('verify failed') && m.contains('sidecar kept'),
+          ),
+          isTrue,
+        );
+        for (final msg in reports) {
+          expect(msg.contains('keep-acc-SECRET'), isFalse);
+          expect(msg.contains('keep-ref-SECRET'), isFalse);
+        }
+      },
+    );
 
     test(
       '(d) corrupt secure store is signed-out path — no plaintext fallback',
@@ -299,6 +325,67 @@ void main() {
       expect(blob.contains('access-token-SECRET'), isFalse);
       expect(blob.contains('refresh-token-SECRET'), isFalse);
     });
+
+    test(
+      '(4) SecureTokenStore garbage FlutterSecureStorage throws corrupt',
+      () async {
+        final previous = FlutterSecureStoragePlatform.instance;
+        addTearDown(() {
+          FlutterSecureStoragePlatform.instance = previous;
+        });
+        final data = <String, String>{
+          kBungieTokenStorageKey: '{not-valid-json-SECRET-should-not-leak}',
+        };
+        FlutterSecureStoragePlatform.instance =
+            TestFlutterSecureStoragePlatform(data);
+        final store = SecureTokenStore(storage: const FlutterSecureStorage());
+
+        await expectLater(
+          store.read(),
+          throwsA(
+            isA<TokenStoreCorruptException>().having(
+              (e) => e.message,
+              'message',
+              'Sign-in data could not be read - please sign in again',
+            ),
+          ),
+        );
+        // Garbage remains in fake storage until clearSecureOnly / clear.
+        expect(data[kBungieTokenStorageKey], isNotNull);
+      },
+    );
+
+    test(
+      '(5) oversized Locker write fails rather than silently truncating',
+      () async {
+        final previous = FlutterSecureStoragePlatform.instance;
+        addTearDown(() {
+          FlutterSecureStoragePlatform.instance = previous;
+        });
+        final data = <String, String>{};
+        FlutterSecureStoragePlatform.instance =
+            TestFlutterSecureStoragePlatform(data);
+        final store = SecureTokenStore(storage: const FlutterSecureStorage());
+
+        final oversized = sampleTokens(
+          access: 'A' * 3000,
+          refresh: 'R' * 3000,
+        );
+        final encodedLen =
+            utf8.encode(encodeBungieTokens(oversized)).length;
+        expect(encodedLen, greaterThan(kMaxSecureTokenPayloadBytes));
+
+        await expectLater(
+          store.write(oversized),
+          throwsA(isA<TokenStoreOverflowException>()),
+        );
+        expect(data.containsKey(kBungieTokenStorageKey), isFalse);
+
+        // Normal-sized payload still writes.
+        await store.write(sampleTokens());
+        expect(data.containsKey(kBungieTokenStorageKey), isTrue);
+      },
+    );
   });
 
   group('MemoryTokenStore US1', () {
