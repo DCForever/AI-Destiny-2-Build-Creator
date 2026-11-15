@@ -1,13 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../auth/browser_launcher.dart';
 import '../auth/windows_oauth_session.dart';
 
 /// Fixed Apply-gate sign-in copy (never echo raw exception text).
 const String kApplySignInTitle = 'Sign in to Bungie';
 
 const String kApplySignInBody =
-    'Apply needs your permission to move and equip items. '
+    'Apply needs your permission to equip items. '
     "Bungie's sign-in opens in your browser.";
 
 const String kApplySignInOpenButton = 'Open Bungie sign-in';
@@ -18,6 +21,7 @@ const String kApplySignInCopyLink = "Didn't open? Copy link";
 
 const String kApplySignInPermissionsHeading = 'PERMISSIONS';
 
+/// Matches the Public+PKCE scopes actually requested (scopes unchanged).
 const List<String> kApplySignInPermissions = <String>[
   'Read profile',
   'Read inventory and vault',
@@ -35,8 +39,16 @@ const String kApplySignInStateMismatchMessage =
 const String kApplySignInNetworkMessage =
     "Couldn't reach Bungie - check your connection.";
 
+const String kApplySignInExchangeMessage =
+    'Could not complete sign-in with Bungie. Please try again.';
+
+const String kApplySignInUnknownMessage =
+    'Sign-in failed - please try again.';
+
 const String kApplySignInMissingCodeMessage =
     "Bungie didn't send a sign-in code - try again.";
+
+const String kApplySignInUnsafeUrlMessage = kUnsafeAuthorizeUrlMessage;
 
 const Duration kApplySignInSuccessContinueDelay = Duration(seconds: 1);
 
@@ -48,10 +60,10 @@ String applySignInDialogErrorMessage(OAuthSignInFailureKind? kind) {
     OAuthSignInFailureKind.stateMismatch => kApplySignInStateMismatchMessage,
     OAuthSignInFailureKind.missingAuthorizationCode =>
       kApplySignInMissingCodeMessage,
-    OAuthSignInFailureKind.networkUnreachable ||
-    OAuthSignInFailureKind.tokenExchangeFailed ||
-    null =>
-      kApplySignInNetworkMessage,
+    OAuthSignInFailureKind.networkUnreachable => kApplySignInNetworkMessage,
+    OAuthSignInFailureKind.tokenExchangeFailed => kApplySignInExchangeMessage,
+    OAuthSignInFailureKind.unsafeAuthorizeUrl => kApplySignInUnsafeUrlMessage,
+    null => kApplySignInUnknownMessage,
   };
 }
 
@@ -83,7 +95,7 @@ Future<ApplySignInDialogResult> showApplySignInDialog({
 }) async {
   final result = await showDialog<ApplySignInDialogResult>(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: true,
     builder: (dialogContext) {
       return ApplySignInDialog(
         session: session,
@@ -137,7 +149,19 @@ class _ApplySignInDialogState extends State<ApplySignInDialog> {
   @override
   void dispose() {
     widget.session.removeListener(_onSession);
+    // Escape / barrier / route dispose while waiting — abort in-flight sign-in.
+    if (!_closed && _phase == _ApplySignInPhase.waiting) {
+      unawaited(widget.session.cancelSignIn());
+    }
     super.dispose();
+  }
+
+  void _onDismissedWithoutResult() {
+    if (_closed) return;
+    _closed = true;
+    if (_phase == _ApplySignInPhase.waiting) {
+      unawaited(widget.session.cancelSignIn());
+    }
   }
 
   void _pop(ApplySignInDialogResult result) {
@@ -224,6 +248,11 @@ class _ApplySignInDialogState extends State<ApplySignInDialog> {
   Future<void> _onCopyLink() async {
     final url = widget.session.pendingAuthorizeUrl;
     if (url == null || url.isEmpty) return;
+    if (!isAllowedBungieAuthorizeUrl(url)) {
+      if (!mounted) return;
+      setState(() => _copiedHint = kApplySignInUnsafeUrlMessage);
+      return;
+    }
     await widget.clipboardWriter(url);
     if (!mounted) return;
     setState(() => _copiedHint = 'Link copied');
@@ -240,19 +269,27 @@ class _ApplySignInDialogState extends State<ApplySignInDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Dialog(
-      key: const Key('apply_sign_in_dialog'),
-      backgroundColor: theme.colorScheme.surface,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-          child: switch (_phase) {
-            _ApplySignInPhase.prompt => _buildPrompt(theme),
-            _ApplySignInPhase.waiting => _buildWaiting(theme),
-            _ApplySignInPhase.success => _buildSuccess(theme),
-            _ApplySignInPhase.error => _buildError(theme),
-          },
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) return;
+        // Barrier / Escape / system back — cancel in-flight sign-in.
+        _onDismissedWithoutResult();
+      },
+      child: Dialog(
+        key: const Key('apply_sign_in_dialog'),
+        backgroundColor: theme.colorScheme.surface,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+            child: switch (_phase) {
+              _ApplySignInPhase.prompt => _buildPrompt(theme),
+              _ApplySignInPhase.waiting => _buildWaiting(theme),
+              _ApplySignInPhase.success => _buildSuccess(theme),
+              _ApplySignInPhase.error => _buildError(theme),
+            },
+          ),
         ),
       ),
     );

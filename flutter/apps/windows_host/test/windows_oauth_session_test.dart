@@ -237,6 +237,42 @@ class _CountingMemoryStore implements TokenStore {
   Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
+/// First write sticks; later writes appear to succeed but secure read is null.
+class _VerifyFailAfterWriteStore implements TokenStore {
+  BungieTokens? _tokens;
+  int writeCount = 0;
+
+  @override
+  Future<BungieTokens?> read() async => _tokens;
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async {
+    // After the re-sign-in write (writeCount >= 2), pretend verify failed
+    // until rollback rewrites the prior session (writeCount keeps climbing).
+    if (writeCount == 2) return null;
+    return _tokens;
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    writeCount += 1;
+    _tokens = tokens;
+  }
+
+  @override
+  Future<void> clear() async {
+    _tokens = null;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    _tokens = null;
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
+}
+
 /// Fake loopback for stop()-isolation tests (no real HTTP bind).
 class FakeLoopbackCallbackServer extends LoopbackCallbackServer {
   FakeLoopbackCallbackServer({
@@ -546,7 +582,8 @@ void main() {
       expect(session.errorMessage, isNot(contains('unreachable')));
     });
 
-    test('(a) unknown failure stays Sign-in failed (<ExceptionType>)', () async {
+    test('(a) unknown failure uses fixed text (no type/raw leak)', () async {
+      // CHANGED: previously included (${e.runtimeType}); now fixed copy only.
       const leaked = 'access-token-SECRET-ui-leak-xyz';
       final session = WindowsOAuthSession(
         clientId: clientId,
@@ -565,10 +602,8 @@ void main() {
       await session.signIn();
       expect(session.errorMessage, isNot(contains('SECRET')));
       expect(session.errorMessage, isNot(contains(leaked)));
-      expect(
-        session.errorMessage,
-        matches(RegExp(r'^Sign-in failed \(.+\)\. Try again\.$')),
-      );
+      expect(session.errorMessage, isNot(contains('Exception')));
+      expect(session.errorMessage, 'Sign-in failed - please try again.');
     });
 
     test(
@@ -723,6 +758,368 @@ void main() {
         expect((await store.read())?.accessToken, 'good-access-SECRET');
         expect(session.isSignedIn, isTrue);
         expect(session.tokens?.accessToken, 'good-access-SECRET');
+      },
+    );
+
+    test(
+      '(5) re-sign-in verify fail rolls Locker back to prior good session',
+      () async {
+        final store = _VerifyFailAfterWriteStore();
+        final now = DateTime.now().toUtc();
+        final good = BungieTokens(
+          accessToken: 'prior-good-access-SECRET',
+          refreshToken: 'prior-good-refresh-SECRET',
+          expiresAt: now.add(const Duration(hours: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 1)),
+          bungieMembershipId: 'prior-memb',
+        );
+        await store.write(good);
+
+        final browser = FakeBrowserLauncher();
+        String? capturedState;
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => BungieHttpResponse(
+              statusCode: 200,
+              body: jsonEncode(rawTokenResponse(
+                access: 'new-bad-access-SECRET',
+                refresh: 'new-bad-refresh-SECRET',
+                membershipId: 'new-memb',
+              )),
+            ),
+          ),
+          browserLauncher: browser,
+          waitForCallbackOverride: () async {
+            capturedState =
+                Uri.parse(browser.opened.single).queryParameters['state'];
+            return LoopbackCallbackResult(
+              code: 'auth-code-xyz',
+              state: capturedState,
+            );
+          },
+        );
+        await session.restore();
+        expect(session.isSignedIn, isTrue);
+
+        await session.signIn();
+        expect(session.isSignedIn, isTrue);
+        expect(session.tokens?.accessToken, 'prior-good-access-SECRET');
+        expect(
+          (await store.read())?.accessToken,
+          'prior-good-access-SECRET',
+        );
+        expect(
+          (await store.readSecureOnly())?.accessToken,
+          'prior-good-access-SECRET',
+        );
+        expect(session.tokens?.accessToken, isNot(contains('new-bad')));
+      },
+    );
+
+    test(
+      '(2) cancel after callback aborts exchange/write',
+      () async {
+        final store = MemoryTokenStore();
+        final browser = FakeBrowserLauncher();
+        final exchangeStarted = Completer<void>();
+        final exchangeRelease = Completer<BungieHttpResponse>();
+        String? capturedState;
+
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async {
+              if (!exchangeStarted.isCompleted) {
+                exchangeStarted.complete();
+              }
+              return exchangeRelease.future;
+            },
+          ),
+          browserLauncher: browser,
+          waitForCallbackOverride: () async {
+            capturedState =
+                Uri.parse(browser.opened.single).queryParameters['state'];
+            return LoopbackCallbackResult(
+              code: 'auth-code-late',
+              state: capturedState,
+            );
+          },
+        );
+
+        final signInFuture = session.signIn();
+        await exchangeStarted.future;
+        expect(session.status, OAuthSessionStatus.signingIn);
+
+        await session.cancelSignIn();
+        exchangeRelease.complete(
+          BungieHttpResponse(
+            statusCode: 200,
+            body: jsonEncode(rawTokenResponse(
+              access: 'should-not-store-SECRET',
+              refresh: 'should-not-store-ref-SECRET',
+            )),
+          ),
+        );
+        await signInFuture;
+
+        expect(session.isSignedIn, isFalse);
+        expect(await store.read(), isNull);
+        expect(session.lastSignInFailureKind, OAuthSignInFailureKind.cancelled);
+      },
+    );
+
+    test(
+      '(3) second signIn is blocked until first finally runs',
+      () async {
+        final waits = <Completer<LoopbackCallbackResult>>[];
+        Completer<LoopbackCallbackResult> nextWait() {
+          final c = Completer<LoopbackCallbackResult>();
+          waits.add(c);
+          return c;
+        }
+
+        final browser = FakeBrowserLauncher();
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: MemoryTokenStore(),
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => BungieHttpResponse(
+              statusCode: 200,
+              body: jsonEncode(rawTokenResponse()),
+            ),
+          ),
+          browserLauncher: browser,
+          waitForCallbackOverride: () => nextWait().future,
+        );
+
+        final first = session.signIn();
+        await Future<void>.delayed(Duration.zero);
+        expect(session.status, OAuthSessionStatus.signingIn);
+
+        // Overlapping call must no-op while first is busy.
+        await session.signIn();
+        expect(browser.opened, hasLength(1));
+        expect(waits, hasLength(1));
+
+        await session.cancelSignIn();
+        await first;
+        expect(session.status, OAuthSessionStatus.signedOut);
+
+        // After finally, a new sign-in may start.
+        final second = session.signIn();
+        await Future<void>.delayed(Duration.zero);
+        expect(session.status, OAuthSessionStatus.signingIn);
+        expect(browser.opened, hasLength(2));
+        expect(waits, hasLength(2));
+        await session.cancelSignIn();
+        await second;
+      },
+    );
+
+    test(
+      '(4) non-bungie authorize URL is refused before browser open',
+      () async {
+        final browser = FakeBrowserLauncher();
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: MemoryTokenStore(),
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            authorizeBaseUrl: Uri.parse('https://evil.example/oauth'),
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: browser,
+          waitForCallbackOverride: () async =>
+              const LoopbackCallbackResult(code: 'x', state: 'y'),
+        );
+
+        await session.signIn();
+        expect(browser.opened, isEmpty);
+        expect(
+          session.lastSignInFailureKind,
+          OAuthSignInFailureKind.unsafeAuthorizeUrl,
+        );
+        expect(session.errorMessage, kUnsafeAuthorizeUrlMessage);
+        expect(session.errorMessage, isNot(contains('evil')));
+      },
+    );
+
+    test('(4) isAllowedBungieAuthorizeUrl allowlist', () {
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://www.bungie.net/en/oauth/authorize?client_id=1',
+        ),
+        isTrue,
+      );
+      expect(
+        isAllowedBungieAuthorizeUrl('http://www.bungie.net/en/oauth/authorize'),
+        isFalse,
+      );
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://evil.example/en/oauth/authorize',
+        ),
+        isFalse,
+      );
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://www.bungie.net.evil.example/x',
+        ),
+        isFalse,
+      );
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://user@www.bungie.net/en/oauth/authorize',
+        ),
+        isFalse,
+      );
+      // Explicit :443 refused (documented port policy — no port ambiguity).
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://www.bungie.net:443/en/oauth/authorize',
+        ),
+        isFalse,
+      );
+      // userinfo@host form — host is evil.example, must refuse.
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://www.bungie.net@evil.example/en/oauth/authorize',
+        ),
+        isFalse,
+      );
+    });
+
+    test('(4) FakeBrowserLauncher refuses non-allowlisted authorize URL',
+        () async {
+      final browser = FakeBrowserLauncher();
+      await expectLater(
+        browser.open('https://evil.example/en/oauth/authorize'),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            kUnsafeAuthorizeUrlMessage,
+          ),
+        ),
+      );
+      expect(browser.opened, isEmpty);
+      await browser.open(
+        'https://www.bungie.net/en/oauth/authorize?client_id=1',
+      );
+      expect(browser.opened, hasLength(1));
+    });
+
+    test(
+      'status=error with Locker tokens: Cancel leaves Locker byte-identical',
+      () async {
+        final store = _CountingMemoryStore();
+        final now = DateTime.now().toUtc();
+        final good = BungieTokens(
+          accessToken: 'locker-keep-access-SECRET',
+          refreshToken: 'locker-keep-refresh-SECRET',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 30)),
+          bungieMembershipId: 'locker-keep-memb',
+        );
+        await store.write(good);
+
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => const BungieHttpResponse(
+              statusCode: 503,
+              body: '{"error":"server_error"}',
+            ),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () =>
+              Completer<LoopbackCallbackResult>().future,
+        );
+        await session.restore();
+        expect(session.status, OAuthSessionStatus.error);
+        expect(session.isSignedIn, isFalse);
+        final before = await store.read();
+        expect(before?.accessToken, 'locker-keep-access-SECRET');
+        expect(store.clearSecureOnlyCalls, 0);
+
+        final signInFuture = session.signIn();
+        await Future<void>.delayed(Duration.zero);
+        expect(session.status, OAuthSessionStatus.signingIn);
+        await session.cancelSignIn();
+        await signInFuture;
+
+        expect(store.clearSecureOnlyCalls, 0);
+        final after = await store.read();
+        expect(after?.accessToken, before?.accessToken);
+        expect(after?.refreshToken, before?.refreshToken);
+        expect(after?.bungieMembershipId, before?.bungieMembershipId);
+        expect(after?.expiresAt, before?.expiresAt);
+        expect(after?.refreshExpiresAt, before?.refreshExpiresAt);
+      },
+    );
+
+    test(
+      'status=error with Locker tokens: failed sign-in leaves Locker intact',
+      () async {
+        final store = _CountingMemoryStore();
+        final now = DateTime.now().toUtc();
+        final good = BungieTokens(
+          accessToken: 'locker-fail-access-SECRET',
+          refreshToken: 'locker-fail-refresh-SECRET',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 30)),
+          bungieMembershipId: 'locker-fail-memb',
+        );
+        await store.write(good);
+
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => const BungieHttpResponse(
+              statusCode: 503,
+              body: '{"error":"server_error"}',
+            ),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () async =>
+              const LoopbackCallbackResult(error: 'server_error'),
+        );
+        await session.restore();
+        expect(session.status, OAuthSessionStatus.error);
+        final before = await store.read();
+        expect(store.clearSecureOnlyCalls, 0);
+
+        await session.signIn();
+
+        expect(store.clearSecureOnlyCalls, 0);
+        final after = await store.read();
+        expect(after?.accessToken, before?.accessToken);
+        expect(after?.refreshToken, before?.refreshToken);
+        expect(after?.bungieMembershipId, before?.bungieMembershipId);
+        expect(after?.expiresAt, before?.expiresAt);
+        expect(after?.refreshExpiresAt, before?.refreshExpiresAt);
       },
     );
 

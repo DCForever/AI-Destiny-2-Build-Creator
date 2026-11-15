@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_windows_host/auth/browser_launcher.dart';
+import 'package:destiny2_windows_host/auth/loopback_callback_server.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/auth/windows_oauth_session.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_apply.dart';
@@ -441,5 +443,75 @@ void main() {
 
     await tester.tap(find.byKey(const Key('apply_sign_in_cancel')));
     await tester.pump();
+  });
+
+  testWidgets(
+      '(8) cancelled sign-in dialog does not continue to Apply',
+      (tester) async {
+    var equipCalls = 0;
+    final session = WindowsOAuthSession(
+      clientId: 'test-client',
+      redirectUri: kDefaultWindowsRedirectUri,
+      tokenStore: MemoryTokenStore(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: kDefaultWindowsRedirectUri,
+        transport: (_) async => throw StateError('unused'),
+      ),
+      browserLauncher: FakeBrowserLauncher(),
+      waitForCallbackOverride: () =>
+          Completer<LoopbackCallbackResult>().future,
+    );
+    await session.restore();
+
+    final controller = BuildsMockController();
+    await pumpMock(
+      tester,
+      controller: controller,
+      applyPorts: BuildsMockApplyPorts(
+        oauthSession: session,
+        profileClient: FakeProfileClient(
+          characters: const [
+            CharacterSummary(
+              characterId: 'char-warlock-4821',
+              classType: 'Warlock',
+              light: 2010,
+            ),
+          ],
+        ),
+        writeClient: createMockWriteClient(
+          equipItem: (ctx, args) async {
+            equipCalls += 1;
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.tap(find.byKey(const Key('builds_mock_card_b01')).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.tap(find.byKey(const Key('builds_mock_apply_character_b01')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('apply_sign_in_dialog')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('apply_sign_in_cancel')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('apply_sign_in_dialog')), findsNothing);
+    expect(session.isSignedIn, isFalse);
+    expect(equipCalls, 0);
+    expect(
+      find.byKey(const Key('builds_mock_apply_progress_b01')),
+      findsNothing,
+    );
+    // Apply button still enabled for another sign-in attempt; no in-flight Apply.
+    final apply = tester.widget<FilledButton>(
+      find.byKey(const Key('builds_mock_apply_character_b01')),
+    );
+    expect(apply.onPressed, isNotNull);
   });
 }
