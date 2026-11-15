@@ -106,7 +106,8 @@ class WindowsOAuthSession extends ChangeNotifier {
           'OAuth: restore — access expired and no refresh_token; clearing',
         );
         try {
-          await _tokenStore.clear();
+          // Locker only — keep legacy sidecar for a later verified migration.
+          await _tokenStore.clearSecureOnly();
         } catch (_) {}
         _tokens = null;
         _status = OAuthSessionStatus.signedOut;
@@ -118,7 +119,7 @@ class WindowsOAuthSession extends ChangeNotifier {
         // ignore: avoid_print
         print('OAuth: restore — refresh token expired; clearing');
         try {
-          await _tokenStore.clear();
+          await _tokenStore.clearSecureOnly();
         } catch (_) {}
         _tokens = null;
         _status = OAuthSessionStatus.signedOut;
@@ -158,7 +159,7 @@ class WindowsOAuthSession extends ChangeNotifier {
         );
         if (definitive) {
           try {
-            await _tokenStore.clear();
+            await _tokenStore.clearSecureOnly();
           } catch (_) {}
           _tokens = null;
           _status = OAuthSessionStatus.signedOut;
@@ -362,9 +363,9 @@ class WindowsOAuthSession extends ChangeNotifier {
       _tokens = null;
       _status = OAuthSessionStatus.error;
       _errorMessage = _safeErrorMessage(e);
-      // Best-effort clear so partial writes cannot linger.
+      // Clear Locker only — do not wipe a pending migration sidecar.
       try {
-        await _tokenStore.clear();
+        await _tokenStore.clearSecureOnly();
       } catch (_) {}
     }
     notifyListeners();
@@ -393,15 +394,9 @@ class WindowsOAuthSession extends ChangeNotifier {
     }
   }
 
+  /// Fixed copy + exception type only — never echo exception message text
+  /// (may contain tokens, auth codes, or Bungie error bodies).
   static String _safeErrorMessage(Object e) {
-    // Prefer full OAuth exception text (includes Bungie error_description).
-    final text = e is BungieOAuthException
-        ? e.toString()
-        : e.toString();
-    // Avoid echoing long token-like payloads; keep message usable for UI.
-    if (text.length > 480) {
-      return '${text.substring(0, 480)}…';
-    }
-    return text;
+    return 'Sign-in failed (${e.runtimeType}). Try again.';
   }
 }

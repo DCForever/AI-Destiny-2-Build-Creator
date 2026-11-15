@@ -90,6 +90,46 @@ class MismatchReadBackStore implements TokenStore {
   }
 }
 
+enum _ReadBackFailMode { nullValue, corrupt, throwIo }
+
+/// Empty until written; then read-back fails per [mode] (rollback coverage).
+class ScriptedFailReadBackStore implements TokenStore {
+  ScriptedFailReadBackStore(this.mode);
+
+  final _ReadBackFailMode mode;
+  bool _written = false;
+  int clearSecureOnlyCalls = 0;
+
+  @override
+  Future<BungieTokens?> read() async {
+    if (!_written) return null;
+    switch (mode) {
+      case _ReadBackFailMode.nullValue:
+        return null;
+      case _ReadBackFailMode.corrupt:
+        throw const TokenStoreCorruptException();
+      case _ReadBackFailMode.throwIo:
+        throw StateError('simulated secure-store I/O failure');
+    }
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    _written = true;
+  }
+
+  @override
+  Future<void> clear() async {
+    _written = false;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
+    _written = false;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -257,6 +297,46 @@ void main() {
         }
       },
     );
+
+    for (final mode in _ReadBackFailMode.values) {
+      test(
+        'rollback: ${mode.name} read-back clears Locker and keeps sidecar',
+        () async {
+          final dir =
+              await Directory.systemTemp.createTemp('tok_rb_${mode.name}_');
+          addTearDown(() async {
+            if (await dir.exists()) await dir.delete(recursive: true);
+          });
+          final secondary = FileTokenStore(baseDir: dir.path);
+          await secondary.write(
+            sampleTokens(
+              access: 'rb-acc-SECRET-${mode.name}',
+              refresh: 'rb-ref-SECRET-${mode.name}',
+            ),
+          );
+          final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+          expect(await sidecar.exists(), isTrue);
+
+          final primary = ScriptedFailReadBackStore(mode);
+          final reports = <String>[];
+          final dual = DualTokenStore(
+            primary: primary,
+            secondary: secondary,
+            report: reports.add,
+          );
+          final recovered = await dual.read();
+          expect(recovered, isNull);
+          expect(primary.clearSecureOnlyCalls, 1);
+          expect(await primary.read(), isNull);
+          expect(await sidecar.exists(), isTrue);
+          expect(await secondary.read(), isNotNull);
+          expect(
+            reports.any((m) => m.contains('sidecar kept')),
+            isTrue,
+          );
+        },
+      );
+    }
 
     test(
       '(d) corrupt secure store is signed-out path — no plaintext fallback',
