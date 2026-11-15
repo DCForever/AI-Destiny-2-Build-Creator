@@ -74,6 +74,30 @@ class BuildsMockWeaponRow {
   final BuildsMockSlotStatus status;
 }
 
+/// Collapses identical labels into stacks (first-seen order).
+///
+/// Stacking armor mods are legitimate in Destiny 2; chips keyed only by name
+/// would otherwise trip Flutter's duplicate-key assert in [Wrap].
+List<({String name, int count})> groupStackedLabels(List<String> labels) {
+  final order = <String>[];
+  final counts = <String, int>{};
+  for (final raw in labels) {
+    final name = raw.trim();
+    if (name.isEmpty) continue;
+    if (counts.containsKey(name)) {
+      counts[name] = counts[name]! + 1;
+    } else {
+      order.add(name);
+      counts[name] = 1;
+    }
+  }
+  return [for (final name in order) (name: name, count: counts[name]!)];
+}
+
+/// Display label for a stacked chip (`Kinetic Siphon ×2`).
+String stackedChipLabel(String name, int count) =>
+    count > 1 ? '$name ×$count' : name;
+
 /// Armor table: slot | item | set | stat | status (+ optional per-slot mods).
 class BuildsMockArmorTable extends StatelessWidget {
   const BuildsMockArmorTable({
@@ -102,8 +126,12 @@ class BuildsMockArmorTable extends StatelessWidget {
                 spacing: 6,
                 runSpacing: 4,
                 children: [
-                  for (final mod in row.mods)
-                    _chip(palette, mod, key: Key('builds_mock_armor_mod_$mod')),
+                  for (final stack in groupStackedLabels(row.mods))
+                    _chip(
+                      palette,
+                      stackedChipLabel(stack.name, stack.count),
+                      key: Key('builds_mock_armor_mod_${stack.name}'),
+                    ),
                 ],
               ),
             ),
