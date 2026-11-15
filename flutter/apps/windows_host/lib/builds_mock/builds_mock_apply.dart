@@ -138,11 +138,11 @@ Future<BuildsMockApplyTargetResolution> resolveBuildsMockApplyTarget(
   }
 }
 
-/// Runs sequential equip for [build] using saved Fill In applied pins.
+/// Runs DIM-style move + bulk equip for [build] using saved Fill In pins.
 ///
 /// [target] must be the same resolved character shown in the Applies-to label.
-/// Calls [onUpdate] as progress changes. Returns a final outcome (never throws
-/// for expected sign-in / empty-plan cases).
+/// [confirmMoves] is required whenever transfers are needed (dry-run). Returns
+/// a final outcome (never throws for expected sign-in / empty-plan cases).
 Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   required MockBuild build,
   required FillInSavedBuildPlan? plan,
@@ -150,6 +150,8 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   required BuildsMockApplyTarget target,
   required bool Function() isMounted,
   required void Function(ApplyToCharacterProgress progress) onProgress,
+  ApplyMovesConfirm? confirmMoves,
+  String? targetLabel,
 }) async {
   final writeClient = ports.resolvedWriteClient;
   final oauth = ports.resolvedOauth;
@@ -221,7 +223,7 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
         finished: true,
       );
     }
-    if (gated.isEmpty) {
+    if (gated.items.isEmpty) {
       return BuildsMockApplyOutcome(
         progress: _finishedProgress(rows),
         finished: true,
@@ -235,7 +237,11 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
         membershipType: target.membership.membershipType,
       ),
       characterId: target.characterId,
-      items: gated,
+      items: gated.items,
+      inventory: gated.inventory,
+      confirmMoves: confirmMoves,
+      targetLabel: targetLabel ??
+          formatBuildsMockApplyTargetLabel(target.character),
       onProgress: (progress) {
         if (!isMounted()) return;
         onProgress(_mergeApplyProgress(rows, progress));
@@ -254,13 +260,24 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
   }
 }
 
-/// Reads live inventory once. Returns present items to equip, or `null` when
-/// the read failed / was empty (fail closed — caller must not EquipItem).
+/// Present pins + live inventory snapshot for move planning.
+class _GatedApplyItems {
+  const _GatedApplyItems({
+    required this.items,
+    required this.inventory,
+  });
+
+  final List<ApplyToCharacterItem> items;
+  final List<ApplyInventoryItem> inventory;
+}
+
+/// Reads live inventory once. Returns present items + snapshot, or `null` when
+/// the read failed / was empty (fail closed — caller must not write).
 ///
 /// Missing instances are marked failed on [rows] with
 /// [kApplyLiveInventoryMissingReason]; read failures mark every row with
 /// [kApplyLiveInventoryReadFailedReason].
-Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
+Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   required BuildsMockApplyPorts ports,
   required String accessToken,
   required DestinyMembership membership,
@@ -282,7 +299,9 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
     }
   }
 
-  if (!isMounted()) return const [];
+  if (!isMounted()) {
+    return const _GatedApplyItems(items: [], inventory: []);
+  }
 
   final inventoryIncomplete = parsed == null ||
       !parsed.diagnostics.inventorySectionsComplete ||
@@ -303,6 +322,18 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
     for (final item in inventory)
       if (item.instanceId.isNotEmpty) item.instanceId,
   };
+  final snapshot = <ApplyInventoryItem>[
+    for (final item in inventory)
+      if (item.instanceId.isNotEmpty)
+        ApplyInventoryItem(
+          instanceId: item.instanceId,
+          itemHash: item.itemHash,
+          location: item.location,
+          bucketHash: item.bucketHash,
+          characterId: item.characterId,
+          isExotic: item.gearTier == 6,
+        ),
+  ];
   final present = <ApplyToCharacterItem>[];
   for (var i = 0; i < items.length; i++) {
     if (liveIds.contains(items[i].instanceId)) {
@@ -322,12 +353,10 @@ Future<List<ApplyToCharacterItem>?> _gateApplyItemsAgainstLiveInventory({
       running: present.isNotEmpty,
       appliedCount: 0,
       failedCount: rows.where((r) => r.state == ApplyItemState.failed).length,
-      summary: present.isEmpty
-          ? _summaryForRows(rows)
-          : null,
+      summary: present.isEmpty ? _summaryForRows(rows) : null,
     ),
   );
-  return present;
+  return _GatedApplyItems(items: present, inventory: snapshot);
 }
 
 ApplyToCharacterProgress _mergeApplyProgress(

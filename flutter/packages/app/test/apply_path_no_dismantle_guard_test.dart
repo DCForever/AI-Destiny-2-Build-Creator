@@ -28,6 +28,8 @@ const List<String> kApplyPathRelativeFiles = <String>[
   '../bungie/lib/src/write/equip_orchestrator.dart',
   '../bungie/lib/src/write/write_client.dart',
   '../../apps/windows_host/lib/builds_mock/builds_mock_apply.dart',
+  // Dry-run confirm UI — must stay free of dismantle/delete write names.
+  '../../apps/windows_host/lib/builds_mock/apply_move_confirm_dialog.dart',
 ];
 
 void main() {
@@ -77,6 +79,7 @@ void main() {
     final text = file.readAsStringSync();
     expect(text, contains('transferItem'));
     expect(text, contains('equipItem'));
+    expect(text, contains('equipItems'));
     expect(text, contains('applyArtifactConfig'));
     expect(text, contains('applyFashionSlot'));
     expect(text.contains('dismantleItem'), isFalse);
