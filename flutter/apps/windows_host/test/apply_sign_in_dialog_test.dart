@@ -485,6 +485,8 @@ WindowsOAuthSession _sessionThatFails(
           throw SocketException(rawLeak);
         case OAuthSignInFailureKind.tokenExchangeFailed:
           return const LoopbackCallbackResult(error: 'server_error');
+        case OAuthSignInFailureKind.missingAuthorizationCode:
+          return const LoopbackCallbackResult(state: 'state-only');
       }
     },
   );

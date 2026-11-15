@@ -32,6 +32,9 @@ enum OAuthSignInFailureKind {
 
   /// Local network unreachable / socket failures.
   networkUnreachable,
+
+  /// Callback reached loopback without an authorization `code`.
+  missingAuthorizationCode,
 }
 
 /// Typed sign-in failure — [kind] only; never carries secret-bearing text.
@@ -254,6 +257,10 @@ class WindowsOAuthSession extends ChangeNotifier {
       return;
     }
 
+    // Snapshot a good Locker session so a failed re-sign-in cannot wipe it.
+    final priorGoodTokens =
+        isSignedIn ? _tokens : null;
+
     _status = OAuthSessionStatus.signingIn;
     _errorMessage = null;
     _lastFailureKind = null;
@@ -370,7 +377,7 @@ class WindowsOAuthSession extends ChangeNotifier {
       }
       if (!callback.hasCode) {
         throw const OAuthSignInFailure(
-          OAuthSignInFailureKind.tokenExchangeFailed,
+          OAuthSignInFailureKind.missingAuthorizationCode,
         );
       }
       final returnedState = callback.state ?? '';
@@ -432,7 +439,9 @@ class WindowsOAuthSession extends ChangeNotifier {
               'Secure token storage write timed out',
             ),
           );
-      final verified = await _tokenStore.read();
+      // Secure store only — DualTokenStore.read() could migrate+delete sidecar
+      // if the Locker write did not stick.
+      final verified = await _tokenStore.readSecureOnly();
       if (verified == null ||
           verified.accessToken != tokens.accessToken ||
           verified.bungieMembershipId != tokens.bungieMembershipId) {
@@ -458,24 +467,40 @@ class WindowsOAuthSession extends ChangeNotifier {
       // Type only — never log exception message/stack (may carry secrets).
       _log('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       debugPrint('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
-      _tokens = null;
+      final failureKind = e is OAuthSignInFailure ? e.kind : null;
       if (_signInCancelled ||
           (e is OAuthSignInFailure &&
               e.kind == OAuthSignInFailureKind.cancelled &&
               _status == OAuthSessionStatus.signedOut)) {
         // User cancel already applied signed-out; do not flip to error.
-        _status = OAuthSessionStatus.signedOut;
-        _errorMessage = null;
-        _lastFailureKind = OAuthSignInFailureKind.cancelled;
+        if (priorGoodTokens != null) {
+          _tokens = priorGoodTokens;
+          _status = OAuthSessionStatus.signedIn;
+          _errorMessage = null;
+          _lastFailureKind = OAuthSignInFailureKind.cancelled;
+        } else {
+          _tokens = null;
+          _status = OAuthSessionStatus.signedOut;
+          _errorMessage = null;
+          _lastFailureKind = OAuthSignInFailureKind.cancelled;
+        }
+      } else if (priorGoodTokens != null) {
+        // Failed re-sign-in: leave the existing good Locker session alone.
+        _tokens = priorGoodTokens;
+        _status = OAuthSessionStatus.signedIn;
+        _errorMessage = _safeErrorMessage(e);
+        _lastFailureKind = failureKind;
       } else {
+        _tokens = null;
         _status = OAuthSessionStatus.error;
         _errorMessage = _safeErrorMessage(e);
-        _lastFailureKind = e is OAuthSignInFailure ? e.kind : null;
+        _lastFailureKind = failureKind;
+        // Clear Locker only when there was no prior good session — do not
+        // wipe a pending migration sidecar.
+        try {
+          await _tokenStore.clearSecureOnly();
+        } catch (_) {}
       }
-      // Clear Locker only — do not wipe a pending migration sidecar.
-      try {
-        await _tokenStore.clearSecureOnly();
-      } catch (_) {}
     } finally {
       _pendingAuthorizeUrl = null;
       _signInCancelGate = null;
@@ -534,6 +559,8 @@ class WindowsOAuthSession extends ChangeNotifier {
           'Could not complete sign-in with Bungie. Please try again.',
         OAuthSignInFailureKind.networkUnreachable =>
           'Network unavailable. Check your connection and try again.',
+        OAuthSignInFailureKind.missingAuthorizationCode =>
+          "Bungie didn't send a sign-in code - try again.",
       };
     }
     if (e is TimeoutException) {

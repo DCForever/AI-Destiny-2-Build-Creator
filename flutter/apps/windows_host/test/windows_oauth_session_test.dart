@@ -8,6 +8,7 @@ import 'package:destiny2_windows_host/auth/loopback_callback_server.dart';
 import 'package:destiny2_windows_host/auth/token_codec.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
 import 'package:destiny2_windows_host/auth/windows_oauth_session.dart';
+import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -31,6 +32,11 @@ class _CorruptThrowingStore implements TokenStore {
 
   @override
   Future<BungieTokens?> read() async {
+    throw const TokenStoreCorruptException();
+  }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async {
     throw const TokenStoreCorruptException();
   }
 
@@ -68,6 +74,9 @@ class _CorruptRawPrimary implements TokenStore {
   }
 
   @override
+  Future<BungieTokens?> readSecureOnly() async => read();
+
+  @override
   Future<void> write(BungieTokens tokens) async {
     raw = encodeBungieTokens(tokens);
   }
@@ -91,11 +100,20 @@ class _CorruptRawPrimary implements TokenStore {
 /// In-memory primary for DualTokenStore session tests.
 class _MemoryPrimary implements TokenStore {
   String? raw;
+  int readSecureOnlyCalls = 0;
+  int readCalls = 0;
 
   @override
   Future<BungieTokens?> read() async {
+    readCalls += 1;
     if (raw == null || raw!.trim().isEmpty) return null;
     return decodeBungieTokens(raw);
+  }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async {
+    readSecureOnlyCalls += 1;
+    return read();
   }
 
   @override
@@ -126,6 +144,9 @@ class _FailOnceThenOkPrimary implements TokenStore {
   Future<BungieTokens?> read() async => _tokens;
 
   @override
+  Future<BungieTokens?> readSecureOnly() async => _tokens;
+
+  @override
   Future<void> write(BungieTokens tokens) async {
     writeCount += 1;
     if (writeCount == 1) {
@@ -142,6 +163,73 @@ class _FailOnceThenOkPrimary implements TokenStore {
 
   @override
   Future<void> clearSecureOnly() async {
+    _tokens = null;
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
+}
+
+/// Write appears to succeed but secure read-back is always null (failed persist).
+class _WriteOkNullReadPrimary implements TokenStore {
+  int clearSecureOnlyCalls = 0;
+  int deleteSidecarCalls = 0;
+  int readSecureOnlyCalls = 0;
+  int readCalls = 0;
+
+  @override
+  Future<BungieTokens?> read() async {
+    readCalls += 1;
+    return null;
+  }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async {
+    readSecureOnlyCalls += 1;
+    return null;
+  }
+
+  @override
+  Future<void> write(BungieTokens tokens) async {}
+
+  @override
+  Future<void> clear() async {}
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {
+    deleteSidecarCalls += 1;
+  }
+}
+
+/// Tracks clearSecureOnly while holding an existing good session.
+class _CountingMemoryStore implements TokenStore {
+  BungieTokens? _tokens;
+  int clearSecureOnlyCalls = 0;
+
+  @override
+  Future<BungieTokens?> read() async => _tokens;
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async => _tokens;
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    _tokens = tokens;
+  }
+
+  @override
+  Future<void> clear() async {
+    _tokens = null;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
     _tokens = null;
   }
 
@@ -535,6 +623,195 @@ void main() {
         expect(session.isSignedIn, isTrue);
         expect((await primary.read())?.accessToken, 'acc-secret-111');
         expect(await sidecar.exists(), isFalse);
+      },
+    );
+
+    test(
+      '(1) failed Locker read-back during sign-in keeps plaintext sidecar',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('oauth_rb_fail_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+        final primary = _WriteOkNullReadPrimary();
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final now = DateTime.now().toUtc();
+        await secondary.write(
+          BungieTokens(
+            accessToken: 'sidecar-keep-SECRET',
+            refreshToken: 'sidecar-keep-ref-SECRET',
+            expiresAt: now.add(const Duration(hours: 1)),
+            refreshExpiresAt: now.add(const Duration(days: 1)),
+            bungieMembershipId: 'sidecar-memb',
+          ),
+        );
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        expect(await sidecar.exists(), isTrue);
+
+        final dual = DualTokenStore(primary: primary, secondary: secondary);
+        final browser = FakeBrowserLauncher();
+        String? capturedState;
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: dual,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => BungieHttpResponse(
+              statusCode: 200,
+              body: jsonEncode(rawTokenResponse()),
+            ),
+          ),
+          browserLauncher: browser,
+          waitForCallbackOverride: () async {
+            capturedState =
+                Uri.parse(browser.opened.single).queryParameters['state'];
+            return LoopbackCallbackResult(
+              code: 'auth-code-xyz',
+              state: capturedState,
+            );
+          },
+        );
+
+        await session.signIn();
+        expect(session.isSignedIn, isFalse);
+        expect(primary.deleteSidecarCalls, 0);
+        expect(await sidecar.exists(), isTrue);
+        expect(
+          (await secondary.read())?.accessToken,
+          'sidecar-keep-SECRET',
+        );
+        // Verify used secure-only read (not DualTokenStore.read migration).
+        expect(primary.readSecureOnlyCalls, greaterThanOrEqualTo(1));
+      },
+    );
+
+    test(
+      '(2) failed re-sign-in does not clearSecureOnly a good Locker session',
+      () async {
+        final store = _CountingMemoryStore();
+        final now = DateTime.now().toUtc();
+        final good = BungieTokens(
+          accessToken: 'good-access-SECRET',
+          refreshToken: 'good-refresh-SECRET',
+          expiresAt: now.add(const Duration(hours: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 1)),
+          bungieMembershipId: 'good-memb',
+        );
+        await store.write(good);
+
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () async =>
+              const LoopbackCallbackResult(error: 'access_denied'),
+        );
+        await session.restore();
+        expect(session.isSignedIn, isTrue);
+        expect(store.clearSecureOnlyCalls, 0);
+
+        await session.signIn();
+        expect(store.clearSecureOnlyCalls, 0);
+        expect((await store.read())?.accessToken, 'good-access-SECRET');
+        expect(session.isSignedIn, isTrue);
+        expect(session.tokens?.accessToken, 'good-access-SECRET');
+      },
+    );
+
+    test(
+      '(3) sign-in verify uses readSecureOnly (no DualTokenStore migration)',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('oauth_sec_only_');
+        addTearDown(() async {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        });
+        // Primary write is a no-op; DualTokenStore.read() would migrate sidecar.
+        final primary = _WriteOkNullReadPrimary();
+        final secondary = FileTokenStore(baseDir: dir.path);
+        final now = DateTime.now().toUtc();
+        await secondary.write(
+          BungieTokens(
+            accessToken: 'migrate-bait-SECRET',
+            refreshToken: 'migrate-bait-ref-SECRET',
+            expiresAt: now.add(const Duration(hours: 1)),
+            refreshExpiresAt: now.add(const Duration(days: 1)),
+            bungieMembershipId: 'migrate-bait',
+          ),
+        );
+        final sidecar = File(p.join(dir.path, kBungieTokenFileName));
+        final dual = DualTokenStore(primary: primary, secondary: secondary);
+        final browser = FakeBrowserLauncher();
+        String? capturedState;
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: dual,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => BungieHttpResponse(
+              statusCode: 200,
+              body: jsonEncode(rawTokenResponse()),
+            ),
+          ),
+          browserLauncher: browser,
+          waitForCallbackOverride: () async {
+            capturedState =
+                Uri.parse(browser.opened.single).queryParameters['state'];
+            return LoopbackCallbackResult(
+              code: 'auth-code-xyz',
+              state: capturedState,
+            );
+          },
+        );
+
+        await session.signIn();
+        expect(session.isSignedIn, isFalse);
+        expect(primary.readSecureOnlyCalls, greaterThanOrEqualTo(1));
+        // Migration via DualTokenStore.read() would have deleted the sidecar.
+        expect(await sidecar.exists(), isTrue);
+        expect(
+          (await secondary.read())?.accessToken,
+          'migrate-bait-SECRET',
+        );
+      },
+    );
+
+    test(
+      '(4) missing authorization code maps to fixed missing-code wording',
+      () async {
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: MemoryTokenStore(),
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () async =>
+              const LoopbackCallbackResult(state: 'some-state'),
+        );
+        await session.signIn();
+        expect(session.isSignedIn, isFalse);
+        expect(
+          session.lastSignInFailureKind,
+          OAuthSignInFailureKind.missingAuthorizationCode,
+        );
+        expect(
+          session.errorMessage,
+          "Bungie didn't send a sign-in code - try again.",
+        );
+        expect(session.errorMessage, isNot(contains('Exception')));
       },
     );
 
@@ -966,6 +1243,25 @@ void main() {
         () => parseLoopbackRedirectUri('http://example.com/callback'),
         throwsFormatException,
       );
+    });
+  });
+
+  group('LoopbackCallbackServer peer filter (5)', () {
+    test('isIpv4LoopbackPeer accepts only 127.0.0.1', () {
+      expect(isIpv4LoopbackPeer(InternetAddress('127.0.0.1')), isTrue);
+      expect(isIpv4LoopbackPeer(InternetAddress.loopbackIPv4), isTrue);
+      // localhost can resolve to IPv6 — reject ::1.
+      expect(isIpv4LoopbackPeer(InternetAddress.loopbackIPv6), isFalse);
+      expect(isIpv4LoopbackPeer(InternetAddress('::1')), isFalse);
+      expect(isIpv4LoopbackPeer(InternetAddress('8.8.8.8')), isFalse);
+      expect(isIpv4LoopbackPeer(null), isFalse);
+    });
+
+    test('registered Windows redirect URI uses 127.0.0.1 not localhost', () {
+      // Prod matrix must stay on 127.0.0.1 — do not widen to localhost.
+      final p = parseLoopbackRedirectUri(kDefaultWindowsRedirectUri);
+      expect(p.host, '127.0.0.1');
+      expect(kDefaultWindowsRedirectUri, isNot(contains('localhost')));
     });
   });
 }

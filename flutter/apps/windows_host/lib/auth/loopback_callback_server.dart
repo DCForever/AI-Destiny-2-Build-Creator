@@ -105,6 +105,16 @@ class LoopbackCallbackServer {
 
     server.listen((request) async {
       try {
+        // Accept only IPv4 loopback peers — `localhost` can be ::1 (IPv6).
+        // Bind address / port / redirect URI are unchanged (still 127.0.0.1).
+        final remote = request.connectionInfo?.remoteAddress;
+        if (!isIpv4LoopbackPeer(remote)) {
+          request.response.statusCode = HttpStatus.forbidden;
+          request.response.write('Forbidden');
+          await request.response.close();
+          return;
+        }
+
         final uri = request.uri;
         // Normalize trailing slash so registered vs actual path still match.
         final requestPath = uri.path.endsWith('/') && uri.path.length > 1
@@ -193,6 +203,13 @@ class LoopbackCallbackServer {
       );
     }
   }
+}
+
+/// True only for IPv4 `127.0.0.1` (rejects IPv6 `::1` / other hosts).
+bool isIpv4LoopbackPeer(InternetAddress? address) {
+  if (address == null) return false;
+  return address.type == InternetAddressType.IPv4 &&
+      address.address == '127.0.0.1';
 }
 
 /// Parses host/port/path/TLS from a registered redirect URI for loopback bind.

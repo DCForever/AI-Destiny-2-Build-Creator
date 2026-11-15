@@ -35,6 +35,9 @@ const String kApplySignInStateMismatchMessage =
 const String kApplySignInNetworkMessage =
     "Couldn't reach Bungie - check your connection.";
 
+const String kApplySignInMissingCodeMessage =
+    "Bungie didn't send a sign-in code - try again.";
+
 const Duration kApplySignInSuccessContinueDelay = Duration(seconds: 1);
 
 /// Maps typed OAuth failures to the Apply dialog's fixed messages.
@@ -43,6 +46,8 @@ String applySignInDialogErrorMessage(OAuthSignInFailureKind? kind) {
     OAuthSignInFailureKind.cancelled => kApplySignInCancelledMessage,
     OAuthSignInFailureKind.callbackTimeout => kApplySignInTimeoutMessage,
     OAuthSignInFailureKind.stateMismatch => kApplySignInStateMismatchMessage,
+    OAuthSignInFailureKind.missingAuthorizationCode =>
+      kApplySignInMissingCodeMessage,
     OAuthSignInFailureKind.networkUnreachable ||
     OAuthSignInFailureKind.tokenExchangeFailed ||
     null =>
