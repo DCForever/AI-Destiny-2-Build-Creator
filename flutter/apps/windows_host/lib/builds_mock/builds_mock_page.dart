@@ -17,6 +17,8 @@ import '../optimize/builds_armor_pool_panel.dart';
 import '../optimize/builds_optimize_apply.dart';
 import '../optimize/builds_optimize_controller.dart';
 import '../optimize/builds_optimize_results_panel.dart';
+import '../optimize/builds_weapon_optimize_results_panel.dart';
+import '../optimize/weapon_optimize_apply.dart';
 import '../sets/set_bonus_families.dart';
 import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
@@ -122,6 +124,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     _optimize = widget.optimizeController ??
         BuildsOptimizeController(
           loadArmorItems: _defaultArmorCsvLoader,
+          loadWeaponItems: _defaultWeaponsCsvLoader,
           optimizeStore: widget.storageRoot == null
               ? null
               : OptimizeBuildStore(root: widget.storageRoot!),
@@ -144,6 +147,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       _loadOptimizeOverlays(root);
     }
     _optimize.refreshArmorCsv();
+    _optimize.refreshWeaponsCsv();
     _refreshApplyTarget();
     _ensureCatalogIcons();
     _ensureModSlotCategories();
@@ -153,6 +157,14 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     final root = widget.storageRoot;
     if (root == null) return null;
     final result = await DimArmorCsvImporter(root: root).loadCache();
+    if (!result.isOk) return null;
+    return result.items;
+  }
+
+  Future<List<FillInInventoryItem>?> _defaultWeaponsCsvLoader() async {
+    final root = widget.storageRoot;
+    if (root == null) return null;
+    final result = await DimWeaponsCsvImporter(root: root).loadCache();
     if (!result.isOk) return null;
     return result.items;
   }

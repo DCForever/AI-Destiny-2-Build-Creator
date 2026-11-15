@@ -116,6 +116,7 @@ export 'src/fill_in/fill_in_result.dart';
 export 'src/fill_in/fill_in_similar_weapon.dart';
 export 'src/fill_in/fill_in_substitute.dart';
 export 'src/fill_in/fill_in_two_plus_two.dart';
+export 'src/fill_in/weapon_optimize.dart';
 
 // Offline contrasting-build pilot (local fixture, synthetic proposals)
 export 'src/pilot_review/pilot_board.dart';

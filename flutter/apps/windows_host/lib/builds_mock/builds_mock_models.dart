@@ -73,6 +73,7 @@ class MockSlotAssignment {
     this.isExoticSlot = false,
     this.statTotal,
     this.filledIn = false,
+    this.isSubstitute = false,
   });
 
   final String slot;
@@ -90,6 +91,9 @@ class MockSlotAssignment {
   /// True when Fill In Apply to build substituted this slot.
   final bool filledIn;
 
+  /// True when this weapon came from a no-CSV substitute kit (not optimized).
+  final bool isSubstitute;
+
   MockSlotAssignment copyWith({
     String? slot,
     String? setId,
@@ -98,6 +102,7 @@ class MockSlotAssignment {
     bool? isExoticSlot,
     int? statTotal,
     bool? filledIn,
+    bool? isSubstitute,
   }) {
     return MockSlotAssignment(
       slot: slot ?? this.slot,
@@ -107,6 +112,7 @@ class MockSlotAssignment {
       isExoticSlot: isExoticSlot ?? this.isExoticSlot,
       statTotal: statTotal ?? this.statTotal,
       filledIn: filledIn ?? this.filledIn,
+      isSubstitute: isSubstitute ?? this.isSubstitute,
     );
   }
 }

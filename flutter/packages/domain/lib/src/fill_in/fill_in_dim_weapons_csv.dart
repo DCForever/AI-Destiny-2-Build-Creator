@@ -208,6 +208,7 @@ _RowParse _itemFromRow({
   final isExotic = rarity.trim().toLowerCase() == 'exotic';
   final displayName = nameRaw.trim();
   final damageType = (elementRaw ?? '').trim();
+  final perkTags = _perkTagsFromRow(row, indexByName);
 
   return _RowParse(
     item: FillInInventoryItem(
@@ -219,8 +220,29 @@ _RowParse _itemFromRow({
       isExotic: isExotic,
       weaponType: weaponType,
       damageType: damageType.isEmpty ? null : damageType,
+      perkTags: perkTags,
     ),
   );
+}
+
+/// Collect non-empty DIM `Perks 0`–`Perks 18` cells (offline CSV only).
+List<String> _perkTagsFromRow(
+  List<String> row,
+  Map<String, int> indexByName,
+) {
+  final tags = <String>[];
+  for (var i = 0; i <= 18; i++) {
+    final raw = _cell(row, indexByName, 'Perks $i');
+    if (raw == null) continue;
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) continue;
+    // DIM often packs several names with `*` separators in one cell.
+    for (final part in trimmed.split('*')) {
+      final tag = part.trim();
+      if (tag.isNotEmpty) tags.add(tag);
+    }
+  }
+  return List<String>.unmodifiable(tags);
 }
 
 String? _cell(List<String> row, Map<String, int> indexByName, String name) {

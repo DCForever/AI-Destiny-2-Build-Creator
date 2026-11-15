@@ -237,6 +237,29 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                         onCancel: () => _optimize.closePanel(),
                       ),
                     ],
+                    if (_optimize.weaponPanelOpen &&
+                        _optimize.weaponCombinations.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      BuildsWeaponOptimizeResultsPanel(
+                        controller: _optimize,
+                        onUseResult: (index) => _useWeaponOptimizeResult(
+                          context,
+                          _optimize.armorAppliedBuild ?? build,
+                          index,
+                        ),
+                        onCancel: () => _optimize.closeWeaponPanel(),
+                      ),
+                    ],
+                    if (_optimize.armorAppliedBuild != null &&
+                        _optimize.weaponCombinations.isEmpty &&
+                        (_optimize.weaponsCsvReason ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _optimize.weaponsCsvReason!,
+                        key: const Key('builds_weapon_optimize_empty_reason'),
+                        style: neonMono(color: palette.muted, fontSize: 11),
+                      ),
+                    ],
                     if (plan != null) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -351,15 +374,8 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     );
     if (!mounted || updated == null) return;
 
-    // Same action: after armor #1, fill weapons the existing substitute way
-    // and merge pins (B1) — not opt-in. Merge armor onto the pre-checked
-    // plan in memory (do not re-read the store for corrupt handling).
-    final FillInCacheLoader loader = widget.fillInCacheLoader ??
-        (root != null
-            ? defaultFillInCacheLoader(root)
-            : () async => FillInCacheLoadResult.missing(
-                  'DIM Armor/Weapons inventory cache is missing or unreadable.',
-                ));
+    // Same action: after armor #1, rank weapons (CSV) or substitute (no CSV)
+    // and auto-apply #1. Merge armor onto the pre-checked plan in memory.
     final appliedCombo = _optimize.combinations.isNotEmpty
         ? _optimize.combinations[
             ((_optimize.appliedResultIndex ?? 1) - 1).clamp(
@@ -374,19 +390,56 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
             combination: appliedCombo,
             existing: priorPlan,
           );
-    final weaponResult = await applyWeaponFillInAfterOptimize(
+
+    // Prefer scored weapon optimize; fall back to legacy random path only when
+    // the optimizer returns no combinations (no empty slots / no inventory).
+    final FillInCacheLoader loader = widget.fillInCacheLoader ??
+        (root != null
+            ? defaultFillInCacheLoader(root)
+            : () async => FillInCacheLoadResult.missing(
+                  'DIM Armor/Weapons inventory cache is missing or unreadable.',
+                ));
+    final cached = await loader();
+    final cachedItems = cached.isOk ? cached.items : const <FillInInventoryItem>[];
+    await _optimize.prepareWeaponResults(
       build: updated,
-      loadCaches: loader,
       existingPlan: planForWeapons,
-      dimLoadout: _controller.dimLoadoutFor(updated),
+      cachedInventory: cachedItems,
+      openPanel: false,
     );
     if (!mounted) return;
+
     var persistOk = true;
     MockBuild? weaponMerged;
-    if (weaponResult != null) {
-      persistOk =
-          await _optimize.persistMergedFillInPlan(weaponResult.plan);
-      weaponMerged = weaponResult.build;
+    if (_optimize.weaponCombinations.isNotEmpty) {
+      final appliedWeapons = await _optimize.applySelectedWeaponResult(
+        build: updated,
+        index: 0,
+        existingPlan: planForWeapons,
+      );
+      persistOk = appliedWeapons != null;
+      weaponMerged = appliedWeapons;
+      if (!persistOk && _optimize.error == null) {
+        // applySelectedWeaponResult already set error on persist failure.
+        persistOk = false;
+      }
+    } else if ((_optimize.weaponsCsvReason ?? '').isNotEmpty &&
+        !_optimize.hasWeaponsCsv) {
+      // Empty substitute pool — visible reason on controller; never blank slots.
+      persistOk = true;
+    } else {
+      // No empty slots from optimizer — keep legacy headless path for pins.
+      final weaponResult = await applyWeaponFillInAfterOptimize(
+        build: updated,
+        loadCaches: loader,
+        existingPlan: planForWeapons,
+        dimLoadout: _controller.dimLoadoutFor(updated),
+      );
+      if (weaponResult != null) {
+        persistOk =
+            await _optimize.persistMergedFillInPlan(weaponResult.plan);
+        weaponMerged = weaponResult.build;
+      }
     }
     // Persist failed → keep armor-only build on screen (matches store).
     updated = buildAfterWeaponMergePersist(
@@ -443,7 +496,85 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
     final root = widget.storageRoot;
     if (root != null) await _loadFillInPlans(root);
     if (!mounted) return;
-    _showOptimizeToast(messenger, index + 1);
+
+    // After armor confirm: show a separate weapons results list.
+    final FillInCacheLoader loader = widget.fillInCacheLoader ??
+        (root != null
+            ? defaultFillInCacheLoader(root)
+            : () async => FillInCacheLoadResult.missing(
+                  'DIM Armor/Weapons inventory cache is missing or unreadable.',
+                ));
+    final cached = await loader();
+    final cachedItems =
+        cached.isOk ? cached.items : const <FillInInventoryItem>[];
+    await _optimize.prepareWeaponResults(
+      build: updated,
+      existingPlan: _savedFillInPlans[updated.id],
+      cachedInventory: cachedItems,
+      openPanel: true,
+    );
+    if (!mounted) return;
+    if (_optimize.weaponCombinations.isEmpty) {
+      final emptyReason = _optimize.weaponsCsvReason?.trim() ?? '';
+      if (emptyReason.isNotEmpty) {
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            key: const Key('builds_weapon_optimize_empty_toast'),
+            content: Text(emptyReason),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+      _showOptimizeToast(messenger, index + 1);
+    }
+  }
+
+  Future<void> _useWeaponOptimizeResult(
+    BuildContext context,
+    MockBuild build,
+    int index,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final updated = await _optimize.applySelectedWeaponResult(
+      build: build,
+      index: index,
+      existingPlan: _savedFillInPlans[build.id],
+    );
+    if (!mounted) return;
+    if (updated == null) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          key: const Key('builds_fill_in_persist_error_toast'),
+          content: Text(
+            _optimize.error ??
+                'Could not save weapon Optimize plan. Armor apply was kept.',
+          ),
+          action: _optimize.canUndo
+              ? SnackBarAction(
+                  key: const Key('builds_optimize_toast_undo'),
+                  label: 'Undo',
+                  onPressed: () async {
+                    final restored = await _optimize.undoLastApply();
+                    if (!mounted || restored == null) return;
+                    _controller.replaceBuild(restored);
+                    final r = widget.storageRoot;
+                    if (r != null) await _loadFillInPlans(r);
+                  },
+                )
+              : null,
+          duration: const Duration(seconds: 8),
+        ),
+      );
+      return;
+    }
+    _controller.replaceBuild(updated);
+    final root = widget.storageRoot;
+    if (root != null) await _loadFillInPlans(root);
+    if (!mounted) return;
+    final idx = _optimize.appliedResultIndex ?? 1;
+    _showOptimizeToast(messenger, idx);
   }
 
   void _showOptimizeToast(

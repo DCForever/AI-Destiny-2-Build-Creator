@@ -29,6 +29,11 @@ BuildsMockSlotStatus _statusForSlot({
   required MockSlotAssignment? assignment,
   FillInSavedBuildPlan? plan,
 }) {
+  // Substitute fills stay visibly "proposed", not "Filled in".
+  if (assignment?.isSubstitute == true &&
+      (assignment!.pieceName.trim().isNotEmpty)) {
+    return BuildsMockSlotStatus.proposed;
+  }
   // Never treat blank / whitespace names as a filled chip/status.
   if (assignment?.filledIn == true &&
       (assignment!.pieceName.trim().isNotEmpty)) {
@@ -125,10 +130,16 @@ List<BuildsMockWeaponRow> buildsMockWeaponRows({
         final slot = byWire[entry.$1];
         final name = slot?.pieceName.trim() ?? '';
         final empty = name.isEmpty;
+        // Substitute tag is session-only ([MockSlotAssignment.isSubstitute]).
+        // Do not infer from plan `proposed` — that state is shared with other
+        // Fill In paths and is not persisted as a substitute flag.
+        final note = slot?.isSubstitute == true
+            ? kWeaponOptimizeSubstituteLabel
+            : '';
         return BuildsMockWeaponRow(
           slotLabel: entry.$2,
           itemName: empty ? 'Not in DIM link' : name,
-          note: '',
+          note: note,
           isExotic: (slot?.isExoticSlot ?? false) ||
               _nameMatchesExotic(name, build.exoticWeapon),
           status: _statusForSlot(

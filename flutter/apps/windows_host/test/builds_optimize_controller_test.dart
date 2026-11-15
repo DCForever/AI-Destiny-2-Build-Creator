@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:destiny2_domain/destiny2_domain.dart';
@@ -7,6 +6,7 @@ import 'package:destiny2_windows_host/builds_mock/builds_mock_fixture.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
 import 'package:destiny2_windows_host/optimize/builds_optimize_apply.dart';
 import 'package:destiny2_windows_host/optimize/builds_optimize_controller.dart';
+import 'package:destiny2_windows_host/optimize/weapon_optimize_apply.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -260,8 +260,10 @@ void main() {
       );
       await optStore.saveBuildRecord(priorOpt);
 
-      final fillBefore = await File(root.fillInMissingByBuildPath).readAsString();
-      final optBefore = await File(root.optimizeByBuildPath).readAsString();
+      final fillBeforeBytes =
+          await File(root.fillInMissingByBuildPath).readAsBytes();
+      final optBeforeBytes =
+          await File(root.optimizeByBuildPath).readAsBytes();
 
       final cPresent = BuildsOptimizeController(
         loadArmorItems: () async => syntheticArmor(),
@@ -287,10 +289,14 @@ void main() {
       );
 
       await cPresent.undoLastApply();
-      final fillAfter = await File(root.fillInMissingByBuildPath).readAsString();
-      final optAfter = await File(root.optimizeByBuildPath).readAsString();
-      expect(jsonDecode(fillAfter), jsonDecode(fillBefore));
-      expect(jsonDecode(optAfter), jsonDecode(optBefore));
+      expect(
+        await File(root.fillInMissingByBuildPath).readAsBytes(),
+        fillBeforeBytes,
+      );
+      expect(
+        await File(root.optimizeByBuildPath).readAsBytes(),
+        optBeforeBytes,
+      );
       final restoredOpt = await optStore.loadForBuild(b.id);
       expect(restoredOpt!.resultIndexOneBased, 9);
       expect(restoredOpt.slots.single.pieceName, 'Prior Helm');
@@ -300,7 +306,7 @@ void main() {
   );
 
   test(
-    'corrupt Fill In store stops before any write; corrupt bytes untouched',
+    'corrupt Fill In store stops before any write; corrupt file bytes untouched',
     () async {
       final temp = await Directory.systemTemp.createTemp('opt_corrupt_fi_');
       addTearDown(() async {
@@ -311,6 +317,7 @@ void main() {
       const corrupt = '{not-json';
       final fiPath = root.fillInMissingByBuildPath;
       await File(fiPath).writeAsString(corrupt);
+      final corruptBytes = await File(fiPath).readAsBytes();
       final optPath = root.optimizeByBuildPath;
       expect(File(optPath).existsSync(), isFalse);
 
@@ -328,8 +335,37 @@ void main() {
       expect(applied, isNull);
       expect(c.error, isNotNull);
       expect(c.canUndo, isFalse);
-      expect(await File(fiPath).readAsString(), corrupt);
+      expect(await File(fiPath).readAsBytes(), corruptBytes);
       expect(File(optPath).existsSync(), isFalse);
+    },
+  );
+
+  test(
+    'failed apply leaves appliedResultIndex unset (highlight not on failed result)',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_idx_fail_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      await Directory(root.fillInCacheDir).create(recursive: true);
+      await File(root.fillInMissingByBuildPath).writeAsString('{not-json}');
+
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        optimizeRunner: fakeResponse,
+        optimizeStore: OptimizeBuildStore(root: root),
+        fillInStore: FillInMissingListStore(root: root),
+      );
+      await c.refreshArmorCsv();
+      expect(c.appliedResultIndex, isNull);
+      final applied = await c.runOptimize(
+        build: build(),
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(applied, isNull);
+      expect(c.canUndo, isFalse);
+      expect(c.appliedResultIndex, isNull);
     },
   );
 
@@ -482,9 +518,10 @@ void main() {
           setBonuses: const [],
         ),
       );
-      final fillBeforeA =
-          await File(root.fillInMissingByBuildPath).readAsString();
-      final optBeforeA = await File(root.optimizeByBuildPath).readAsString();
+      final fillBeforeABytes =
+          await File(root.fillInMissingByBuildPath).readAsBytes();
+      final optBeforeABytes =
+          await File(root.optimizeByBuildPath).readAsBytes();
 
       final c = BuildsOptimizeController(
         loadArmorItems: () async => syntheticArmor(),
@@ -501,11 +538,13 @@ void main() {
       );
       expect(appliedA, isNotNull);
       expect(c.canUndo, isTrue);
-      final fillAfterA =
-          await File(root.fillInMissingByBuildPath).readAsString();
-      final optAfterA = await File(root.optimizeByBuildPath).readAsString();
-      expect(jsonDecode(fillAfterA), isNot(jsonDecode(fillBeforeA)));
-      expect(jsonDecode(optAfterA), isNot(jsonDecode(optBeforeA)));
+      expect(c.appliedResultIndex, 1);
+      final fillAfterABytes =
+          await File(root.fillInMissingByBuildPath).readAsBytes();
+      final optAfterABytes =
+          await File(root.optimizeByBuildPath).readAsBytes();
+      expect(fillAfterABytes, isNot(fillBeforeABytes));
+      expect(optAfterABytes, isNot(optBeforeABytes));
 
       // Apply B — second store load fails; must not clobber A's undo priors.
       final appliedB = await c.runOptimize(
@@ -515,27 +554,30 @@ void main() {
       expect(appliedB, isNull);
       expect(c.error, isNotNull);
       expect(c.canUndo, isTrue);
+      // Failed B must keep appliedResultIndex from A (loads never succeeded).
+      expect(c.appliedResultIndex, 1);
       // Failed B must not have rewritten stores past A's apply.
       expect(
-        jsonDecode(await File(root.fillInMissingByBuildPath).readAsString()),
-        jsonDecode(fillAfterA),
+        await File(root.fillInMissingByBuildPath).readAsBytes(),
+        fillAfterABytes,
       );
       expect(
-        jsonDecode(await File(root.optimizeByBuildPath).readAsString()),
-        jsonDecode(optAfterA),
+        await File(root.optimizeByBuildPath).readAsBytes(),
+        optAfterABytes,
       );
 
-      // Undo restores A's prior file state exactly.
+      // Undo restores A's prior file state exactly (raw bytes).
       final restored = await c.undoLastApply();
       expect(restored, isNotNull);
       expect(c.canUndo, isFalse);
+      expect(c.appliedResultIndex, isNull);
       expect(
-        jsonDecode(await File(root.fillInMissingByBuildPath).readAsString()),
-        jsonDecode(fillBeforeA),
+        await File(root.fillInMissingByBuildPath).readAsBytes(),
+        fillBeforeABytes,
       );
       expect(
-        jsonDecode(await File(root.optimizeByBuildPath).readAsString()),
-        jsonDecode(optBeforeA),
+        await File(root.optimizeByBuildPath).readAsBytes(),
+        optBeforeABytes,
       );
       final restoredPlan = await fiStore.loadForBuild(b.id);
       expect(restoredPlan!.applied.single.label, 'Seed Primary');
@@ -579,11 +621,11 @@ void main() {
         ],
       );
       await fiStore.saveBuildPlan(priorPlan);
-      final fillBefore =
-          await File(root.fillInMissingByBuildPath).readAsString();
+      final fillBeforeBytes =
+          await File(root.fillInMissingByBuildPath).readAsBytes();
       final optExistsBefore = File(root.optimizeByBuildPath).existsSync();
-      final optBefore = optExistsBefore
-          ? await File(root.optimizeByBuildPath).readAsString()
+      final optBeforeBytes = optExistsBefore
+          ? await File(root.optimizeByBuildPath).readAsBytes()
           : null;
 
       final c = BuildsOptimizeController(
@@ -601,6 +643,7 @@ void main() {
       );
       expect(armorApplied, isNotNull);
       expect(c.canUndo, isTrue);
+      expect(c.appliedResultIndex, 1);
 
       // Weapon auto-apply merge (Fill In path step 2) — merge plan without
       // touching armor pins; persist via the same controller Undo snapshot.
@@ -635,22 +678,230 @@ void main() {
         isTrue,
       );
 
-      // Undo must restore both store files to pre-apply bytes.
+      // (b) Undo restores both store files to exact pre-apply raw bytes.
       await c.undoLastApply();
       expect(
-        jsonDecode(await File(root.fillInMissingByBuildPath).readAsString()),
-        jsonDecode(fillBefore),
+        await File(root.fillInMissingByBuildPath).readAsBytes(),
+        fillBeforeBytes,
       );
-      if (optBefore == null) {
+      if (optBeforeBytes == null) {
         expect(await optStore.loadForBuild(b.id), isNull);
       } else {
         expect(
-          jsonDecode(await File(root.optimizeByBuildPath).readAsString()),
-          jsonDecode(optBefore),
+          await File(root.optimizeByBuildPath).readAsBytes(),
+          optBeforeBytes,
         );
       }
       final restoredPlan = await fiStore.loadForBuild(b.id);
       expect(restoredPlan!.applied.single.label, 'Pre Primary');
+    },
+  );
+
+  test(
+    '(b) weapon optimize apply then Undo restores prior store file bytes',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_weapon_undo_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      final fiStore = FillInMissingListStore(root: root);
+      final optStore = OptimizeBuildStore(root: root);
+      final b = build();
+      final priorPlan = FillInSavedBuildPlan(
+        buildId: b.id,
+        missing: const [],
+        applied: const [
+          FillInAppliedSlot(
+            slotWire: 'helmet',
+            label: 'Prior Helm',
+            originalLabel: '',
+            instanceId: 'h1',
+            itemHash: 1,
+          ),
+        ],
+      );
+      await fiStore.saveBuildPlan(priorPlan);
+      final fillBeforeBytes =
+          await File(root.fillInMissingByBuildPath).readAsBytes();
+
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        loadWeaponItems: () async => const [
+          FillInInventoryItem(
+            instanceId: 'wk1',
+            itemHash: 201,
+            name: 'Kinetic Scout',
+            slot: EquipmentSlot.primary,
+            isExotic: false,
+            weaponType: 'Scout Rifle',
+            damageType: 'Kinetic',
+          ),
+          FillInInventoryItem(
+            instanceId: 'we1',
+            itemHash: 202,
+            name: 'Energy Fusion',
+            slot: EquipmentSlot.special,
+            isExotic: false,
+            weaponType: 'Fusion Rifle',
+            damageType: 'Solar',
+          ),
+          FillInInventoryItem(
+            instanceId: 'wp1',
+            itemHash: 203,
+            name: 'Power Rocket',
+            slot: EquipmentSlot.heavy,
+            isExotic: false,
+            weaponType: 'Rocket Launcher',
+            damageType: 'Solar',
+          ),
+        ],
+        optimizeRunner: fakeResponse,
+        optimizeStore: optStore,
+        fillInStore: fiStore,
+      );
+      await c.refreshArmorCsv();
+      await c.refreshWeaponsCsv();
+      expect(c.hasWeaponsCsv, isTrue);
+
+      final armorApplied = await c.runOptimize(
+        build: b,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(armorApplied, isNotNull);
+      expect(c.canUndo, isTrue);
+
+      await c.prepareWeaponResults(
+        build: armorApplied!,
+        existingPlan: await fiStore.loadForBuild(b.id),
+        openPanel: true,
+      );
+      expect(c.weaponPanelOpen, isTrue);
+      expect(c.weaponCombinations, isNotEmpty);
+      expect(c.weaponCombinations.first.isOptimized, isTrue);
+
+      final weaponApplied = await c.applySelectedWeaponResult(
+        build: armorApplied,
+        index: 0,
+        existingPlan: await fiStore.loadForBuild(b.id),
+      );
+      expect(weaponApplied, isNotNull);
+      expect(
+        (await fiStore.loadForBuild(b.id))!.applied.any(
+          (a) => a.slotWire == 'primary' || a.slotWire == 'special',
+        ),
+        isTrue,
+      );
+
+      await c.undoLastApply();
+      expect(
+        await File(root.fillInMissingByBuildPath).readAsBytes(),
+        fillBeforeBytes,
+      );
+      expect(c.appliedResultIndex, isNull);
+      expect(c.weaponPanelOpen, isFalse);
+    },
+  );
+
+  test(
+    '(d) no weapons CSV → substitute results; never saved as optimized',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('opt_weapon_sub_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final root = StorageRoot(basePath: temp.path);
+      final fiStore = FillInMissingListStore(root: root);
+      final b = build();
+
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        loadWeaponItems: () async => null,
+        optimizeRunner: fakeResponse,
+        fillInStore: fiStore,
+      );
+      await c.refreshArmorCsv();
+      await c.refreshWeaponsCsv();
+      expect(c.hasWeaponsCsv, isFalse);
+      expect(c.weaponsCsvReason, kWeaponOptimizeNoCsvReason);
+
+      final armorApplied = await c.runOptimize(
+        build: b,
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(armorApplied, isNotNull);
+
+      // Provide inventory for substitute picks without claiming CSV import.
+      c.weaponItems; // touch getter
+      final response = runWeaponOptimizeForBuild(
+        build: armorApplied!,
+        weaponInventory: const [
+          FillInInventoryItem(
+            instanceId: 'sub1',
+            itemHash: 301,
+            name: 'Sub Scout',
+            slot: EquipmentSlot.primary,
+            isExotic: false,
+            weaponType: 'Scout Rifle',
+            damageType: 'Kinetic',
+          ),
+        ],
+        hasWeaponsCsv: false,
+      );
+      expect(response.combinations.single.isSubstitute, isTrue);
+      expect(response.combinations.single.reason, kWeaponOptimizeNoCsvReason);
+
+      final merged = applyWeaponOptimizeCombination(
+        build: armorApplied,
+        combination: response.combinations.single,
+      );
+      final ok = await c.persistMergedFillInPlan(merged.plan);
+      expect(ok, isTrue);
+      final plan = await fiStore.loadForBuild(b.id);
+      expect(plan, isNotNull);
+      for (final row in plan!.rows) {
+        if (row.slotWire == 'primary') {
+          expect(row.state, 'proposed');
+        }
+      }
+      // Armor isOptimized may be true; substitute weapons are proposed only.
+      expect(merged.build.isOptimized, armorApplied.isOptimized);
+    },
+  );
+
+  test(
+    'no weapons CSV and empty substitute pool surfaces visible reason',
+    () async {
+      final c = BuildsOptimizeController(
+        loadArmorItems: () async => syntheticArmor(),
+        loadWeaponItems: () async => null,
+        optimizeRunner: fakeResponse,
+      );
+      await c.refreshArmorCsv();
+      await c.refreshWeaponsCsv();
+      expect(c.hasWeaponsCsv, isFalse);
+
+      final armorApplied = await c.runOptimize(
+        build: build(),
+        mode: BuildsOptimizeMode.autoApplyFirst,
+      );
+      expect(armorApplied, isNotNull);
+
+      final response = await c.prepareWeaponResults(
+        build: armorApplied!,
+        cachedInventory: const [],
+        openPanel: true,
+      );
+      expect(response, isNotNull);
+      expect(response!.combinations, isEmpty);
+      expect(c.weaponCombinations, isEmpty);
+      expect(c.weaponPanelOpen, isFalse);
+      expect(
+        c.weaponsCsvReason,
+        kWeaponOptimizeEmptySubstitutePoolReason,
+      );
+      expect(c.error, kWeaponOptimizeEmptySubstitutePoolReason);
+      expect(c.armorAppliedBuild, isNotNull);
     },
   );
 }
