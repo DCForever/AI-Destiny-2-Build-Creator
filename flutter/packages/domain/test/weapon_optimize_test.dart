@@ -202,7 +202,7 @@ void main() {
     });
   });
 
-  group('optimizeWeapons pin / stale', () {
+  group('optimizeWeapons pins', () {
     test('pinned instance ids are never re-picked', () {
       final inv = [
         _w('pinned', 1, EquipmentSlot.primary, 'Scout Rifle', 'Kinetic'),

@@ -102,7 +102,7 @@ class WeaponOptimizeRequest {
   /// Combat buckets that still need a weapon (empty / unpinned only).
   final List<EquipmentSlot> emptySlots;
 
-  /// Held weapons from offline cache or imported CSV (already filtered stale).
+  /// Held weapons from offline cache or imported CSV (not checked against the live profile).
   final List<FillInInventoryItem> inventory;
 
   /// Build subclass key (Arc/Solar/…/Prismatic).
