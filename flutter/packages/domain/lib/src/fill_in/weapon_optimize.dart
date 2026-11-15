@@ -105,7 +105,7 @@ class WeaponOptimizeRequest {
   /// Held weapons from offline cache or imported CSV.
   ///
   /// Optimizer scoring uses this local list only; Apply to character later
-  /// checks each picked instance against the live profile before EquipItem.
+  /// checks each picked instance against the live profile before equipping.
   final List<FillInInventoryItem> inventory;
 
   /// Build subclass key (Arc/Solar/…/Prismatic).
