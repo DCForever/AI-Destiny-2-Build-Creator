@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../auth/browser_launcher.dart';
 import '../auth/windows_oauth_session.dart';
 
 /// Fixed Apply-gate sign-in copy (never echo raw exception text).

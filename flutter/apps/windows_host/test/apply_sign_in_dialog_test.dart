@@ -14,6 +14,7 @@ import 'package:destiny2_windows_host/builds_mock/builds_mock_page.dart';
 import 'package:destiny2_windows_host/host_bootstrap.dart';
 import 'package:destiny2_windows_host/theme/flap_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'inventory_sync_test_fakes.dart';
@@ -281,7 +282,7 @@ void main() {
     });
 
     testWidgets(
-        '(1) Escape/barrier dismiss while waiting calls cancelSignIn',
+        '(1) barrier dismiss while waiting calls cancelSignIn',
         (tester) async {
       final wait = Completer<LoopbackCallbackResult>();
       var loopbackStopped = false;
@@ -334,6 +335,192 @@ void main() {
       expect(result, ApplySignInDialogResult.cancelled);
       expect(session.status, OAuthSessionStatus.signedOut);
       expect(loopbackStopped, isTrue);
+    });
+
+    testWidgets(
+        '(1) Escape key while waiting calls cancelSignIn',
+        (tester) async {
+      final wait = Completer<LoopbackCallbackResult>();
+      var loopbackStopped = false;
+      final loopback = _RecordingLoopback(
+        onStop: () => loopbackStopped = true,
+      );
+      final session = _buildSession(
+        wait: () => wait.future,
+        loopback: loopback,
+      );
+      await session.restore();
+
+      ApplySignInDialogResult? result;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _theme(),
+          home: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: TextButton(
+                  key: const Key('open_dialog'),
+                  onPressed: () async {
+                    result = await showApplySignInDialog(
+                      context: context,
+                      session: session,
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('open_dialog')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('apply_sign_in_open')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(session.status, OAuthSessionStatus.signingIn);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('apply_sign_in_dialog')), findsNothing);
+      expect(result, ApplySignInDialogResult.cancelled);
+      expect(session.status, OAuthSessionStatus.signedOut);
+      expect(loopbackStopped, isTrue);
+    });
+
+    testWidgets(
+        '(1) route dispose while waiting calls cancelSignIn',
+        (tester) async {
+      final wait = Completer<LoopbackCallbackResult>();
+      var loopbackStopped = false;
+      final loopback = _RecordingLoopback(
+        onStop: () => loopbackStopped = true,
+      );
+      final session = _buildSession(
+        wait: () => wait.future,
+        loopback: loopback,
+      );
+      await session.restore();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _theme(),
+          home: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: TextButton(
+                  key: const Key('open_dialog'),
+                  onPressed: () {
+                    showApplySignInDialog(
+                      context: context,
+                      session: session,
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('open_dialog')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('apply_sign_in_open')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(find.byKey(const Key('apply_sign_in_dialog')), findsOneWidget);
+      expect(session.status, OAuthSessionStatus.signingIn);
+
+      // Drop the whole tree → dialog dispose must cancel in-flight sign-in.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+
+      expect(session.status, OAuthSessionStatus.signedOut);
+      expect(loopbackStopped, isTrue);
+    });
+
+    testWidgets(
+        'status=error + Locker: Escape leaves Locker byte-identical',
+        (tester) async {
+      final store = _CountingDialogTokenStore();
+      final now = DateTime.now().toUtc();
+      final good = BungieTokens(
+        accessToken: 'dialog-escape-access-SECRET',
+        refreshToken: 'dialog-escape-refresh-SECRET',
+        expiresAt: now.subtract(const Duration(minutes: 1)),
+        refreshExpiresAt: now.add(const Duration(days: 30)),
+        bungieMembershipId: 'dialog-escape-memb',
+      );
+      await store.write(good);
+
+      final wait = Completer<LoopbackCallbackResult>();
+      final session = WindowsOAuthSession(
+        clientId: 'test-client',
+        redirectUri: 'http://127.0.0.1:8765/callback',
+        tokenStore: store,
+        oauthClient: BungieOAuthClient(
+          clientId: 'test-client',
+          redirectUri: 'http://127.0.0.1:8765/callback',
+          transport: (_) async => const BungieHttpResponse(
+            statusCode: 503,
+            body: '{"error":"server_error"}',
+          ),
+        ),
+        browserLauncher: FakeBrowserLauncher(),
+        waitForCallbackOverride: () => wait.future,
+      );
+      await session.restore();
+      expect(session.status, OAuthSessionStatus.error);
+      expect(session.isSignedIn, isFalse);
+      final before = await store.read();
+      expect(store.clearSecureOnlyCalls, 0);
+
+      ApplySignInDialogResult? result;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _theme(),
+          home: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: TextButton(
+                  key: const Key('open_dialog'),
+                  onPressed: () async {
+                    result = await showApplySignInDialog(
+                      context: context,
+                      session: session,
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('open_dialog')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('apply_sign_in_open')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(session.status, OAuthSessionStatus.signingIn);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(result, ApplySignInDialogResult.cancelled);
+      expect(store.clearSecureOnlyCalls, 0);
+      final after = await store.read();
+      expect(after?.accessToken, before?.accessToken);
+      expect(after?.refreshToken, before?.refreshToken);
+      expect(after?.bungieMembershipId, before?.bungieMembershipId);
+      expect(after?.expiresAt, before?.expiresAt);
+      expect(after?.refreshExpiresAt, before?.refreshExpiresAt);
     });
 
     testWidgets(
@@ -617,4 +804,35 @@ class _RecordingLoopback extends LoopbackCallbackServer {
     onStop();
     await super.stop();
   }
+}
+
+/// Tracks clearSecureOnly for dialog Locker-preservation tests.
+class _CountingDialogTokenStore implements TokenStore {
+  BungieTokens? _tokens;
+  int clearSecureOnlyCalls = 0;
+
+  @override
+  Future<BungieTokens?> read() async => _tokens;
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async => _tokens;
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    _tokens = tokens;
+  }
+
+  @override
+  Future<void> clear() async {
+    _tokens = null;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
+    _tokens = null;
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }

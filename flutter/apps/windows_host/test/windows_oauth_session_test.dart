@@ -987,7 +987,141 @@ void main() {
         ),
         isFalse,
       );
+      // Explicit :443 refused (documented port policy — no port ambiguity).
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://www.bungie.net:443/en/oauth/authorize',
+        ),
+        isFalse,
+      );
+      // userinfo@host form — host is evil.example, must refuse.
+      expect(
+        isAllowedBungieAuthorizeUrl(
+          'https://www.bungie.net@evil.example/en/oauth/authorize',
+        ),
+        isFalse,
+      );
     });
+
+    test('(4) FakeBrowserLauncher refuses non-allowlisted authorize URL',
+        () async {
+      final browser = FakeBrowserLauncher();
+      await expectLater(
+        browser.open('https://evil.example/en/oauth/authorize'),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            kUnsafeAuthorizeUrlMessage,
+          ),
+        ),
+      );
+      expect(browser.opened, isEmpty);
+      await browser.open(
+        'https://www.bungie.net/en/oauth/authorize?client_id=1',
+      );
+      expect(browser.opened, hasLength(1));
+    });
+
+    test(
+      'status=error with Locker tokens: Cancel leaves Locker byte-identical',
+      () async {
+        final store = _CountingMemoryStore();
+        final now = DateTime.now().toUtc();
+        final good = BungieTokens(
+          accessToken: 'locker-keep-access-SECRET',
+          refreshToken: 'locker-keep-refresh-SECRET',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 30)),
+          bungieMembershipId: 'locker-keep-memb',
+        );
+        await store.write(good);
+
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => const BungieHttpResponse(
+              statusCode: 503,
+              body: '{"error":"server_error"}',
+            ),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () =>
+              Completer<LoopbackCallbackResult>().future,
+        );
+        await session.restore();
+        expect(session.status, OAuthSessionStatus.error);
+        expect(session.isSignedIn, isFalse);
+        final before = await store.read();
+        expect(before?.accessToken, 'locker-keep-access-SECRET');
+        expect(store.clearSecureOnlyCalls, 0);
+
+        final signInFuture = session.signIn();
+        await Future<void>.delayed(Duration.zero);
+        expect(session.status, OAuthSessionStatus.signingIn);
+        await session.cancelSignIn();
+        await signInFuture;
+
+        expect(store.clearSecureOnlyCalls, 0);
+        final after = await store.read();
+        expect(after?.accessToken, before?.accessToken);
+        expect(after?.refreshToken, before?.refreshToken);
+        expect(after?.bungieMembershipId, before?.bungieMembershipId);
+        expect(after?.expiresAt, before?.expiresAt);
+        expect(after?.refreshExpiresAt, before?.refreshExpiresAt);
+      },
+    );
+
+    test(
+      'status=error with Locker tokens: failed sign-in leaves Locker intact',
+      () async {
+        final store = _CountingMemoryStore();
+        final now = DateTime.now().toUtc();
+        final good = BungieTokens(
+          accessToken: 'locker-fail-access-SECRET',
+          refreshToken: 'locker-fail-refresh-SECRET',
+          expiresAt: now.subtract(const Duration(minutes: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 30)),
+          bungieMembershipId: 'locker-fail-memb',
+        );
+        await store.write(good);
+
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => const BungieHttpResponse(
+              statusCode: 503,
+              body: '{"error":"server_error"}',
+            ),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () async =>
+              const LoopbackCallbackResult(error: 'server_error'),
+        );
+        await session.restore();
+        expect(session.status, OAuthSessionStatus.error);
+        final before = await store.read();
+        expect(store.clearSecureOnlyCalls, 0);
+
+        await session.signIn();
+
+        expect(store.clearSecureOnlyCalls, 0);
+        final after = await store.read();
+        expect(after?.accessToken, before?.accessToken);
+        expect(after?.refreshToken, before?.refreshToken);
+        expect(after?.bungieMembershipId, before?.bungieMembershipId);
+        expect(after?.expiresAt, before?.expiresAt);
+        expect(after?.refreshExpiresAt, before?.refreshExpiresAt);
+      },
+    );
 
     test(
       '(3) sign-in verify uses readSecureOnly (no DualTokenStore migration)',
