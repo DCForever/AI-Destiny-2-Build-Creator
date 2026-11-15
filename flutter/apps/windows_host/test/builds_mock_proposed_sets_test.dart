@@ -163,4 +163,237 @@ void main() {
     expect(bonuses.single.tier, '4pc');
     expect(bonuses.single.setId, 'Techsec');
   });
+
+  test('same-name legendaries in different set families emit no goal for row',
+      () {
+    final build = bare();
+    final plan = const FillInSavedBuildPlan(
+      buildId: 'b1',
+      missing: [],
+      rows: [
+        FillInSavedSlotRow(
+          slotWire: 'helmet',
+          slotLabel: 'Helmet',
+          state: 'proposed',
+          itemName: 'Shared Helm',
+        ),
+      ],
+    );
+    final armor = [
+      const FillInInventoryItem(
+        instanceId: 'a',
+        itemHash: 11,
+        slot: EquipmentSlot.helmet,
+        isExotic: false,
+        guardianClass: GuardianClass.warlock,
+        name: 'Shared Helm',
+        armorSetHash: 501,
+        location: 'vault',
+      ),
+      const FillInInventoryItem(
+        instanceId: 'b',
+        itemHash: 22,
+        slot: EquipmentSlot.helmet,
+        isExotic: false,
+        guardianClass: GuardianClass.warlock,
+        name: 'Shared Helm',
+        armorSetHash: 777,
+        location: 'character',
+      ),
+    ];
+    // Catalog maps disagree on family for the same display name.
+    final keyByHash = {11: 'Techsec', 22: 'OtherFamily'};
+    expect(
+      proposedSetBonusesFor(
+        build: build,
+        plan: plan,
+        armorItems: armor,
+        setBonusKeyByItemHash: keyByHash,
+      ),
+      isEmpty,
+    );
+    expect(
+      proposedSetBonusGoalsFor(
+        build: build,
+        plan: plan,
+        armorItems: armor,
+        setBonusKeyByItemHash: keyByHash,
+      ),
+      isEmpty,
+    );
+  });
+
+  test('itemHash on applied pin selects the correct set family', () {
+    final build = bare();
+    final plan = const FillInSavedBuildPlan(
+      buildId: 'b1',
+      missing: [],
+      applied: [
+        FillInAppliedSlot(
+          slotWire: 'helmet',
+          label: 'Shared Helm',
+          originalLabel: '',
+          itemHash: 22,
+          instanceId: 'b',
+        ),
+      ],
+      rows: [
+        FillInSavedSlotRow(
+          slotWire: 'helmet',
+          slotLabel: 'Helmet',
+          state: 'filled',
+          itemName: 'Shared Helm',
+        ),
+        FillInSavedSlotRow(
+          slotWire: 'arms',
+          slotLabel: 'Gauntlets',
+          state: 'filled',
+          itemName: 'Other Arms',
+        ),
+        FillInSavedSlotRow(
+          slotWire: 'chest',
+          slotLabel: 'Chest',
+          state: 'filled',
+          itemName: 'Other Chest',
+        ),
+        FillInSavedSlotRow(
+          slotWire: 'legs',
+          slotLabel: 'Legs',
+          state: 'filled',
+          itemName: 'Other Legs',
+        ),
+      ],
+    );
+    final armor = [
+      const FillInInventoryItem(
+        instanceId: 'a',
+        itemHash: 11,
+        slot: EquipmentSlot.helmet,
+        isExotic: false,
+        guardianClass: GuardianClass.warlock,
+        name: 'Shared Helm',
+        location: 'vault',
+      ),
+      const FillInInventoryItem(
+        instanceId: 'b',
+        itemHash: 22,
+        slot: EquipmentSlot.helmet,
+        isExotic: false,
+        guardianClass: GuardianClass.warlock,
+        name: 'Shared Helm',
+        location: 'character',
+      ),
+      const FillInInventoryItem(
+        instanceId: 'c',
+        itemHash: 23,
+        slot: EquipmentSlot.arms,
+        isExotic: false,
+        guardianClass: GuardianClass.warlock,
+        name: 'Other Arms',
+        location: 'vault',
+      ),
+      const FillInInventoryItem(
+        instanceId: 'd',
+        itemHash: 24,
+        slot: EquipmentSlot.chest,
+        isExotic: false,
+        guardianClass: GuardianClass.warlock,
+        name: 'Other Chest',
+        location: 'vault',
+      ),
+      const FillInInventoryItem(
+        instanceId: 'e',
+        itemHash: 25,
+        slot: EquipmentSlot.legs,
+        isExotic: false,
+        guardianClass: GuardianClass.warlock,
+        name: 'Other Legs',
+        location: 'vault',
+      ),
+    ];
+    final keyByHash = {
+      11: 'Techsec',
+      22: 'OtherFamily',
+      23: 'OtherFamily',
+      24: 'OtherFamily',
+      25: 'OtherFamily',
+    };
+    final goals = proposedSetBonusGoalsFor(
+      build: build,
+      plan: plan,
+      armorItems: armor,
+      setBonusKeyByItemHash: keyByHash,
+    );
+    expect(goals, [
+      const SetBonusCoverageGoal(setBonusKey: 'OtherFamily', minPieces: 4),
+    ]);
+  });
+
+  test('set-key matches candidatesFromDimArmorItems (catalog + set:hash)', () {
+    final item = const FillInInventoryItem(
+      instanceId: 'i1',
+      itemHash: 9001,
+      slot: EquipmentSlot.helmet,
+      isExotic: false,
+      guardianClass: GuardianClass.warlock,
+      name: 'Piece',
+      armorSetHash: 501,
+      location: 'vault',
+    );
+    // No catalog → same set:501 fallback candidates use.
+    expect(
+      setKeyForInventoryItem(item: item),
+      'set:501',
+    );
+    final candidates = candidatesFromDimArmorItems(
+      items: [item],
+      guardianClass: GuardianClass.warlock,
+    );
+    expect(candidates.single.setBonusKey, 'set:501');
+
+    // Catalog display name wins — same as candidates.
+    expect(
+      setKeyForInventoryItem(
+        item: item,
+        setBonusKeyByItemHash: const {9001: 'Techsec'},
+      ),
+      'Techsec',
+    );
+    final stamped = candidatesFromDimArmorItems(
+      items: [item],
+      guardianClass: GuardianClass.warlock,
+      setBonusKeyByItemHash: const {9001: 'Techsec'},
+    );
+    expect(stamped.single.setBonusKey, 'Techsec');
+
+    // Slot setId set:501 lines up with candidate key when catalog empty.
+    final build = bare(
+      slots: const [
+        MockSlotAssignment(
+          slot: 'helmet',
+          setId: 'set:501',
+          pieceName: 'Piece',
+        ),
+        MockSlotAssignment(
+          slot: 'arms',
+          setId: 'set:501',
+          pieceName: 'Piece Arms',
+        ),
+        MockSlotAssignment(
+          slot: 'chest',
+          setId: 'set:501',
+          pieceName: 'Piece Chest',
+        ),
+        MockSlotAssignment(
+          slot: 'legs',
+          setId: 'set:501',
+          pieceName: 'Piece Legs',
+        ),
+      ],
+    );
+    final goals = proposedSetBonusGoalsFor(build: build);
+    expect(goals, [
+      const SetBonusCoverageGoal(setBonusKey: 'set:501', minPieces: 4),
+    ]);
+  });
 }

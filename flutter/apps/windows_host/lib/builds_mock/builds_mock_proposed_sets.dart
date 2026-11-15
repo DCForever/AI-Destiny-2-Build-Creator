@@ -4,6 +4,8 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'builds_mock_derived_name.dart';
 import 'builds_mock_models.dart';
 
+const _kArmorSlotWires = {'helmet', 'arms', 'chest', 'legs', 'class_item'};
+
 /// Placeholder / synthetic slot setIds that are not armor-set families.
 bool _isPlaceholderSetId(String raw) {
   final id = raw.trim().toLowerCase();
@@ -14,18 +16,85 @@ bool _isPlaceholderSetId(String raw) {
   return false;
 }
 
-/// Count legendary armor pieces per set family from [build.slots].
-Map<String, int> _slotSetPieceCounts(MockBuild build) {
-  final counts = <String, int>{};
-  const armorWires = {'helmet', 'arms', 'chest', 'legs', 'class_item'};
-  for (final s in build.slots) {
-    if (s.isExoticSlot) continue;
-    if (!armorWires.contains(s.slot)) continue;
-    if (_isPlaceholderSetId(s.setId)) continue;
-    final key = s.setId.trim();
-    counts[key] = (counts[key] ?? 0) + 1;
+/// Same key rules as [candidatesFromDimArmorItems] so Optimize goals match
+/// stamped [CandidatePiece.setBonusKey] values.
+///
+/// Prefers catalog display name from [setBonusKeyByItemHash]; falls back to
+/// `set:${armorSetHash}` when the catalog map misses.
+String? setKeyForInventoryItem({
+  required FillInInventoryItem item,
+  Map<int, String> setBonusKeyByItemHash = const {},
+}) {
+  if (item.isExotic) return null;
+  final mapped = setBonusKeyByItemHash[item.itemHash]?.trim();
+  if (mapped != null && mapped.isNotEmpty) return mapped;
+  final fromHash = item.armorSetHash;
+  if (fromHash != null && fromHash > 0) return 'set:$fromHash';
+  return null;
+}
+
+FillInAppliedSlot? _appliedForSlot(
+  FillInSavedBuildPlan plan,
+  String slotWire,
+) {
+  for (final a in plan.applied) {
+    if (a.slotWire == slotWire) return a;
   }
-  return counts;
+  return null;
+}
+
+/// Inventory matches for one Fill In armor row (slot-gated; hash/instance first).
+List<FillInInventoryItem> _inventoryMatchesForPlanRow({
+  required FillInSavedSlotRow row,
+  FillInAppliedSlot? applied,
+  required List<FillInInventoryItem> armorItems,
+}) {
+  final slotWire = row.slotWire;
+  final wantHash = applied?.itemHash;
+  final wantInstance = applied?.instanceId?.trim() ?? '';
+  final name = row.itemName.trim().toLowerCase();
+  final out = <FillInInventoryItem>[];
+  for (final item in armorItems) {
+    if (item.isExotic) continue;
+    if (item.slot.wireName != slotWire) continue;
+    if (wantHash != null) {
+      if (item.itemHash == wantHash) out.add(item);
+      continue;
+    }
+    if (wantInstance.isNotEmpty) {
+      if (item.instanceId == wantInstance) out.add(item);
+      continue;
+    }
+    if (name.isEmpty) continue;
+    if ((item.name ?? '').trim().toLowerCase() == name) out.add(item);
+  }
+  return out;
+}
+
+/// Resolve one row's set key, or null when unmatched / ambiguous set family.
+String? _setKeyForPlanRow({
+  required FillInSavedSlotRow row,
+  FillInAppliedSlot? applied,
+  required List<FillInInventoryItem> armorItems,
+  required Map<int, String> setBonusKeyByItemHash,
+}) {
+  final matches = _inventoryMatchesForPlanRow(
+    row: row,
+    applied: applied,
+    armorItems: armorItems,
+  );
+  if (matches.isEmpty) return null;
+  final keys = <String>{};
+  for (final item in matches) {
+    final key = setKeyForInventoryItem(
+      item: item,
+      setBonusKeyByItemHash: setBonusKeyByItemHash,
+    );
+    if (key != null && key.isNotEmpty) keys.add(key);
+  }
+  // Same-name (or multi-copy) hits that disagree on family → no goal for row.
+  if (keys.length != 1) return null;
+  return keys.single;
 }
 
 /// Resolve set-bonus family keys from Fill In proposed/filled armor rows.
@@ -35,25 +104,64 @@ Map<String, int> _planSetPieceCounts({
   required Map<int, String> setBonusKeyByItemHash,
 }) {
   final counts = <String, int>{};
-  const armorWires = {'helmet', 'arms', 'chest', 'legs', 'class_item'};
   for (final row in plan.rows) {
-    if (!armorWires.contains(row.slotWire)) continue;
+    if (!_kArmorSlotWires.contains(row.slotWire)) continue;
     final state = row.state.trim().toLowerCase();
     if (state != 'proposed' && state != 'filled') continue;
-    final name = row.itemName.trim().toLowerCase();
-    if (name.isEmpty) continue;
+    final key = _setKeyForPlanRow(
+      row: row,
+      applied: _appliedForSlot(plan, row.slotWire),
+      armorItems: armorItems,
+      setBonusKeyByItemHash: setBonusKeyByItemHash,
+    );
+    if (key == null || key.isEmpty) continue;
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return counts;
+}
+
+/// Count legendary armor pieces per set family from [build.slots].
+///
+/// When inventory + catalog map are provided, resolves each piece through
+/// [setKeyForInventoryItem] so keys match optimizer candidates; otherwise
+/// uses non-placeholder [MockSlotAssignment.setId] as-is.
+Map<String, int> _slotSetPieceCounts(
+  MockBuild build, {
+  List<FillInInventoryItem> armorItems = const [],
+  Map<int, String> setBonusKeyByItemHash = const {},
+}) {
+  final counts = <String, int>{};
+  for (final s in build.slots) {
+    if (s.isExoticSlot) continue;
+    if (!_kArmorSlotWires.contains(s.slot)) continue;
     String? key;
-    for (final item in armorItems) {
-      if (item.isExotic) continue;
-      if ((item.name ?? '').trim().toLowerCase() != name) continue;
-      final mapped = setBonusKeyByItemHash[item.itemHash]?.trim();
-      if (mapped != null && mapped.isNotEmpty) {
-        key = mapped;
-      } else if (item.armorSetHash != null && item.armorSetHash! > 0) {
-        key = 'set:${item.armorSetHash}';
+    if (armorItems.isNotEmpty) {
+      final name = s.pieceName.trim().toLowerCase();
+      if (name.isNotEmpty) {
+        final matches = <FillInInventoryItem>[
+          for (final item in armorItems)
+            if (!item.isExotic &&
+                item.slot.wireName == s.slot &&
+                (item.name ?? '').trim().toLowerCase() == name)
+              item,
+        ];
+        final keys = <String>{};
+        for (final item in matches) {
+          final resolved = setKeyForInventoryItem(
+            item: item,
+            setBonusKeyByItemHash: setBonusKeyByItemHash,
+          );
+          if (resolved != null && resolved.isNotEmpty) keys.add(resolved);
+        }
+        if (keys.length == 1) {
+          key = keys.single;
+        } else if (keys.length > 1) {
+          // Ambiguous name across families — skip this slot.
+          continue;
+        }
       }
-      if (key != null) break;
     }
+    key ??= _isPlaceholderSetId(s.setId) ? null : s.setId.trim();
     if (key == null || key.isEmpty) continue;
     counts[key] = (counts[key] ?? 0) + 1;
   }
@@ -128,7 +236,13 @@ List<MockSetBonus> proposedSetBonusesFor({
     );
     if (fromPlan.isNotEmpty) return combineBuildsMockSetBonuses(fromPlan);
   }
-  final fromSlots = _bonusesFromCounts(_slotSetPieceCounts(build));
+  final fromSlots = _bonusesFromCounts(
+    _slotSetPieceCounts(
+      build,
+      armorItems: armorItems,
+      setBonusKeyByItemHash: setBonusKeyByItemHash,
+    ),
+  );
   if (fromSlots.isEmpty) return const [];
   return combineBuildsMockSetBonuses(fromSlots);
 }
