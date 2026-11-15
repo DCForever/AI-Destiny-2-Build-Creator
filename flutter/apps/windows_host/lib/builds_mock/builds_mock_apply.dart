@@ -257,7 +257,10 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
     if (!isMounted()) {
       return const BuildsMockApplyOutcome(finished: true);
     }
-    return BuildsMockApplyOutcome(error: e.toString(), finished: true);
+    return const BuildsMockApplyOutcome(
+      error: kGenericApplyFailureMessage,
+      finished: true,
+    );
   }
 }
 
@@ -324,22 +327,57 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
       if (item.instanceId.isNotEmpty) item.instanceId,
   };
   final exoticHashes = _exoticHashesForApply(ports);
+  final nameByHash = _catalogNamesByHash(ports);
   final snapshot = <ApplyInventoryItem>[
     for (final item in inventory)
       if (item.instanceId.isNotEmpty)
         ApplyInventoryItem(
           instanceId: item.instanceId,
           itemHash: item.itemHash,
-          location: item.location,
+          location: item.bucketHash == kPostmasterBucketHash
+              ? 'postmaster'
+              : item.location,
           bucketHash: item.bucketHash,
           characterId: item.characterId,
           isExotic: item.isExotic || exoticHashes.contains(item.itemHash),
+          power: item.power,
+          name: nameByHash[item.itemHash] ?? '',
+          isLocked: item.isLocked,
+          isTransferable: item.isTransferable,
         ),
   ];
+  final liveByInstance = <String, ApplyInventoryItem>{
+    for (final row in snapshot) row.instanceId: row,
+  };
   final present = <ApplyToCharacterItem>[];
   for (var i = 0; i < items.length; i++) {
     if (liveIds.contains(items[i].instanceId)) {
-      present.add(items[i]);
+      final live = liveByInstance[items[i].instanceId];
+      final isExotic = items[i].isExotic || (live?.isExotic ?? false);
+      final label = formatApplyOutcomeLabel(
+        rawLabel: items[i].label,
+        slot: items[i].slot,
+        isExotic: isExotic,
+      );
+      present.add(
+        ApplyToCharacterItem(
+          id: items[i].id,
+          label: label,
+          itemHash: items[i].itemHash,
+          instanceId: items[i].instanceId,
+          slot: items[i].slot,
+          isExotic: isExotic,
+        ),
+      );
+      rows[i] = ApplyItemProgress(
+        id: items[i].id,
+        label: label,
+        state: rows[i].state,
+        reason: rows[i].reason,
+        itemHash: items[i].itemHash,
+        instanceId: items[i].instanceId,
+        slot: items[i].slot,
+      );
     } else {
       rows[i] = rows[i].copyWith(
         state: ApplyItemState.failed,
@@ -374,8 +412,15 @@ ApplyToCharacterProgress _mergeApplyProgress(
       rows[i] = updated;
     }
   }
-  final applied = rows.where((r) => r.state == ApplyItemState.done).length;
-  final failed = rows.where((r) => r.state == ApplyItemState.failed).length;
+  final knownIds = {for (final row in rows) row.id};
+  for (final row in partial.items) {
+    if (!knownIds.contains(row.id)) {
+      rows.add(row);
+      knownIds.add(row.id);
+    }
+  }
+  final applied = _countNonMakeRoom(rows, ApplyItemState.done);
+  final failed = _countNonMakeRoom(rows, ApplyItemState.failed);
   var currentIndex = 0;
   if (!partial.running) {
     currentIndex = rows.isEmpty ? 0 : rows.length - 1;
@@ -390,7 +435,7 @@ ApplyToCharacterProgress _mergeApplyProgress(
   return ApplyToCharacterProgress(
     items: List<ApplyItemProgress>.unmodifiable(rows),
     currentIndex: currentIndex,
-    total: rows.length,
+    total: rows.where((r) => !r.id.startsWith(kApplyMakeRoomRowIdPrefix)).length,
     running: partial.running,
     appliedCount: applied,
     failedCount: failed,
@@ -398,21 +443,30 @@ ApplyToCharacterProgress _mergeApplyProgress(
   );
 }
 
+int _countNonMakeRoom(List<ApplyItemProgress> rows, ApplyItemState state) {
+  var n = 0;
+  for (final row in rows) {
+    if (row.id.startsWith(kApplyMakeRoomRowIdPrefix)) continue;
+    if (row.state == state) n += 1;
+  }
+  return n;
+}
+
 ApplyToCharacterProgress _finishedProgress(List<ApplyItemProgress> rows) {
   return ApplyToCharacterProgress(
     items: List<ApplyItemProgress>.unmodifiable(rows),
     currentIndex: rows.isEmpty ? 0 : rows.length - 1,
-    total: rows.length,
+    total: rows.where((r) => !r.id.startsWith(kApplyMakeRoomRowIdPrefix)).length,
     running: false,
-    appliedCount: rows.where((r) => r.state == ApplyItemState.done).length,
-    failedCount: rows.where((r) => r.state == ApplyItemState.failed).length,
+    appliedCount: _countNonMakeRoom(rows, ApplyItemState.done),
+    failedCount: _countNonMakeRoom(rows, ApplyItemState.failed),
     summary: _summaryForRows(rows),
   );
 }
 
 String _summaryForRows(List<ApplyItemProgress> rows) {
-  final applied = rows.where((r) => r.state == ApplyItemState.done).length;
-  final failed = rows.where((r) => r.state == ApplyItemState.failed).length;
+  final applied = _countNonMakeRoom(rows, ApplyItemState.done);
+  final failed = _countNonMakeRoom(rows, ApplyItemState.failed);
   return '$applied applied, $failed failed';
 }
 
@@ -422,6 +476,10 @@ List<ApplyToCharacterItem> itemsForBuildsMockApply(
 ) {
   final applied = plan?.applied ?? const <FillInAppliedSlot>[];
   if (applied.isEmpty) return const [];
+  final exoticSlots = <String>{};
+  for (final s in build.slots) {
+    if (s.isExoticSlot) exoticSlots.add(s.slot);
+  }
   return [
     for (final slot in applied)
       if (slot.instanceId != null &&
@@ -429,12 +487,24 @@ List<ApplyToCharacterItem> itemsForBuildsMockApply(
           slot.itemHash != null)
         ApplyToCharacterItem(
           id: '${build.id}-${slot.slotWire}',
-          label: slot.label.isEmpty ? slot.slotWire : slot.label,
+          label: formatApplyOutcomeLabel(
+            rawLabel: slot.label,
+            slot: slot.slotWire,
+            isExotic: exoticSlots.contains(slot.slotWire) ||
+                _slotWireLooksExotic(slot.slotWire),
+          ),
           itemHash: slot.itemHash!,
           instanceId: slot.instanceId!,
           slot: slot.slotWire,
+          isExotic: exoticSlots.contains(slot.slotWire) ||
+              _slotWireLooksExotic(slot.slotWire),
         ),
   ];
+}
+
+bool _slotWireLooksExotic(String slotWire) {
+  final wire = slotWire.trim().toLowerCase();
+  return wire == 'exotic_weapon' || wire == 'exotic_armor';
 }
 
 /// Exotic hashes from inject + OfflineCatalog (definition isExotic / tierType).
@@ -447,4 +517,15 @@ Set<int> _exoticHashesForApply(BuildsMockApplyPorts ports) {
     }
   }
   return hashes;
+}
+
+Map<int, String> _catalogNamesByHash(BuildsMockApplyPorts ports) {
+  final out = <int, String>{};
+  final catalog = ports.services?.offlineCatalog;
+  if (catalog == null) return out;
+  for (final item in catalog.baseItems) {
+    final name = item.name.trim();
+    if (name.isNotEmpty) out[item.hash] = name;
+  }
+  return out;
 }

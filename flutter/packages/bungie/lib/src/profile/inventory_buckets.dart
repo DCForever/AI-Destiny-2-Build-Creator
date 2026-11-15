@@ -3,10 +3,16 @@
 
 const int kSubclassBucketHash = 3284755031;
 
+/// Vault General bucket hash (profile inventory).
+const int kVaultGeneralBucketHash = 138197802;
+
+/// Postmaster / lost-items bucket hash (not TransferItem-eligible for Apply).
+const int kPostmasterBucketHash = 215593132;
+
 /// Vault and other containers whose items need equipment-bucket resolution.
 const Set<int> kTransferContainerBuckets = {
-  138197802, // General (vault)
-  215593132, // Postmaster
+  kVaultGeneralBucketHash,
+  kPostmasterBucketHash,
 };
 
 /// Equipment bucket hash → stored inventory label (catalog / owned filters).
@@ -24,8 +30,8 @@ const Map<int, String> kEquipmentBucketLabels = {
 
 /// Labels for transfer containers (diagnostics only — resolve before storage).
 const Map<int, String> kTransferContainerLabels = {
-  138197802: 'VaultGeneral',
-  215593132: 'Postmaster',
+  kVaultGeneralBucketHash: 'VaultGeneral',
+  kPostmasterBucketHash: 'Postmaster',
 };
 
 const Set<int> kWeaponBucketHashes = {

@@ -96,6 +96,12 @@ class RawSocketCapture {
 }
 
 /// One parsed inventory instance before Drift normalize.
+/// Destiny ItemState bit: Locked (SetItemLockState).
+const int kDestinyItemStateLocked = 1;
+
+/// DestinyTransferStatus: item may be moved with TransferItem.
+const int kDestinyTransferStatusCanTransfer = 0;
+
 class RawInventoryItem {
   const RawInventoryItem({
     required this.instanceId,
@@ -111,6 +117,8 @@ class RawInventoryItem {
     this.gearTier,
     this.tierType,
     this.socketCapture,
+    this.isLocked = false,
+    this.isTransferable = true,
   });
 
   final String instanceId;
@@ -131,6 +139,12 @@ class RawInventoryItem {
   final int? tierType;
   final List<RawSocketCapture>? socketCapture;
 
+  /// Destiny ItemState Locked bit from the profile item component.
+  final bool isLocked;
+
+  /// False when DestinyTransferStatus is not CanTransfer.
+  final bool isTransferable;
+
   /// Exotic via instance gearTier or definition tierType.
   bool get isExotic =>
       gearTier == 6 || tierType == 6;
@@ -150,6 +164,8 @@ class RawInventoryItem {
       gearTier: gearTier,
       tierType: tierType ?? this.tierType,
       socketCapture: socketCapture,
+      isLocked: isLocked,
+      isTransferable: isTransferable,
     );
   }
 }
