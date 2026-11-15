@@ -22,6 +22,11 @@ abstract class TokenStore {
 
   /// Clears Credential Locker / primary only; never deletes the legacy sidecar.
   Future<void> clearSecureOnly();
+
+  /// Best-effort delete of the legacy plaintext sidecar only (exact path).
+  ///
+  /// No-op when this store has no sidecar. Safe after a verified Locker write.
+  Future<void> deleteLegacySidecarIfPresent();
 }
 
 /// Thrown when the secure store has a payload that cannot be parsed.
@@ -74,6 +79,9 @@ class MemoryTokenStore implements TokenStore {
   Future<void> clearSecureOnly() async {
     _tokens = null;
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 /// Default secure-storage key for the Windows host OAuth payload.
@@ -136,6 +144,9 @@ class SecureTokenStore implements TokenStore {
   Future<void> clearSecureOnly() async {
     await _storage.delete(key: storageKey);
   }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
 }
 
 /// Legacy file store under [baseDir] (application-support).
@@ -182,6 +193,11 @@ class FileTokenStore implements TokenStore {
   @override
   Future<void> clearSecureOnly() async {
     // File store is never the Credential Locker.
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {
+    await clear();
   }
 }
 
@@ -305,6 +321,13 @@ class DualTokenStore implements TokenStore {
   Future<void> clearSecureOnly() async {
     try {
       await _primary.clearSecureOnly();
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {
+    try {
+      await _secondary.deleteLegacySidecarIfPresent();
     } catch (_) {}
   }
 }
