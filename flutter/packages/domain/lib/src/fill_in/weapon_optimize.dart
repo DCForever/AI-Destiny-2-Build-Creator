@@ -102,7 +102,10 @@ class WeaponOptimizeRequest {
   /// Combat buckets that still need a weapon (empty / unpinned only).
   final List<EquipmentSlot> emptySlots;
 
-  /// Held weapons from offline cache or imported CSV (not checked against the live profile).
+  /// Held weapons from offline cache or imported CSV.
+  ///
+  /// Optimizer scoring uses this local list only; Apply to character later
+  /// checks each picked instance against the live profile before equipping.
   final List<FillInInventoryItem> inventory;
 
   /// Build subclass key (Arc/Solar/…/Prismatic).
