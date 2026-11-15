@@ -27,6 +27,9 @@ class BungieHttpException extends BungieClientException {
 }
 
 /// Bungie Platform envelope reported non-success (`ErrorCode != 1`).
+///
+/// Also thrown when HTTP is non-2xx but the body is a normal Bungie envelope
+/// (Bungie often returns HTTP 500 with ErrorCode/ErrorStatus/Message).
 class BungiePlatformException extends BungieClientException {
   const BungiePlatformException(
     super.message, {
@@ -34,12 +37,16 @@ class BungiePlatformException extends BungieClientException {
     this.throttleSeconds = 0,
     this.errorStatus,
     this.rateLimitSignal,
+    this.statusCode,
   });
 
   final int errorCode;
   final int throttleSeconds;
   final String? errorStatus;
   final RateLimitSignal? rateLimitSignal;
+
+  /// HTTP status when this exception came from a non-2xx response body.
+  final int? statusCode;
 }
 
 /// Response body could not be parsed as a Bungie envelope.
