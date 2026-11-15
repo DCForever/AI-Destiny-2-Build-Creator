@@ -20,6 +20,7 @@ import '../optimize/builds_optimize_results_panel.dart';
 import '../optimize/builds_weapon_optimize_results_panel.dart';
 import '../optimize/weapon_optimize_apply.dart';
 import '../sets/set_bonus_families.dart';
+import 'apply_sign_in_dialog.dart';
 import 'builds_mock_apply.dart';
 import 'builds_mock_controller.dart';
 import 'builds_mock_derived_name.dart';
@@ -256,6 +257,18 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
   BuildsMockApplyPorts get _applyPorts =>
       widget.applyPorts ?? BuildsMockApplyPorts(services: widget.services);
 
+  /// Signed-out Apply opens the Bungie sign-in dialog (system browser).
+  bool get _canOpenApplySignIn {
+    final oauth = _applyPorts.resolvedOauth;
+    return oauth != null && oauth.isConfigured && !oauth.isSignedIn;
+  }
+
+  bool get _isApplyButtonEnabled {
+    if (_applyingBuildId != null) return false;
+    if (_applyTarget != null) return true;
+    return _canOpenApplySignIn;
+  }
+
   Future<void> _refreshApplyTarget() async {
     final resolution = await resolveBuildsMockApplyTarget(_applyPorts);
     if (!mounted) return;
@@ -265,7 +278,11 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       _applyTargetLabel = target == null
           ? null
           : formatBuildsMockApplyTargetLabel(target.character);
-      _applyDisabledReason = target == null ? resolution.reason : null;
+      // When Apply can open the sign-in dialog, do not show the old
+      // "Sign in from Settings" disable reason beside an enabled button.
+      _applyDisabledReason = target == null && !_canOpenApplySignIn
+          ? resolution.reason
+          : null;
     });
   }
 
@@ -366,9 +383,24 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
 
   Future<void> _applyToCharacter(MockBuild build) async {
     if (_applyingBuildId != null) return;
+    final ports = _applyPorts;
+    final oauth = ports.resolvedOauth;
+
+    // Already signed in with a valid token → skip dialog, go straight to Apply.
+    // Signed out → mockup dialog; Bungie opens in the system browser (PKCE).
+    if (oauth != null && oauth.isConfigured && !oauth.isSignedIn) {
+      final result = await showApplySignInDialog(
+        context: context,
+        session: oauth,
+      );
+      if (!mounted) return;
+      if (result != ApplySignInDialogResult.signedIn) return;
+      await _refreshApplyTarget();
+      if (!mounted) return;
+    }
+
     final target = _applyTarget;
     if (target == null) return;
-    final ports = _applyPorts;
 
     setState(() {
       _applyingBuildId = build.id;

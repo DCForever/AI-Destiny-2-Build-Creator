@@ -88,6 +88,10 @@ class WindowsOAuthSession extends ChangeNotifier {
   BungieTokens? _tokens;
   String? _errorMessage;
   bool _loaded = false;
+  String? _pendingAuthorizeUrl;
+  OAuthSignInFailureKind? _lastFailureKind;
+  bool _signInCancelled = false;
+  Completer<void>? _signInCancelGate;
 
   OAuthSessionStatus get status => _status;
   BungieTokens? get tokens => _tokens;
@@ -96,6 +100,15 @@ class WindowsOAuthSession extends ChangeNotifier {
       _tokens != null && _status == OAuthSessionStatus.signedIn;
   bool get isConfigured => clientId.trim().isNotEmpty && redirectUri.trim().isNotEmpty;
   String? get membershipId => _tokens?.bungieMembershipId;
+
+  /// Authorize URL opened for the in-flight Public+PKCE sign-in (copy-link).
+  ///
+  /// Contains only public OAuth query params (client_id, state, PKCE challenge,
+  /// redirect). Never tokens or a client secret. Null when not signing in.
+  String? get pendingAuthorizeUrl => _pendingAuthorizeUrl;
+
+  /// Last typed sign-in failure (null after success / cancel / fresh start).
+  OAuthSignInFailureKind? get lastSignInFailureKind => _lastFailureKind;
 
   /// Loads tokens from secure storage (call once after bootstrap).
   ///
@@ -233,6 +246,7 @@ class WindowsOAuthSession extends ChangeNotifier {
       _status = OAuthSessionStatus.error;
       _errorMessage =
           'Bungie client id / redirect URI not configured (BUNGIE_CLIENT_ID)';
+      _lastFailureKind = null;
       notifyListeners();
       return;
     }
@@ -242,10 +256,15 @@ class WindowsOAuthSession extends ChangeNotifier {
 
     _status = OAuthSessionStatus.signingIn;
     _errorMessage = null;
+    _lastFailureKind = null;
+    _signInCancelled = false;
+    _pendingAuthorizeUrl = null;
     notifyListeners();
 
     OAuthPendingAuth? pending;
     var loopbackStarted = false;
+    final cancelGate = Completer<void>();
+    _signInCancelGate = cancelGate;
     try {
       _log(
         'OAuth: starting sign-in redirectUri=$redirectUri '
@@ -264,6 +283,8 @@ class WindowsOAuthSession extends ChangeNotifier {
         state: state,
         codeChallenge: pkce.codeChallenge,
       );
+      _pendingAuthorizeUrl = authorizeUrl;
+      notifyListeners();
       final authUri = Uri.parse(authorizeUrl);
       _log(
         'OAuth: authorize URL built (len=${authorizeUrl.length}) '
@@ -295,12 +316,25 @@ class WindowsOAuthSession extends ChangeNotifier {
       final LoopbackCallbackResult callback;
       try {
         final waitOverride = _waitForCallbackOverride;
-        callback = waitOverride != null
-            ? await waitOverride()
-            : await _loopback.waitForCallback(timeout: _loopbackTimeout);
+        final waitFuture = waitOverride != null
+            ? waitOverride()
+            : _loopback.waitForCallback(timeout: _loopbackTimeout);
+        callback = await Future.any<LoopbackCallbackResult>([
+          waitFuture,
+          cancelGate.future.then(
+            (_) => throw const OAuthSignInFailure(
+              OAuthSignInFailureKind.cancelled,
+            ),
+          ),
+        ]);
       } on TimeoutException {
         throw const OAuthSignInFailure(OAuthSignInFailureKind.callbackTimeout);
+      } on OAuthSignInFailure {
+        rethrow;
       } catch (e) {
+        if (_signInCancelled) {
+          throw const OAuthSignInFailure(OAuthSignInFailureKind.cancelled);
+        }
         if (_isNetworkFailure(e)) {
           throw const OAuthSignInFailure(
             OAuthSignInFailureKind.networkUnreachable,
@@ -415,6 +449,7 @@ class WindowsOAuthSession extends ChangeNotifier {
       _tokens = tokens;
       _status = OAuthSessionStatus.signedIn;
       _errorMessage = null;
+      _lastFailureKind = null;
       _log(
         'OAuth: signed in membership=${tokens.bungieMembershipId} '
         'stored refreshLen=${verified.refreshToken.length}',
@@ -424,13 +459,26 @@ class WindowsOAuthSession extends ChangeNotifier {
       _log('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       debugPrint('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       _tokens = null;
-      _status = OAuthSessionStatus.error;
-      _errorMessage = _safeErrorMessage(e);
+      if (_signInCancelled ||
+          (e is OAuthSignInFailure &&
+              e.kind == OAuthSignInFailureKind.cancelled &&
+              _status == OAuthSessionStatus.signedOut)) {
+        // User cancel already applied signed-out; do not flip to error.
+        _status = OAuthSessionStatus.signedOut;
+        _errorMessage = null;
+        _lastFailureKind = OAuthSignInFailureKind.cancelled;
+      } else {
+        _status = OAuthSessionStatus.error;
+        _errorMessage = _safeErrorMessage(e);
+        _lastFailureKind = e is OAuthSignInFailure ? e.kind : null;
+      }
       // Clear Locker only — do not wipe a pending migration sidecar.
       try {
         await _tokenStore.clearSecureOnly();
       } catch (_) {}
     } finally {
+      _pendingAuthorizeUrl = null;
+      _signInCancelGate = null;
       if (loopbackStarted) {
         try {
           await _loopback.stop();
@@ -443,11 +491,18 @@ class WindowsOAuthSession extends ChangeNotifier {
   /// Aborts an in-flight loopback wait (e.g. user closed the browser).
   Future<void> cancelSignIn() async {
     if (_status != OAuthSessionStatus.signingIn) return;
+    _signInCancelled = true;
+    final gate = _signInCancelGate;
+    if (gate != null && !gate.isCompleted) {
+      gate.complete();
+    }
     try {
       await _loopback.stop();
     } catch (_) {}
+    _pendingAuthorizeUrl = null;
     _status = OAuthSessionStatus.signedOut;
-    _errorMessage = 'Sign-in cancelled';
+    _errorMessage = null;
+    _lastFailureKind = OAuthSignInFailureKind.cancelled;
     notifyListeners();
   }
 

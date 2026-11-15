@@ -390,7 +390,11 @@ void main() {
     expect(find.textContaining('Undo fill in restores it'), findsOneWidget);
   });
 
-  testWidgets('Apply disabled with reason when not signed in', (tester) async {
+  testWidgets(
+      'Apply enabled when signed out — opens Bungie sign-in dialog (mockup)',
+      (tester) async {
+    // CHANGED: previously disabled with "Sign in from Settings"; Apply now
+    // opens the system-browser sign-in dialog (Daniel Nov 14 2026 mockup).
     final controller = BuildsMockController();
     await pumpMock(
       tester,
@@ -421,12 +425,21 @@ void main() {
     final apply = tester.widget<FilledButton>(
       find.byKey(const Key('builds_mock_apply_character_b01')),
     );
-    expect(apply.onPressed, isNull);
+    expect(apply.onPressed, isNotNull);
     expect(
       find.byKey(const Key('builds_mock_apply_disabled_reason_b01')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.textContaining('Sign in'), findsOneWidget);
     expect(find.byKey(const Key('builds_mock_apply_target_b01')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('builds_mock_apply_character_b01')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('apply_sign_in_dialog')), findsOneWidget);
+    expect(find.text('Sign in to Bungie'), findsOneWidget);
+    expect(find.text('Open Bungie sign-in'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('apply_sign_in_cancel')));
+    await tester.pump();
   });
 }
