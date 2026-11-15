@@ -4,6 +4,7 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'builds_mock_derived_name.dart';
 import 'builds_mock_gear_tables.dart';
 import 'builds_mock_models.dart';
+import 'builds_mock_proposed_sets.dart';
 import '../fill_in/fill_in_build_mapper.dart';
 
 bool _nameMatchesExotic(String? pieceName, String exoticName) {
@@ -301,6 +302,20 @@ class BuildsMockEnrichmentCache {
   );
 }
 
-List<MockSetBonus> displaySetBonusesFor(MockBuild build) {
-  return combineBuildsMockSetBonuses(build.setBonuses);
+/// Set-bonus boxes for browse/detail cards.
+///
+/// Uses [proposedSetBonusesFor] so matrix builds with slot / Fill In proposed
+/// sets still render (not only fixture [MockBuild.setBonuses]).
+List<MockSetBonus> displaySetBonusesFor(
+  MockBuild build, {
+  FillInSavedBuildPlan? plan,
+  List<FillInInventoryItem> armorItems = const [],
+  Map<int, String> setBonusKeyByItemHash = const {},
+}) {
+  return proposedSetBonusesFor(
+    build: build,
+    plan: plan,
+    armorItems: armorItems,
+    setBonusKeyByItemHash: setBonusKeyByItemHash,
+  );
 }

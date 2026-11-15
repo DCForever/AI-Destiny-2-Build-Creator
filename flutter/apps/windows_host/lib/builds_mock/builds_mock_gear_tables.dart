@@ -3,6 +3,7 @@ import 'package:destiny2_ui_tokens/destiny2_ui_tokens.dart';
 import 'package:flutter/material.dart';
 
 import '../fill_in/fill_in_saved_plan_card.dart';
+import 'builds_mock_icon_paths.dart';
 import 'builds_mock_models.dart';
 
 /// Row status for armor / weapon tables.
@@ -316,9 +317,16 @@ class BuildsMockStatsRow extends StatelessWidget {
 }
 
 class BuildsMockSetBonusBoxes extends StatelessWidget {
-  const BuildsMockSetBonusBoxes({super.key, required this.bonuses});
+  const BuildsMockSetBonusBoxes({
+    super.key,
+    required this.bonuses,
+    this.iconByLowerName = const {},
+  });
 
   final List<MockSetBonus> bonuses;
+
+  /// Optional set-bonus catalog icons keyed by lowercased family name.
+  final Map<String, String> iconByLowerName;
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +347,7 @@ class BuildsMockSetBonusBoxes extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.grid_view_outlined, size: 16, color: palette.foreground),
+                _setBonusLeadingIcon(palette, b),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -386,6 +394,22 @@ class BuildsMockSetBonusBoxes extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  Widget _setBonusLeadingIcon(FlapPalette palette, MockSetBonus b) {
+    final path = resolveSetFilterIconPath(
+      setName: b.setName,
+      iconByLowerName: iconByLowerName,
+    );
+    if (path != null && path.isNotEmpty) {
+      return BungieContentIcon(
+        key: Key('builds_mock_set_bonus_icon_${b.setId}'),
+        pathOrUrl: path,
+        size: 16,
+        semanticLabel: b.setName,
+      );
+    }
+    return Icon(Icons.grid_view_outlined, size: 16, color: palette.foreground);
   }
 }
 
