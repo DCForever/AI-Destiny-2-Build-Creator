@@ -221,11 +221,17 @@ void main() {
 
     testWidgets('each error maps to fixed message; raw text never appears',
         (tester) async {
+      // CHANGED: tokenExchangeFailed no longer shares the network message;
+      // null/unknown uses its own fixed text (not the network copy).
       final cases = <OAuthSignInFailureKind, String>{
         OAuthSignInFailureKind.cancelled: kApplySignInCancelledMessage,
         OAuthSignInFailureKind.callbackTimeout: kApplySignInTimeoutMessage,
         OAuthSignInFailureKind.stateMismatch: kApplySignInStateMismatchMessage,
         OAuthSignInFailureKind.networkUnreachable: kApplySignInNetworkMessage,
+        OAuthSignInFailureKind.tokenExchangeFailed: kApplySignInExchangeMessage,
+        OAuthSignInFailureKind.missingAuthorizationCode:
+            kApplySignInMissingCodeMessage,
+        OAuthSignInFailureKind.unsafeAuthorizeUrl: kApplySignInUnsafeUrlMessage,
       };
 
       for (final entry in cases.entries) {
@@ -250,6 +256,9 @@ void main() {
         expect(find.textContaining(rawLeak), findsNothing);
         expect(find.textContaining('Exception'), findsNothing);
         expect(find.textContaining('access_token'), findsNothing);
+        if (kind != OAuthSignInFailureKind.networkUnreachable) {
+          expect(find.text(kApplySignInNetworkMessage), findsNothing);
+        }
 
         await tester.tap(find.byKey(const Key('apply_sign_in_try_again')));
         await tester.pump();
@@ -258,6 +267,94 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('apply_sign_in_dialog')), findsNothing);
       }
+    });
+
+    test('applySignInDialogErrorMessage null uses unknown fixed text', () {
+      expect(
+        applySignInDialogErrorMessage(null),
+        kApplySignInUnknownMessage,
+      );
+      expect(
+        applySignInDialogErrorMessage(null),
+        isNot(kApplySignInNetworkMessage),
+      );
+    });
+
+    testWidgets(
+        '(1) Escape/barrier dismiss while waiting calls cancelSignIn',
+        (tester) async {
+      final wait = Completer<LoopbackCallbackResult>();
+      var loopbackStopped = false;
+      final loopback = _RecordingLoopback(
+        onStop: () => loopbackStopped = true,
+      );
+      final session = _buildSession(
+        wait: () => wait.future,
+        loopback: loopback,
+      );
+      await session.restore();
+
+      ApplySignInDialogResult? result;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _theme(),
+          home: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: TextButton(
+                  key: const Key('open_dialog'),
+                  onPressed: () async {
+                    result = await showApplySignInDialog(
+                      context: context,
+                      session: session,
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('open_dialog')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('apply_sign_in_open')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(find.byKey(const Key('apply_sign_in_waiting')), findsOneWidget);
+      expect(session.status, OAuthSessionStatus.signingIn);
+
+      // Barrier tap (outside dialog) dismisses and must cancel sign-in.
+      await tester.tapAt(const Offset(8, 8));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('apply_sign_in_dialog')), findsNothing);
+      expect(result, ApplySignInDialogResult.cancelled);
+      expect(session.status, OAuthSessionStatus.signedOut);
+      expect(loopbackStopped, isTrue);
+    });
+
+    testWidgets(
+        '(7) body says equip only; permissions still list move and equip',
+        (tester) async {
+      final session = _buildSession();
+      await session.restore();
+      await _openDialog(tester, session: session);
+
+      expect(
+        find.text(
+          'Apply needs your permission to equip items. '
+          "Bungie's sign-in opens in your browser.",
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('move and equip items'), findsNothing);
+      expect(find.text('· Move and equip items'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('apply_sign_in_cancel')));
+      await tester.pumpAndSettle();
     });
   });
 
@@ -460,6 +557,22 @@ WindowsOAuthSession _sessionThatFails(
   OAuthSignInFailureKind kind, {
   required String rawLeak,
 }) {
+  if (kind == OAuthSignInFailureKind.unsafeAuthorizeUrl) {
+    return WindowsOAuthSession(
+      clientId: 'test-client',
+      redirectUri: 'http://127.0.0.1:8765/callback',
+      tokenStore: MemoryTokenStore(),
+      oauthClient: BungieOAuthClient(
+        clientId: 'test-client',
+        redirectUri: 'http://127.0.0.1:8765/callback',
+        authorizeBaseUrl: Uri.parse('https://evil.example/oauth'),
+        transport: (_) async => throw StateError(rawLeak),
+      ),
+      browserLauncher: FakeBrowserLauncher(),
+      waitForCallbackOverride: () async =>
+          const LoopbackCallbackResult(code: 'x', state: 'y'),
+    );
+  }
   return WindowsOAuthSession(
     clientId: 'test-client',
     redirectUri: 'http://127.0.0.1:8765/callback',
@@ -487,6 +600,8 @@ WindowsOAuthSession _sessionThatFails(
           return const LoopbackCallbackResult(error: 'server_error');
         case OAuthSignInFailureKind.missingAuthorizationCode:
           return const LoopbackCallbackResult(state: 'state-only');
+        case OAuthSignInFailureKind.unsafeAuthorizeUrl:
+          throw StateError(rawLeak);
       }
     },
   );

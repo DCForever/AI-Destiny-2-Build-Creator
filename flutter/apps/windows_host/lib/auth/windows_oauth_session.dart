@@ -35,6 +35,24 @@ enum OAuthSignInFailureKind {
 
   /// Callback reached loopback without an authorization `code`.
   missingAuthorizationCode,
+
+  /// Authorize URL host/scheme failed the www.bungie.net https allowlist.
+  unsafeAuthorizeUrl,
+}
+
+/// Fixed copy when the authorize URL is not https://www.bungie.net/….
+const String kUnsafeAuthorizeUrlMessage =
+    'Sign-in link is not valid - please try again.';
+
+/// True only for https://www.bungie.net/… (no other host, scheme, port, userinfo).
+bool isAllowedBungieAuthorizeUrl(String url) {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null) return false;
+  if (uri.scheme.toLowerCase() != 'https') return false;
+  if (uri.host.toLowerCase() != 'www.bungie.net') return false;
+  if (uri.hasPort) return false;
+  if (uri.userInfo.isNotEmpty) return false;
+  return true;
 }
 
 /// Typed sign-in failure — [kind] only; never carries secret-bearing text.
@@ -95,6 +113,8 @@ class WindowsOAuthSession extends ChangeNotifier {
   OAuthSignInFailureKind? _lastFailureKind;
   bool _signInCancelled = false;
   Completer<void>? _signInCancelGate;
+  /// True from [signIn] entry until its `finally` finishes (blocks overlap).
+  bool _signInBusy = false;
 
   OAuthSessionStatus get status => _status;
   BungieTokens? get tokens => _tokens;
@@ -243,6 +263,23 @@ class WindowsOAuthSession extends ChangeNotifier {
 
   bool get hasRestored => _loaded;
 
+  void _throwIfSignInCancelled() {
+    if (_signInCancelled) {
+      throw const OAuthSignInFailure(OAuthSignInFailureKind.cancelled);
+    }
+  }
+
+  /// Rewrites [prior] into Locker, or clears secure storage when null.
+  Future<void> _rollbackSecureStore(BungieTokens? prior) async {
+    try {
+      if (prior != null) {
+        await _tokenStore.write(prior);
+      } else {
+        await _tokenStore.clearSecureOnly();
+      }
+    } catch (_) {}
+  }
+
   /// Starts Public+PKCE sign-in via loopback + system browser.
   Future<void> signIn() async {
     if (!isConfigured) {
@@ -253,9 +290,12 @@ class WindowsOAuthSession extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    if (_status == OAuthSessionStatus.signingIn) {
+    // Block overlap until the previous signIn `finally` has finished — even
+    // if status already flipped away from signingIn (e.g. mid-cancel).
+    if (_signInBusy || _status == OAuthSessionStatus.signingIn) {
       return;
     }
+    _signInBusy = true;
 
     // Snapshot a good Locker session so a failed re-sign-in cannot wipe it.
     final priorGoodTokens =
@@ -290,6 +330,12 @@ class WindowsOAuthSession extends ChangeNotifier {
         state: state,
         codeChallenge: pkce.codeChallenge,
       );
+      if (!isAllowedBungieAuthorizeUrl(authorizeUrl)) {
+        _pendingAuthorizeUrl = null;
+        throw const OAuthSignInFailure(
+          OAuthSignInFailureKind.unsafeAuthorizeUrl,
+        );
+      }
       _pendingAuthorizeUrl = authorizeUrl;
       notifyListeners();
       final authUri = Uri.parse(authorizeUrl);
@@ -359,6 +405,8 @@ class WindowsOAuthSession extends ChangeNotifier {
         }
       }
 
+      _throwIfSignInCancelled();
+
       // Path + flags only — never log raw OAuth error / description values.
       _log(
         'OAuth: callback received hasCode=${callback.hasCode} '
@@ -388,6 +436,8 @@ class WindowsOAuthSession extends ChangeNotifier {
         throw const OAuthSignInFailure(OAuthSignInFailureKind.stateMismatch);
       }
 
+      _throwIfSignInCancelled();
+
       _log('OAuth: exchanging code for tokens…');
       final BungieTokens tokens;
       try {
@@ -409,6 +459,9 @@ class WindowsOAuthSession extends ChangeNotifier {
           OAuthSignInFailureKind.tokenExchangeFailed,
         );
       } catch (e) {
+        if (_signInCancelled) {
+          throw const OAuthSignInFailure(OAuthSignInFailureKind.cancelled);
+        }
         if (_isNetworkFailure(e)) {
           throw const OAuthSignInFailure(
             OAuthSignInFailureKind.networkUnreachable,
@@ -418,6 +471,9 @@ class WindowsOAuthSession extends ChangeNotifier {
           OAuthSignInFailureKind.tokenExchangeFailed,
         );
       }
+
+      // Cancel after callback/exchange must not write Locker.
+      _throwIfSignInCancelled();
 
       _log(
         'OAuth: token exchange OK accessLen=${tokens.accessToken.length} '
@@ -439,16 +495,22 @@ class WindowsOAuthSession extends ChangeNotifier {
               'Secure token storage write timed out',
             ),
           );
+
+      _throwIfSignInCancelled();
+
       // Secure store only — DualTokenStore.read() could migrate+delete sidecar
       // if the Locker write did not stick.
       final verified = await _tokenStore.readSecureOnly();
       if (verified == null ||
           verified.accessToken != tokens.accessToken ||
           verified.bungieMembershipId != tokens.bungieMembershipId) {
+        await _rollbackSecureStore(priorGoodTokens);
         throw const BungieOAuthException(
           'Secure token storage write did not persist (read-back failed)',
         );
       }
+
+      _throwIfSignInCancelled();
 
       // Verified Locker write — drop any leftover plaintext sidecar.
       try {
@@ -474,18 +536,21 @@ class WindowsOAuthSession extends ChangeNotifier {
               _status == OAuthSessionStatus.signedOut)) {
         // User cancel already applied signed-out; do not flip to error.
         if (priorGoodTokens != null) {
+          await _rollbackSecureStore(priorGoodTokens);
           _tokens = priorGoodTokens;
           _status = OAuthSessionStatus.signedIn;
           _errorMessage = null;
           _lastFailureKind = OAuthSignInFailureKind.cancelled;
         } else {
+          await _rollbackSecureStore(null);
           _tokens = null;
           _status = OAuthSessionStatus.signedOut;
           _errorMessage = null;
           _lastFailureKind = OAuthSignInFailureKind.cancelled;
         }
       } else if (priorGoodTokens != null) {
-        // Failed re-sign-in: leave the existing good Locker session alone.
+        // Failed re-sign-in: keep memory + Locker on the prior good session.
+        await _rollbackSecureStore(priorGoodTokens);
         _tokens = priorGoodTokens;
         _status = OAuthSessionStatus.signedIn;
         _errorMessage = _safeErrorMessage(e);
@@ -509,6 +574,7 @@ class WindowsOAuthSession extends ChangeNotifier {
           await _loopback.stop();
         } catch (_) {}
       }
+      _signInBusy = false;
     }
     notifyListeners();
   }
@@ -561,6 +627,8 @@ class WindowsOAuthSession extends ChangeNotifier {
           'Network unavailable. Check your connection and try again.',
         OAuthSignInFailureKind.missingAuthorizationCode =>
           "Bungie didn't send a sign-in code - try again.",
+        OAuthSignInFailureKind.unsafeAuthorizeUrl =>
+          kUnsafeAuthorizeUrlMessage,
       };
     }
     if (e is TimeoutException) {
@@ -569,7 +637,8 @@ class WindowsOAuthSession extends ChangeNotifier {
     if (_isNetworkFailure(e)) {
       return 'Network unavailable. Check your connection and try again.';
     }
-    return 'Sign-in failed (${e.runtimeType}). Try again.';
+    // Fixed text only — never echo exception type/message (may leak secrets).
+    return 'Sign-in failed - please try again.';
   }
 
   static bool _isNetworkFailure(Object e) {
