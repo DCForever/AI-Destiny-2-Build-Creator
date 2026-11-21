@@ -10,6 +10,37 @@ permissions:
   contents: read
 
 jobs:
+  # Thin shared CI (Skeptic deterministic checks companion): size/risk labels,
+  # weakened-test heuristic. No new secrets. No write permissions. Does not
+  # wake or mention Skeptic from CI output labels.
+  size-risk:
+    name: size · risk labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Measure production-diff size and risk flags
+        run: node scripts/ci/measure-size-risk.mjs
+        env:
+          BASE_REF: origin/${{ github.base_ref || 'main' }}
+
+  weakened-tests:
+    name: weakened-test heuristic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for weakened safety tests
+        run: node scripts/ci/check-weakened-tests.mjs
+        env:
+          BASE_REF: origin/${{ github.base_ref || 'main' }}
+
   quality:
     name: product-map · typecheck · lint · test · build
     runs-on: ubuntu-latest
@@ -137,3 +168,45 @@ jobs:
 
       - name: Scan committed files for secrets
         run: gitleaks detect --no-git --redact --source . --exit-code 1
+
+  # Signal only: when any required check is red, fail with a clear
+  # "do not request review" message. No comments, no secrets, no writes.
+  do-not-request-review:
+    name: do not request review when red
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - quality
+      - flutter-test
+      - gitleaks
+      - size-risk
+      - weakened-tests
+    steps:
+      - name: Block review request when required checks failed
+        run: |
+          set -euo pipefail
+          results=(
+            "quality=${{ needs.quality.result }}"
+            "flutter-test=${{ needs.flutter-test.result }}"
+            "gitleaks=${{ needs.gitleaks.result }}"
+            "size-risk=${{ needs.size-risk.result }}"
+            "weakened-tests=${{ needs.weakened-tests.result }}"
+          )
+          echo "## Required check results" >> "$GITHUB_STEP_SUMMARY"
+          red=0
+          for entry in "${results[@]}"; do
+            name="${entry%%=*}"
+            result="${entry#*=}"
+            echo "- ${name}: \`${result}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "${name}=${result}"
+            if [[ "$result" != "success" ]]; then
+              red=1
+            fi
+          done
+          if [[ "$red" -ne 0 ]]; then
+            echo "::error::DO NOT REQUEST REVIEW — one or more required checks are red"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**DO NOT REQUEST REVIEW** — required checks are red." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "All required checks green." >> "$GITHUB_STEP_SUMMARY"
