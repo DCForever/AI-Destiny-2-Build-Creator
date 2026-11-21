@@ -90,13 +90,15 @@ export function measureSizeRisk(input) {
   ) {
     flags.add("network-bind");
   }
-  // Patterns built in pieces so this lib file is not itself flagged.
+  // Char codes / pieces so this lib is not itself flagged by these scans.
   const skipTrue = new RegExp("\\b" + "skip\\s*:\\s*" + "true\\b");
   const oneToMany = new RegExp(
     "finds" + "OneWidget[\\s\\S]{0,120}finds" + "Widgets",
   );
+  const eqOp = String.fromCharCode(61, 61);
+  const gteOp = String.fromCharCode(62, 61);
   const eqToGte = new RegExp(
-    "(?:" + "==|equals\\s*\\(" + ")[\\s\\S]{0,80}(?:" + ">=|greaterThanOrEqualTo)",
+    `(?:${eqOp}|equals\\s*\\()[\\s\\S]{0,80}(?:${gteOp}|greaterThanOrEqualTo)`,
   );
   if (
     oneToMany.test(input.testPatch) ||

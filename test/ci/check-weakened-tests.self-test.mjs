@@ -14,8 +14,8 @@ function ok(name, fn) {
 }
 
 ok("spaced equality loosened to gte is detected", () => {
-  const eq = "=" + "=";
-  const gte = ">" + "=";
+  const eq = String.fromCharCode(61, 61);
+  const gte = String.fromCharCode(62, 61);
   const diff = [
     "diff --git a/test/a_test.dart b/test/a_test.dart",
     "--- a/test/a_test.dart",

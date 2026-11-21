@@ -59,8 +59,11 @@ function detectLoosening(removed, added) {
   const tips = [];
   const rm = stripComments(removed);
   const ad = stripComments(added);
-  const eq = new RegExp("(?:" + "==|equals\\s*\\()");
-  const gte = new RegExp("(?:" + ">=|greaterThan" + "OrEqualTo)");
+  // Char codes so == and >= never co-occur in this source (size-risk scan).
+  const eqOp = String.fromCharCode(61, 61);
+  const gteOp = String.fromCharCode(62, 61);
+  const eq = new RegExp(`(?:${eqOp}|equals\\s*\\()`);
+  const gte = new RegExp(`(?:${gteOp}|greaterThanOrEqualTo)`);
   const one = new RegExp("\\bfinds" + "OneWidget\\b");
   const many = new RegExp("\\bfinds" + "Widgets\\b");
   const nothing = new RegExp("\\bfinds" + "Nothing\\b");
