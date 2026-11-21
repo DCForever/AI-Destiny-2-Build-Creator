@@ -22,6 +22,7 @@ MockBuild snapshotMockBuild(MockBuild build) {
           isExoticSlot: s.isExoticSlot,
           statTotal: s.statTotal,
           filledIn: s.filledIn,
+          isSubstitute: s.isSubstitute,
         ),
     ],
     loop: build.loop,

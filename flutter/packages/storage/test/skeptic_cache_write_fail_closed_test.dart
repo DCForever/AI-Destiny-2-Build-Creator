@@ -13,6 +13,7 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('skeptic_cache_');
+    assertResolvedPathIsUnderSystemTemp(tempDir.path);
     root = StorageRoot(basePath: tempDir.path);
   });
 

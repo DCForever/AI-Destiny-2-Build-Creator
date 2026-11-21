@@ -156,6 +156,47 @@ void main() {
       );
     });
 
+    test(
+      'known-but-empty ownership set fails closed (not fail-open)',
+      () {
+        const subclassHash = 100;
+        const wanted = 21;
+        final plan = planApplySockets(
+          characterId: target,
+          build: const ApplyBuildSocketInputs(
+            subclassHash: subclassHash,
+            subclassPlugs: [
+              ApplyNamedPlug(name: "Weaver's Call", hash: wanted),
+            ],
+          ),
+          manifest: _subclassAspectManifest(
+            subclassHash: subclassHash,
+            plugHash: wanted,
+            plugName: "Weaver's Call",
+          ),
+          instances: const [
+            ApplyInstanceSocketState(
+              instanceId: 'sub-1',
+              itemHash: subclassHash,
+              bucketHash: subclassBucket,
+              characterId: target,
+              location: 'equipped',
+              ownedPlugHashes: {},
+              // Ownership channel is known, but the set is empty → still refuse.
+              subclassPlugOwnershipKnown: true,
+              socketDataKnown: true,
+            ),
+          ],
+          equippedArmor: const [],
+        );
+        expect(plan.subclassPlugs.single.shouldCall, isFalse);
+        expect(
+          plan.subclassPlugs.single.skipReason,
+          notUnlockedOrUnknownPlugMessage("Weaver's Call"),
+        );
+      },
+    );
+
     test('unknown energy cost is skipped; never used as empty clear', () {
       const armorHash = 200;
       const wanted = 301;

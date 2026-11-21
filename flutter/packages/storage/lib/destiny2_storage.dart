@@ -12,6 +12,7 @@ export 'src/fill_in_missing_list_store.dart';
 export 'src/optimize_build_store.dart';
 export 'src/read_only_file.dart';
 export 'src/storage_root.dart';
+export 'src/test_temp_path_guard.dart';
 export 'src/version_dir.dart';
 export 'src/warlock_matrix_path.dart';
 export 'src/warlock_matrix_path_setting.dart';

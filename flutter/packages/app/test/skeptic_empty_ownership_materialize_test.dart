@@ -57,8 +57,8 @@ void main() {
         membershipType: 3,
         displayName: 'Skeptic',
       );
-      expect(
-        () => materializeArmorCombination(
+      await expectLater(
+        materializeArmorCombination(
           db,
           userId,
           MaterializeArmorCommand(
