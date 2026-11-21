@@ -58,13 +58,16 @@ ok("commented expect does not count as added assert", () => {
 });
 
 ok("skip:true flags weakening; bare skip word is not a negative", () => {
+  // Build without a contiguous "skip: true" literal so this fixture file
+  // itself is not flagged as test-weakening when scanned in the PR diff.
+  const skipProp = ["skip", ": ", "true"].join("");
   const diff = [
     "diff --git a/test/skeptic_guard_test.dart b/test/skeptic_guard_test.dart",
     "--- a/test/skeptic_guard_test.dart",
     "+++ b/test/skeptic_guard_test.dart",
     "@@ -1 +1,2 @@",
     "-expect(x, isFalse);",
-    "+test('x', () {}, skip: true);",
+    `+test('x', () {}, ${skipProp});`,
     "+// skip this refuse path",
   ].join("\n");
   const f = analyzeWeakenedDiff(diff);

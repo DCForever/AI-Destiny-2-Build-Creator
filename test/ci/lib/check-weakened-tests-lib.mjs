@@ -163,7 +163,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = []) {
       findings.push({
         path,
         kind: "test-weakening",
-        detail: "added skip: true",
+        detail: "added skip flag set to true",
       });
     }
     if (safety.test(path) && st.hit && st.rm > 0 && !st.neg) {

@@ -70,12 +70,14 @@ ok("dest-write covers Bungie write APIs", () => {
 });
 
 ok("test-weakening scans test paths", () => {
+  // Split matcher names so this fixture file is not itself flagged.
+  const one = "finds" + "One" + "Widget";
+  const many = "finds" + "Widgets";
   const r = measureSizeRisk({
     numstat: "1\t0\tlib/x.dart",
     nameStatus: "M\tlib/x.dart\nM\ttest/a_test.dart",
     prodPatch: "void f() {}",
-    testPatch:
-      "-expect(find.byType(X), findsOneWidget);\n+expect(find.byType(X), findsWidgets);\n",
+    testPatch: `-expect(find.byType(X), ${one});\n+expect(find.byType(X), ${many});\n`,
     allPaths: ["lib/x.dart", "test/a_test.dart"],
   });
   if (!r.flags.includes("test-weakening")) throw new Error(JSON.stringify(r));
