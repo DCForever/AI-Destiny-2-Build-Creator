@@ -6,7 +6,7 @@
 import {
   analyzeWeakenedDiff,
   resolveBase,
-} from "../../scripts/ci/check-weakened-tests.mjs";
+} from "./lib/check-weakened-tests-lib.mjs";
 
 function ok(name, fn) {
   fn();

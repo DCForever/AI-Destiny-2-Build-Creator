@@ -7,7 +7,7 @@ import {
   isExcludedFromProduction,
   measureSizeRisk,
   resolveBase,
-} from "../../scripts/ci/measure-size-risk.mjs";
+} from "./lib/measure-size-risk-lib.mjs";
 
 function ok(name, fn) {
   fn();
