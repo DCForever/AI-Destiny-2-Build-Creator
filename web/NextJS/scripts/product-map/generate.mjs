@@ -217,7 +217,11 @@ function main() {
   const atlasByIdFull = new Map(allScreens.map((s) => [s.id, s]));
   // Build fake inventory for reverse map
   const atlasIndex = buildNodeAtlasIndex(inv, atlasByIdFull);
-  const reverse = buildReverseAtlasMap(inv, atlasIndex);
+  // Stable stamp for CI dirty checks (avoid daily churn) — same as manifest.
+  const stamp = hub.meta.updated || hub.meta.version || "1";
+  const reverse = buildReverseAtlasMap(inv, atlasIndex, {
+    generatedAt: String(stamp),
+  });
   fs.writeFileSync(
     ATLAS_LINKS_PATH,
     JSON.stringify(reverse, null, 2) + "\n",
@@ -228,8 +232,6 @@ function main() {
   fs.writeFileSync(DRAWIO_PATH, xml, "utf8");
 
   // Merge atlas manifest
-  // Stable stamp for CI dirty checks (avoid daily churn)
-  const stamp = hub.meta.updated || hub.meta.version || "1";
   let base = {
     app: "Destiny 2 Build Creator",
     version: 4,
