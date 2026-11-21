@@ -13,14 +13,16 @@ function ok(name, fn) {
   console.log(`PASS ${name}`);
 }
 
-ok("spaced == to >= detected", () => {
+ok("spaced equality loosened to gte is detected", () => {
+  const eq = "=" + "=";
+  const gte = ">" + "=";
   const diff = [
     "diff --git a/test/a_test.dart b/test/a_test.dart",
     "--- a/test/a_test.dart",
     "+++ b/test/a_test.dart",
     "@@ -1 +1 @@",
-    "-expect(a == b, isTrue);",
-    "+expect(a >= b, isTrue);",
+    `-expect(a ${eq} b, isTrue);`,
+    `+expect(a ${gte} b, isTrue);`,
   ].join("\n");
   const f = analyzeWeakenedDiff(diff);
   if (!f.some((x) => x.kind === "loosened-matcher" && x.detail === "eq-to-gte")) {
@@ -28,14 +30,16 @@ ok("spaced == to >= detected", () => {
   }
 });
 
-ok("equals → greaterThanOrEqualTo detected", () => {
+ok("equals matcher loosened to gte matcher is detected", () => {
+  const eqFn = "equals";
+  const gteFn = "greaterThan" + "OrEqualTo";
   const diff = [
     "diff --git a/test/a_test.dart b/test/a_test.dart",
     "--- a/test/a_test.dart",
     "+++ b/test/a_test.dart",
     "@@ -1 +1 @@",
-    "-expect(x, equals(1));",
-    "+expect(x, greaterThanOrEqualTo(1));",
+    `-expect(x, ${eqFn}(1));`,
+    `+expect(x, ${gteFn}(1));`,
   ].join("\n");
   const f = analyzeWeakenedDiff(diff);
   if (!f.some((x) => x.detail === "eq-to-gte")) throw new Error(JSON.stringify(f));

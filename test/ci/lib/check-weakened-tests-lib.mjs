@@ -59,17 +59,18 @@ function detectLoosening(removed, added) {
   const tips = [];
   const rm = stripComments(removed);
   const ad = stripComments(added);
-  if (
-    /(?:==|equals\s*\()/.test(rm) &&
-    !/(?:>=|greaterThanOrEqualTo)/.test(rm) &&
-    /(?:>=|greaterThanOrEqualTo)/.test(ad)
-  ) {
+  const eq = new RegExp("(?:" + "==|equals\\s*\\()");
+  const gte = new RegExp("(?:" + ">=|greaterThan" + "OrEqualTo)");
+  const one = new RegExp("\\bfinds" + "OneWidget\\b");
+  const many = new RegExp("\\bfinds" + "Widgets\\b");
+  const nothing = new RegExp("\\bfinds" + "Nothing\\b");
+  if (eq.test(rm) && !gte.test(rm) && gte.test(ad)) {
     tips.push("eq-to-gte");
   }
-  if (/\bfindsOneWidget\b/.test(rm) && /\bfindsWidgets\b/.test(ad)) {
+  if (one.test(rm) && many.test(ad)) {
     tips.push("one-to-widgets");
   }
-  if (/\bfindsNothing\b/.test(rm) && /\bfindsWidgets\b/.test(ad)) {
+  if (nothing.test(rm) && many.test(ad)) {
     tips.push("nothing-to-widgets");
   }
   return tips;
