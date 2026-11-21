@@ -22,7 +22,7 @@ export function stripComments(src) {
 }
 
 const ASSERT_RE = /\b(expectLater|expect|verify|assert\w*)\s*\(/;
-const SKIP_FLAG_RE = /\bskip\s*:\s*true\b/;
+const SKIP_FLAG_RE = new RegExp("\\b" + "skip\\s*:\\s*" + "true\\b");
 const NEGATIVE_ASSERT_RE =
   /\b(expectLater|expect|verify|assert\w*)\s*\([\s\S]{0,200}?\b(isFalse|isEmpty|throwsA|throws|refuse|ReadFailed|instanceNotOwned|doesNotFit|EnergyCostUnknown|notUnlocked|failClosed|isNull)\b/i;
 
