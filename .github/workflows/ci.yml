@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Self-test size/risk fail-closed fixtures
-        run: node scripts/ci/measure-size-risk.mjs --self-test
+        run: node test/ci/measure-size-risk.self-test.mjs
 
       - name: Measure production-diff size and risk flags
         run: node scripts/ci/measure-size-risk.mjs
@@ -40,7 +40,7 @@ jobs:
           fetch-depth: 0
 
       - name: Self-test weakened-test fail-closed fixtures
-        run: node scripts/ci/check-weakened-tests.mjs --self-test
+        run: node test/ci/check-weakened-tests.self-test.mjs
 
       - name: Check for weakened safety tests
         run: node scripts/ci/check-weakened-tests.mjs

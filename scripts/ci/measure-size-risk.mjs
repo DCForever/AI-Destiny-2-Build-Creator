@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
- * Label production-diff size (exclude top-level docs/test trees + named tests)
- * and risk flags. Fail closed on a missing base ref. Use --self-test.
+ * Label production-diff size (exclude top-level docs/test + named tests)
+ * and risk flags. Fail closed on a missing base ref.
+ * Self-tests live in test/ci/ (excluded from size).
  */
 import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { basename } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const SMALL = 300;
 
@@ -31,7 +33,6 @@ export function isExcludedFromProduction(path) {
   if (/^docs-site(\/|$)/.test(path)) return true;
   if (/^test(\/|$)/.test(path)) return true;
   if (/^tests(\/|$)/.test(path)) return true;
-  // Conventionally-only test trees (Jest/Vitest), never production sources.
   if (/(^|\/)__tests__\//.test(path)) return true;
   const name = basename(path);
   if (/_test\.(dart|ts|tsx|js|mjs|py|go)$/i.test(name)) return true;
@@ -90,7 +91,6 @@ export function measureSizeRisk(input) {
   if (/(migration|schemaVersion|ALTER TABLE)/i.test(input.prodPatch)) {
     flags.add("migrations");
   }
-  // Destiny Bungie write surface + drive letters.
   if (
     /\b(EquipItems?|TransferItem|InsertSocketPlugFree)\b/.test(input.prodPatch) ||
     /[Dd]:\\| [Ee]:\\| [Zz]:\\|\/Volumes\//.test(input.prodPatch)
@@ -123,119 +123,7 @@ export function measureSizeRisk(input) {
   return { added, deleted, prod, flags: [...flags].sort(), size };
 }
 
-function runSelfTest() {
-  const cases = [];
-  const ok = (name, fn) => {
-    fn();
-    cases.push(`PASS ${name}`);
-  };
-
-  ok("ci-runner on .github without runs-on", () => {
-    const r = measureSizeRisk({
-      numstat: "1\t0\t.github/workflows/ci.yml",
-      nameStatus: "M\t.github/workflows/ci.yml",
-      prodPatch: "name: CI\n",
-      testPatch: "",
-      allPaths: [".github/workflows/ci.yml"],
-    });
-    if (!r.flags.includes("ci-runner")) throw new Error(JSON.stringify(r));
-  });
-
-  ok("ci-runner on scripts/ci", () => {
-    const r = measureSizeRisk({
-      numstat: "1\t0\tscripts/ci/x.mjs",
-      nameStatus: "A\tscripts/ci/x.mjs",
-      prodPatch: "",
-      testPatch: "",
-      allPaths: ["scripts/ci/x.mjs"],
-    });
-    if (!r.flags.includes("ci-runner")) throw new Error(JSON.stringify(r));
-  });
-
-  ok("auth-secrets patterns", () => {
-    const r = measureSizeRisk({
-      numstat: "1\t0\tsrc/auth.ts",
-      nameStatus: "M\tsrc/auth.ts",
-      prodPatch: "const h = 'Bearer FAKE';\nrefresh_token storage\n",
-      testPatch: "",
-      allPaths: ["src/auth.ts"],
-    });
-    if (!r.flags.includes("auth-secrets")) throw new Error(JSON.stringify(r));
-  });
-
-  ok("network-bind includes HttpServer.bind", () => {
-    const r = measureSizeRisk({
-      numstat: "1\t0\tsrc/server.dart",
-      nameStatus: "M\tsrc/server.dart",
-      prodPatch: "await HttpServer.bind('127.0.0.1', 0);\n",
-      testPatch: "",
-      allPaths: ["src/server.dart"],
-    });
-    if (!r.flags.includes("network-bind")) throw new Error(JSON.stringify(r));
-  });
-
-  ok("dest-write covers Bungie write APIs", () => {
-    const r = measureSizeRisk({
-      numstat: "1\t0\tsrc/apply.dart",
-      nameStatus: "M\tsrc/apply.dart",
-      prodPatch: "client.equipItems(...); TransferItem; InsertSocketPlugFree\n",
-      testPatch: "",
-      allPaths: ["src/apply.dart"],
-    });
-    if (!r.flags.includes("dest-write")) throw new Error(JSON.stringify(r));
-  });
-
-  ok("test-weakening scans test paths", () => {
-    const r = measureSizeRisk({
-      numstat: "1\t0\tlib/x.dart",
-      nameStatus: "M\tlib/x.dart\nM\ttest/a_test.dart",
-      prodPatch: "void f() {}",
-      testPatch: "-expect(find.byType(X), findsOneWidget);\n+expect(find.byType(X), findsWidgets);\n",
-      allPaths: ["lib/x.dart", "test/a_test.dart"],
-    });
-    if (!r.flags.includes("test-weakening")) throw new Error(JSON.stringify(r));
-  });
-
-  ok("nested paths must not hide production", () => {
-    if (isExcludedFromProduction("flutter/packages/app/README.md")) {
-      throw new Error("nested README should count as production for size");
-    }
-    if (!isExcludedFromProduction("docs/README.md")) {
-      throw new Error("docs/README.md should be excluded");
-    }
-    if (isExcludedFromProduction("packages/foo/fixtures/loader.dart")) {
-      throw new Error("nested fixtures must not hide production");
-    }
-    if (isExcludedFromProduction("flutter/packages/app/docs/note.md")) {
-      throw new Error("nested docs/ must not hide production");
-    }
-    if (isExcludedFromProduction("flutter/packages/app/test/helpers/util.dart")) {
-      throw new Error("nested test/ helper without _test suffix must not hide production");
-    }
-    if (!isExcludedFromProduction("flutter/packages/app/test/foo_test.dart")) {
-      throw new Error("named *_test.dart should still be excluded");
-    }
-  });
-
-  ok("missing base fails closed", () => {
-    let threw = false;
-    try {
-      resolveBase("refs/does-not-exist-size-risk");
-    } catch {
-      threw = true;
-    }
-    if (!threw) throw new Error("expected throw");
-  });
-
-  console.log(cases.join("\n"));
-  console.log("size-risk self-test: ok");
-}
-
 function main() {
-  if (process.argv.includes("--self-test")) {
-    runSelfTest();
-    return;
-  }
   const preferred = process.argv[2] || process.env.BASE_REF || "origin/main";
   const base = resolveBase(preferred);
   const sh = (c) => execSync(c, { encoding: "utf8" }).trim();
@@ -289,4 +177,6 @@ function main() {
   console.log(`LABELS=${labels.join(",")}`);
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}
