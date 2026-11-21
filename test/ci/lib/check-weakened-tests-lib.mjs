@@ -59,7 +59,7 @@ function detectLoosening(removed, added) {
   const tips = [];
   const rm = stripComments(removed);
   const ad = stripComments(added);
-  // Char codes so == and >= never co-occur in this source (size-risk scan).
+  // Char codes avoid operator literals co-occurring in this source.
   const eqOp = String.fromCharCode(61, 61);
   const gteOp = String.fromCharCode(62, 61);
   const eq = new RegExp(`(?:${eqOp}|equals\\s*\\()`);
