@@ -46,8 +46,9 @@ abstract class BungieProfileClient {
 
   Future<FullInventoryParseResult> getFullInventoryWithDiagnostics(
     String accessToken,
-    DestinyMembership membership,
-  );
+    DestinyMembership membership, {
+    Map<int, int>? tierTypeByItemHash,
+  });
 }
 
 /// HTTP implementation over [BungieHttpClient].
@@ -107,8 +108,9 @@ class HttpBungieProfileClient implements BungieProfileClient {
   @override
   Future<FullInventoryParseResult> getFullInventoryWithDiagnostics(
     String accessToken,
-    DestinyMembership membership,
-  ) async {
+    DestinyMembership membership, {
+    Map<int, int>? tierTypeByItemHash,
+  }) async {
     final path =
         '/Destiny2/${membership.membershipType}/Profile/${membership.membershipId}/';
     final response = await http.getJson(
@@ -116,6 +118,10 @@ class HttpBungieProfileClient implements BungieProfileClient {
       accessToken: accessToken,
       queryParameters: {'components': kInventoryProfileComponents},
     );
-    return parseFullInventoryResponse(response, membership);
+    return parseFullInventoryResponse(
+      response,
+      membership,
+      tierTypeByItemHash: tierTypeByItemHash,
+    );
   }
 }

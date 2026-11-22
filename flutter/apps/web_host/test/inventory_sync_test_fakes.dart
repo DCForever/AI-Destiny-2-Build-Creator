@@ -98,8 +98,9 @@ class FakeProfileClient implements BungieProfileClient {
   @override
   Future<FullInventoryParseResult> getFullInventoryWithDiagnostics(
     String accessToken,
-    DestinyMembership membership,
-  ) async {
+    DestinyMembership membership, {
+    Map<int, int>? tierTypeByItemHash,
+  }) async {
     inventoryCalls += 1;
     if (throwOnInventory) {
       throw StateError('No Destiny memberships found');

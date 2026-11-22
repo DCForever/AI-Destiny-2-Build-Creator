@@ -360,8 +360,8 @@ class ApplyInstanceSocketState {
   /// [notUnlockedOrUnknownPlugMessage] (F3). Empty owned is UNKNOWN, not open.
   final bool subclassPlugOwnershipKnown;
 
-  /// Live unlocked/enabled socket indexes (305 isEnabled/isVisible or 310
-  /// presence) — not "occupied". Null means use manifest indexes as-is.
+  /// Live unlocked socket indexes (305 enabled+visible AND 310 plugs) —
+  /// not "occupied". Null means use manifest indexes as-is.
   final Set<int>? unlockedSocketIndexes;
 
   /// False until live socket capture is present (defaults false — Skeptic).

@@ -26,6 +26,42 @@ Map<String, dynamic> rawTokenResponse({
       'membership_id': membershipId,
     };
 
+/// [read] throws a generic I/O error (restore → storage error) while
+/// [readSecureOnly] still returns Locker tokens for Cancel restore.
+class _StorageErrorKeepLockerStore implements TokenStore {
+  _StorageErrorKeepLockerStore(this.locker);
+
+  BungieTokens? locker;
+  int clearSecureOnlyCalls = 0;
+
+  @override
+  Future<BungieTokens?> read() async {
+    throw StateError('simulated disk I/O failure');
+  }
+
+  @override
+  Future<BungieTokens?> readSecureOnly() async => locker;
+
+  @override
+  Future<void> write(BungieTokens tokens) async {
+    locker = tokens;
+  }
+
+  @override
+  Future<void> clear() async {
+    locker = null;
+  }
+
+  @override
+  Future<void> clearSecureOnly() async {
+    clearSecureOnlyCalls += 1;
+    locker = null;
+  }
+
+  @override
+  Future<void> deleteLegacySidecarIfPresent() async {}
+}
+
 class _CorruptThrowingStore implements TokenStore {
   bool cleared = false;
   bool clearedSecureOnly = false;
@@ -1073,6 +1109,61 @@ void main() {
         expect(after?.bungieMembershipId, before?.bungieMembershipId);
         expect(after?.expiresAt, before?.expiresAt);
         expect(after?.refreshExpiresAt, before?.refreshExpiresAt);
+      },
+    );
+
+    test(
+      'restore storage error: Cancel leaves Locker intact and clears signInBusy',
+      () async {
+        final now = DateTime.now().toUtc();
+        final good = BungieTokens(
+          accessToken: 'locker-storage-access-SECRET',
+          refreshToken: 'locker-storage-refresh-SECRET',
+          expiresAt: now.add(const Duration(hours: 1)),
+          refreshExpiresAt: now.add(const Duration(days: 30)),
+          bungieMembershipId: 'locker-storage-memb',
+        );
+        final store = _StorageErrorKeepLockerStore(good);
+
+        final session = WindowsOAuthSession(
+          clientId: clientId,
+          redirectUri: redirectUri,
+          tokenStore: store,
+          oauthClient: BungieOAuthClient(
+            clientId: clientId,
+            redirectUri: redirectUri,
+            transport: (_) async => throw StateError('unused'),
+          ),
+          browserLauncher: FakeBrowserLauncher(),
+          waitForCallbackOverride: () =>
+              Completer<LoopbackCallbackResult>().future,
+        );
+        await session.restore();
+        expect(session.status, OAuthSessionStatus.error);
+        expect(
+          session.errorMessage,
+          contains('Could not restore session (storage)'),
+        );
+        expect(session.isSignedIn, isFalse);
+        final before = await store.readSecureOnly();
+        expect(before?.accessToken, 'locker-storage-access-SECRET');
+
+        final signInFuture = session.signIn();
+        await Future<void>.delayed(Duration.zero);
+        expect(session.status, OAuthSessionStatus.signingIn);
+        await session.cancelSignIn();
+        await signInFuture;
+
+        expect(store.clearSecureOnlyCalls, 0);
+        final after = await store.readSecureOnly();
+        expect(after?.accessToken, before?.accessToken);
+        expect(after?.refreshToken, before?.refreshToken);
+        // _signInBusy cleared — a second signIn must be allowed.
+        final second = session.signIn();
+        await Future<void>.delayed(Duration.zero);
+        expect(session.status, OAuthSessionStatus.signingIn);
+        await session.cancelSignIn();
+        await second;
       },
     );
 

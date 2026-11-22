@@ -95,6 +95,31 @@ void main() {
       expect(stored.map((p) => p.columnLabel).toList(), ['Barrel', 'Magazine']);
     });
 
+    test('skips disabled 305 sockets from perk grid', () {
+      final stored = buildStoredSocketPlugs(
+        socketCapture: const [
+          RawSocketCapture(
+            socketIndex: 0,
+            equippedPlugHash: 101,
+            isEnabled: true,
+          ),
+          RawSocketCapture(
+            socketIndex: 1,
+            equippedPlugHash: 201,
+            isEnabled: false,
+          ),
+        ],
+        plugCategoryByHash: const {
+          101: 'barrels.rifle',
+          201: 'magazines.ar',
+        },
+        weaponPerkSocketIndexes: const [0, 1, 2],
+      );
+      expect(stored, hasLength(1));
+      expect(stored.single.equippedPlugHash, 101);
+      expect(stored.any((p) => p.equippedPlugHash == 201), isFalse);
+    });
+
     test('deriveCaptureStatus', () {
       expect(deriveCaptureStatus(null), PerkCaptureStatus.pending);
       expect(deriveCaptureStatus(const []), PerkCaptureStatus.unavailable);
