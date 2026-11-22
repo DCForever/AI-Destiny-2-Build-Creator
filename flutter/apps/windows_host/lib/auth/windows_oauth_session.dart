@@ -308,16 +308,18 @@ class WindowsOAuthSession extends ChangeNotifier {
 
   Future<void> _refreshConfidentialFlag() async {
     try {
-      _confidentialMode = await _credentialStore.hasCredential;
+      _confidentialMode = await _credentialStore.hasCredential
+          .timeout(const Duration(seconds: 2));
     } catch (_) {
-      // Plugin missing in flutter_tester / headless — treat as Public.
+      // Plugin missing / hung in flutter_tester — treat as Public.
       _confidentialMode = false;
     }
   }
 
   Future<String?> _readCredentialSafe() async {
     try {
-      return await _credentialStore.read();
+      return await _credentialStore.read()
+          .timeout(const Duration(seconds: 2));
     } catch (_) {
       return null;
     }
