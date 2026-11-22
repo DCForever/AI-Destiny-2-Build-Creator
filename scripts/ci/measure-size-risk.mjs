@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** CI entry: size/risk labels. Logic + self-tests under test/ci/. */
+/** CI entry: size/risk labels. */
 import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import {
@@ -8,7 +8,7 @@ import {
   measureSizeRisk,
   resolveBase,
   SMALL,
-} from "../../test/ci/lib/measure-size-risk-lib.mjs";
+} from "./measure-size-risk-lib.mjs";
 
 const preferred = process.argv[2] || process.env.BASE_REF || "origin/main";
 const base = resolveBase(preferred);
@@ -44,7 +44,7 @@ const summary = [
   "",
   `- Production added lines (exclude tests + docs): **${added}**`,
   `- Production deleted lines: **${deleted}**`,
-  `- Size: **${size}** (Small ≤ ${SMALL})`,
+  `- Size: **${size}** (Small ≤ ${SMALL}; otherwise Large — honest count)`,
   `- Flags: ${flags.length ? flags.map((f) => `\`${f}\``).join(", ") : "_none_"}`,
   `- Label hints: ${labels.map((l) => `\`${l}\``).join(", ")}`,
   "",

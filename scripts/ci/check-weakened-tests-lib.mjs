@@ -1,4 +1,7 @@
-/** Shared weakened-test analysis (imported by scripts/ci + self-tests). */
+/**
+ * Weakened-test analysis (production gate logic under scripts/ci/).
+ * Self-tests: test/ci/check-weakened-tests.self-test.mjs
+ */
 import { execSync } from "node:child_process";
 
 export function stripComments(src) {
@@ -22,12 +25,27 @@ export function stripComments(src) {
 }
 
 const ASSERT_RE = /\b(expectLater|expect|verify|assert\w*)\s*\(/;
-const SKIP_FLAG_RE = new RegExp("\\b" + "skip\\s*:\\s*" + "true\\b");
+/** skip: true | skip: 'reason' | @Skip | it.skip / test.skip / describe.skip */
+const SKIP_WEAK_RE =
+  /\bskip\s*:\s*(?:true\b|'[^']*'|"[^"]*")|@Skip\b|\b(?:it|test|describe)\.skip\s*\(/;
 const NEGATIVE_ASSERT_RE =
   /\b(expectLater|expect|verify|assert\w*)\s*\([\s\S]{0,200}?\b(isFalse|isEmpty|throwsA|throws|refuse|ReadFailed|instanceNotOwned|doesNotFit|EnergyCostUnknown|notUnlocked|failClosed|isNull)\b/i;
 
+/** Gate / CI paths — pattern sources here must set ci-runner, not fail tests. */
+export function isCiGatePath(path) {
+  if (!path) return false;
+  return path.startsWith("scripts/ci/") || path.startsWith(".github/");
+}
+
+/** Intentional detector fixtures under test/ci — not product test weakening. */
+export function isDetectorSelfTestPath(path) {
+  return /^test\/ci\/.*\.self-test\.mjs$/.test(path || "");
+}
+
 export function isTestPath(path) {
   if (!path) return false;
+  if (isCiGatePath(path)) return false;
+  if (isDetectorSelfTestPath(path)) return false;
   if (/(^|\/)__tests__\//.test(path)) return true;
   if (/(^|\/)test(s)?\//.test(path)) return true;
   if (/_test\.(dart|ts|tsx|js|mjs|py|go)$/i.test(path)) return true;
@@ -59,26 +77,36 @@ function detectLoosening(removed, added) {
   const tips = [];
   const rm = stripComments(removed);
   const ad = stripComments(added);
-  // Char codes avoid operator literals co-occurring in this source.
-  const eqOp = String.fromCharCode(61, 61);
-  const gteOp = String.fromCharCode(62, 61);
-  const eq = new RegExp(`(?:${eqOp}|equals\\s*\\()`);
-  const gte = new RegExp(`(?:${gteOp}|greaterThanOrEqualTo)`);
-  const one = new RegExp("\\bfinds" + "OneWidget\\b");
-  const many = new RegExp("\\bfinds" + "Widgets\\b");
-  const nothing = new RegExp("\\bfinds" + "Nothing\\b");
-  if (eq.test(rm) && !gte.test(rm) && gte.test(ad)) {
+  if (
+    /(?:==|equals\s*\(|toEqual\s*\()/.test(rm) &&
+    !/(?:>=|greaterThanOrEqualTo|toBeGreaterThanOrEqual)/.test(rm) &&
+    /(?:>=|greaterThanOrEqualTo|toBeGreaterThanOrEqual)/.test(ad)
+  ) {
     tips.push("eq-to-gte");
   }
-  if (one.test(rm) && many.test(ad)) {
+  if (/\bfindsOneWidget\b/.test(rm) && /\bfindsWidgets\b/.test(ad)) {
     tips.push("one-to-widgets");
   }
-  if (nothing.test(rm) && many.test(ad)) {
+  if (/\bfindsNothing\b/.test(rm) && /\bfindsWidgets\b/.test(ad)) {
     tips.push("nothing-to-widgets");
   }
   return tips;
 }
 
+function flushHunkLoosening(removed, added, st) {
+  for (const rm of removed) {
+    for (const ad of added) {
+      for (const tip of detectLoosening(rm, ad)) {
+        st.loose.push(tip);
+      }
+    }
+  }
+}
+
+/**
+ * @param {string} diff unified diff text
+ * @param {string[]} [nameStatusLines]
+ */
 export function analyzeWeakenedDiff(diff, nameStatusLines = []) {
   const safety =
     /(skeptic_|fail_closed|ownership|guard|undo|apply_socket|cache_write|path_guard|no_dismantle)/i;
@@ -121,38 +149,51 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = []) {
   }
 
   let cur = null;
+  let hunkRemoved = [];
+  let hunkAdded = [];
+  const endHunk = () => {
+    if (cur && isTestPath(cur) && (hunkRemoved.length || hunkAdded.length)) {
+      flushHunkLoosening(hunkRemoved, hunkAdded, state(cur));
+    }
+    hunkRemoved = [];
+    hunkAdded = [];
+  };
+
   const lines = diff.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const m = line.match(/^diff --git a\/(.+) b\/(.+)$/);
     if (m) {
+      endHunk();
       cur = m[2];
       continue;
     }
-    if (!cur || !isTestPath(cur)) continue;
+    if (line.startsWith("@@")) {
+      endHunk();
+      continue;
+    }
+    if (!cur || isCiGatePath(cur) || isDetectorSelfTestPath(cur) || !isTestPath(cur)) {
+      continue;
+    }
     const st = state(cur);
     st.hit = true;
     if (line.startsWith("-") && !line.startsWith("---")) {
-      st.rm += countAsserts(line.slice(1));
-    }
-    if (line.startsWith("+") && !line.startsWith("+++")) {
+      const body = line.slice(1);
+      st.rm += countAsserts(body);
+      hunkRemoved.push(body);
+    } else if (line.startsWith("+") && !line.startsWith("+++")) {
       const body = line.slice(1);
       st.add += countAsserts(body);
-      if (SKIP_FLAG_RE.test(stripComments(body))) st.skipWeak = true;
+      hunkAdded.push(body);
+      if (SKIP_WEAK_RE.test(stripComments(body))) st.skipWeak = true;
       if (NEGATIVE_ASSERT_RE.test(stripComments(body))) st.neg = true;
     }
-    if (line.startsWith("-") && !line.startsWith("---")) {
-      const next = lines[i + 1] || "";
-      if (!next.startsWith("+") || next.startsWith("+++")) continue;
-      for (const tip of detectLoosening(line.slice(1), next.slice(1))) {
-        st.loose.push(tip);
-      }
-    }
   }
+  endHunk();
 
   const findings = [];
   for (const [path, st] of files) {
-    if (!st.hit) continue;
+    if (!st.hit || isCiGatePath(path)) continue;
     if (st.rm > 0 && st.add - st.rm < 0) {
       findings.push({
         path,
@@ -167,7 +208,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = []) {
       findings.push({
         path,
         kind: "test-weakening",
-        detail: "added skip flag set to true",
+        detail: "added skip / @Skip / *.skip",
       });
     }
     if (safety.test(path) && st.hit && st.rm > 0 && !st.neg) {

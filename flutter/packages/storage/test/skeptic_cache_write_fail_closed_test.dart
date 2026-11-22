@@ -5,6 +5,8 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import 'support/test_temp_path_guard.dart';
+
 /// Skeptic plan item 4 (2026-11-20): a failed cache write leaves the live
 /// file unchanged; no Force overwrite of live data.
 void main() {

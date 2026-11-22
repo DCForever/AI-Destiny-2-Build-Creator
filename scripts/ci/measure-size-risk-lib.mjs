@@ -1,4 +1,7 @@
-/** Shared size/risk measurement (imported by scripts/ci + self-tests). */
+/**
+ * Size/risk measurement (production gate logic under scripts/ci/).
+ * Self-tests: test/ci/measure-size-risk.self-test.mjs
+ */
 import { execSync } from "node:child_process";
 import { basename } from "node:path";
 
@@ -14,6 +17,17 @@ export function resolveBase(preferred) {
       `Base ref missing or unresolvable: ${preferred} (fail closed; no HEAD~1 fallback)`,
     );
   }
+}
+
+/** Gate / CI paths — always set ci-runner; pattern source allowlisted. */
+export function isCiGatePath(path) {
+  if (!path) return false;
+  return path.startsWith("scripts/ci/") || path.startsWith(".github/");
+}
+
+/** Intentional detector fixtures — excluded from test-weakening content scan. */
+export function isDetectorSelfTestPath(path) {
+  return /^test\/ci\/.*\.self-test\.mjs$/.test(path || "");
 }
 
 /** Top-level docs/test + named tests only — nested docs/fixtures/*.md do not hide prod. */
@@ -32,11 +46,43 @@ export function isExcludedFromProduction(path) {
 
 export function isTestPath(path) {
   if (!path) return false;
+  if (isCiGatePath(path)) return false;
+  if (isDetectorSelfTestPath(path)) return false;
   if (/(^|\/)__tests__\//.test(path)) return true;
   if (/(^|\/)test(s)?\//.test(path)) return true;
   if (/_test\.(dart|ts|tsx|js|mjs|py|go)$/i.test(path)) return true;
   if (/\.test\.(ts|tsx|js|mjs)$/i.test(path)) return true;
   return false;
+}
+
+/** Keep only +/- body lines; drop context and file headers. */
+export function addedOrRemovedBodies(patch) {
+  const out = [];
+  for (const line of patch.split("\n")) {
+    if (line.startsWith("+++") || line.startsWith("---")) continue;
+    if (line.startsWith("+") || line.startsWith("-")) out.push(line.slice(1));
+  }
+  return out.join("\n");
+}
+
+/**
+ * Drop unified-diff hunks for CI gate libs (ci-runner allowlist) and
+ * detector self-tests that intentionally embed pattern fixtures.
+ */
+export function stripCiGateHunks(patch) {
+  const lines = patch.split("\n");
+  const keep = [];
+  let skip = false;
+  for (const line of lines) {
+    const m = line.match(/^diff --git a\/(.+) b\/(.+)$/);
+    if (m) {
+      skip = isCiGatePath(m[2]) || isDetectorSelfTestPath(m[2]);
+      if (!skip) keep.push(line);
+      continue;
+    }
+    if (!skip) keep.push(line);
+  }
+  return keep.join("\n");
 }
 
 export function measureSizeRisk(input) {
@@ -61,9 +107,7 @@ export function measureSizeRisk(input) {
 
   const flags = new Set();
   const allPaths = input.allPaths || prod;
-  if (
-    allPaths.some((p) => p.startsWith(".github/") || p.startsWith("scripts/ci/"))
-  ) {
+  if (allPaths.some((p) => isCiGatePath(p))) {
     flags.add("ci-runner");
   }
   if (gone.length || /\b(dismantle|DeleteItem)\b/.test(input.prodPatch)) {
@@ -90,20 +134,16 @@ export function measureSizeRisk(input) {
   ) {
     flags.add("network-bind");
   }
-  // Char codes / pieces so this lib is not itself flagged by these scans.
-  const skipTrue = new RegExp("\\b" + "skip\\s*:\\s*" + "true\\b");
-  const oneToMany = new RegExp(
-    "finds" + "OneWidget[\\s\\S]{0,120}finds" + "Widgets",
-  );
-  const eqOp = String.fromCharCode(61, 61);
-  const gteOp = String.fromCharCode(62, 61);
-  const eqToGte = new RegExp(
-    `(?:${eqOp}|equals\\s*\\()[\\s\\S]{0,80}(?:${gteOp}|greaterThanOrEqualTo)`,
-  );
+
+  const testScan = addedOrRemovedBodies(stripCiGateHunks(input.testPatch || ""));
+  const SKIP_WEAK_RE =
+    /\bskip\s*:\s*(?:true\b|'[^']*'|"[^"]*")|@Skip\b|\b(?:it|test|describe)\.skip\s*\(/;
   if (
-    oneToMany.test(input.testPatch) ||
-    eqToGte.test(input.testPatch) ||
-    skipTrue.test(input.testPatch)
+    /findsOneWidget[\s\S]{0,120}findsWidgets/.test(testScan) ||
+    /(?:==|equals\s*\(|toEqual\s*\()[\s\S]{0,80}(?:>=|greaterThanOrEqualTo|toBeGreaterThanOrEqual)/.test(
+      testScan,
+    ) ||
+    SKIP_WEAK_RE.test(testScan)
   ) {
     flags.add("test-weakening");
   }

@@ -101,6 +101,31 @@ void main() {
     return (equipped: equipped, transfers: transfers, outcome: outcome);
   }
 
+  test(
+    'Skeptic #3 positive: complete inventory allows equip writes',
+    () async {
+      final result = await runApply(
+        profile: FakeProfileClient(
+          characters: const [warlockA],
+          items: const [
+            RawInventoryItem(
+              instanceId: 'inst-helmet-1',
+              itemHash: 1001,
+              bucketHash: 3448274439,
+              location: 'character',
+              characterId: '2305843009264904821',
+            ),
+          ],
+          inventorySectionsComplete: true,
+        ),
+      );
+      expect(result.outcome.error, isNull);
+      expect(result.equipped, ['inst-helmet-1']);
+      expect(result.outcome.progress!.failedCount, 0);
+      expect(result.outcome.progress!.appliedCount, greaterThan(0));
+    },
+  );
+
   test('Skeptic #3: inventory read error refuses writes (fail closed)', () async {
     final result = await runApply(
       profile: FakeProfileClient(

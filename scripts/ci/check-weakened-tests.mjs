@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-/** CI entry: weakened-test heuristic. Logic + self-tests under test/ci/. */
+/** CI entry: weakened-test heuristic. */
 import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import {
   analyzeWeakenedDiff,
   resolveBase,
-} from "../../test/ci/lib/check-weakened-tests-lib.mjs";
+} from "./check-weakened-tests-lib.mjs";
 
 const preferred = process.argv[2] || process.env.BASE_REF || "origin/main";
 const base = resolveBase(preferred);

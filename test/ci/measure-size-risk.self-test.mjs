@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Regression fixtures for scripts/ci/measure-size-risk.mjs (fail-closed).
- * Lives under top-level test/ so it does not count toward production size.
+ * Regression fixtures for scripts/ci/measure-size-risk-lib.mjs.
+ * Under top-level test/ (not production size).
  */
 import {
+  addedOrRemovedBodies,
+  isCiGatePath,
   isExcludedFromProduction,
   measureSizeRisk,
   resolveBase,
-} from "./lib/measure-size-risk-lib.mjs";
+  stripCiGateHunks,
+} from "../../scripts/ci/measure-size-risk-lib.mjs";
 
 function ok(name, fn) {
   fn();
@@ -25,15 +28,18 @@ ok("ci-runner on .github without runs-on", () => {
   if (!r.flags.includes("ci-runner")) throw new Error(JSON.stringify(r));
 });
 
-ok("ci-runner on scripts/ci", () => {
+ok("ci-runner on scripts/ci libs", () => {
   const r = measureSizeRisk({
-    numstat: "1\t0\tscripts/ci/x.mjs",
-    nameStatus: "A\tscripts/ci/x.mjs",
-    prodPatch: "",
+    numstat: "10\t0\tscripts/ci/check-weakened-tests-lib.mjs",
+    nameStatus: "A\tscripts/ci/check-weakened-tests-lib.mjs",
+    prodPatch: "const SKIP = /skip: true/;\n",
     testPatch: "",
-    allPaths: ["scripts/ci/x.mjs"],
+    allPaths: ["scripts/ci/check-weakened-tests-lib.mjs"],
   });
   if (!r.flags.includes("ci-runner")) throw new Error(JSON.stringify(r));
+  if (!isCiGatePath("scripts/ci/check-weakened-tests-lib.mjs")) {
+    throw new Error("lib must be ci gate path");
+  }
 });
 
 ok("auth-secrets patterns", () => {
@@ -69,18 +75,53 @@ ok("dest-write covers Bungie write APIs", () => {
   if (!r.flags.includes("dest-write")) throw new Error(JSON.stringify(r));
 });
 
-ok("test-weakening scans test paths", () => {
-  // Split matcher names so this fixture file is not itself flagged.
-  const one = "finds" + "One" + "Widget";
-  const many = "finds" + "Widgets";
+ok("test-weakening scans +/- lines only (not context)", () => {
   const r = measureSizeRisk({
     numstat: "1\t0\tlib/x.dart",
     nameStatus: "M\tlib/x.dart\nM\ttest/a_test.dart",
     prodPatch: "void f() {}",
-    testPatch: `-expect(find.byType(X), ${one});\n+expect(find.byType(X), ${many});\n`,
+    testPatch: [
+      "diff --git a/test/a_test.dart b/test/a_test.dart",
+      "--- a/test/a_test.dart",
+      "+++ b/test/a_test.dart",
+      "@@ -1,3 +1,3 @@",
+      " expect(find.byType(X), findsOneWidget);",
+      "-const a = 1;",
+      "+const a = 2;",
+      " // context still has findsWidgets nearby in real files sometimes",
+    ].join("\n"),
+    allPaths: ["lib/x.dart", "test/a_test.dart"],
+  });
+  if (r.flags.includes("test-weakening")) {
+    throw new Error(`context-only must not flag: ${JSON.stringify(r)}`);
+  }
+});
+
+ok("test-weakening detects findsOneWidget→findsWidgets on +/- lines", () => {
+  const r = measureSizeRisk({
+    numstat: "1\t0\tlib/x.dart",
+    nameStatus: "M\tlib/x.dart\nM\ttest/a_test.dart",
+    prodPatch: "void f() {}",
+    testPatch:
+      "-expect(find.byType(X), findsOneWidget);\n+expect(find.byType(X), findsWidgets);\n",
     allPaths: ["lib/x.dart", "test/a_test.dart"],
   });
   if (!r.flags.includes("test-weakening")) throw new Error(JSON.stringify(r));
+});
+
+ok("ci-gate hunks stripped from weakening scan", () => {
+  const patch = [
+    "diff --git a/scripts/ci/measure-size-risk-lib.mjs b/scripts/ci/measure-size-risk-lib.mjs",
+    "--- a/scripts/ci/measure-size-risk-lib.mjs",
+    "+++ b/scripts/ci/measure-size-risk-lib.mjs",
+    "@@ -1 +1 @@",
+    "-old",
+    "+skip: true findsOneWidget findsWidgets == >=",
+  ].join("\n");
+  const stripped = stripCiGateHunks(patch);
+  if (stripped.includes("skip: true")) throw new Error("gate hunk not stripped");
+  const bodies = addedOrRemovedBodies(stripped);
+  if (bodies.includes("skip: true")) throw new Error("bodies still have skip");
 });
 
 ok("nested paths must not hide production", () => {
