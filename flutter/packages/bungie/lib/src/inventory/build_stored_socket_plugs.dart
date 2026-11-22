@@ -70,6 +70,10 @@ List<StoredSocketPlug> buildStoredSocketPlugs({
   final result = <StoredSocketPlug>[];
 
   for (final row in socketCapture) {
+    // Disabled 305 sockets stay in capture for Apply/ownership, but must not
+    // appear as perk-grid columns (PR 59 parser keeps disabled rows).
+    if (!row.isEnabled) continue;
+
     final classified = classifyWeaponSocket(
       socketIndex: row.socketIndex,
       equippedPlugHash: row.equippedPlugHash,

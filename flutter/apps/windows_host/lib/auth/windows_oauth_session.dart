@@ -492,7 +492,9 @@ class WindowsOAuthSession extends ChangeNotifier {
     // Locker snapshot independent of status — restore() may leave good Locker
     // tokens while status is error (transient refresh / storage failure).
     // Cancel must not clear those unless this attempt wrote.
-    final priorLockerTokens = await _tokenStore.readSecureOnly();
+    // readSecureOnly stays inside try/finally so a throw cannot stick
+    // _signInBusy true.
+    BungieTokens? priorLockerTokens;
     var didWrite = false;
 
     _status = OAuthSessionStatus.signingIn;
@@ -507,6 +509,7 @@ class WindowsOAuthSession extends ChangeNotifier {
     final cancelGate = Completer<void>();
     _signInCancelGate = cancelGate;
     try {
+      priorLockerTokens = await _tokenStore.readSecureOnly();
       _log(
         'OAuth: starting sign-in redirectUri=$redirectUri '
         'clientIdLen=${clientId.length}',

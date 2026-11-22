@@ -1,5 +1,6 @@
 import 'package:destiny2_app/destiny2_app.dart';
 import 'package:destiny2_bungie/destiny2_bungie.dart';
+import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:destiny2_windows_host/auth/browser_launcher.dart';
 import 'package:destiny2_windows_host/auth/token_store.dart';
@@ -103,8 +104,7 @@ void main() {
     );
   });
 
-  test('M2: unlocked indexes include empty enabled sockets, not only occupied',
-      () {
+  test('M2: unlocked indexes require 305 enabled+visible AND 310 plugs', () {
     final live = const RawInventoryItem(
       instanceId: 'sub-1',
       itemHash: 100,
@@ -114,18 +114,29 @@ void main() {
         RawSocketCapture(
           socketIndex: 7,
           equippedPlugHash: 31,
+          reusablePlugHashes: [31, 32],
           isEnabled: true,
           isVisible: true,
         ),
         RawSocketCapture(
           socketIndex: 8,
           equippedPlugHash: 0,
+          reusablePlugHashes: [32],
           isEnabled: true,
           isVisible: true,
         ),
+        // 305 enabled but no 310 → not unlocked.
         RawSocketCapture(
           socketIndex: 9,
           equippedPlugHash: 0,
+          isEnabled: true,
+          isVisible: true,
+        ),
+        // 310 alone on disabled socket → not unlocked.
+        RawSocketCapture(
+          socketIndex: 10,
+          equippedPlugHash: 0,
+          reusablePlugHashes: [99],
           isEnabled: false,
           isVisible: true,
         ),
@@ -134,6 +145,7 @@ void main() {
     final unlocked = unlockedSocketIndexesFromCapture(live)!;
     expect(unlocked, containsAll([7, 8]));
     expect(unlocked.contains(9), isFalse);
+    expect(unlocked.contains(10), isFalse);
   });
 
   test('label includes class, light, and last 4 of character id', () {
@@ -706,7 +718,7 @@ void main() {
             ],
           ),
           writeClient: writeClient,
-          exoticItemHashes: const {9001},
+          // Isolate from exoticItemHashes — exotic via live tierType only.
         ),
         target: const BuildsMockApplyTarget(
           membership: membership,
@@ -721,6 +733,118 @@ void main() {
       expect(order, ['leg-w', 'exo-w']);
     },
   );
+
+  test('host→planner fragment path: empty unlocked socket gets InsertSocketPlugFree',
+      () {
+    const subclassHash = 900001;
+    const fragA = 31;
+    const fragB = 32;
+    const charId = '2305843009264904821';
+    const loadout = CachedDimLoadout(
+      shareId: 's1',
+      name: 'Test',
+      classType: 2,
+      items: [],
+      subclass: CachedDimSubclass(hash: subclassHash, name: 'Broodweaver'),
+      subclassPlugs: [
+        CachedDimNamedHash(hash: fragA, name: 'Fragment A'),
+        CachedDimNamedHash(hash: fragB, name: 'Fragment B'),
+      ],
+      mods: [],
+      artifactPerks: [],
+    );
+    final live = const RawInventoryItem(
+      instanceId: 'sub-1',
+      itemHash: subclassHash,
+      bucketHash: kSubclassBucketHash,
+      location: 'equipped',
+      characterId: charId,
+      socketCapture: [
+        RawSocketCapture(
+          socketIndex: 7,
+          equippedPlugHash: fragA,
+          reusablePlugHashes: [fragA, fragB],
+          isEnabled: true,
+          isVisible: true,
+        ),
+        RawSocketCapture(
+          socketIndex: 8,
+          equippedPlugHash: 0,
+          reusablePlugHashes: [fragA, fragB],
+          isEnabled: true,
+          isVisible: true,
+        ),
+        RawSocketCapture(
+          socketIndex: 9,
+          equippedPlugHash: 0,
+          reusablePlugHashes: [fragA, fragB],
+          isEnabled: true,
+          isVisible: true,
+        ),
+      ],
+    );
+    final manifest = ApplySocketManifestLookup(
+      itemDef: (h) => h == subclassHash
+          ? const ApplyManifestItemDef(
+              hash: subclassHash,
+              name: 'Broodweaver',
+              socketCategories: [
+                ApplyManifestSocketCategory(
+                  socketCategoryHash: 271461480,
+                  socketIndexes: [7, 8, 9],
+                ),
+              ],
+            )
+          : null,
+      plugDef: (h) {
+        if (h == fragA) {
+          return const ApplyManifestPlugDef(
+            hash: fragA,
+            name: 'Fragment A',
+            plugCategoryIdentifier: 'shared.fragments',
+          );
+        }
+        if (h == fragB) {
+          return const ApplyManifestPlugDef(
+            hash: fragB,
+            name: 'Fragment B',
+            plugCategoryIdentifier: 'shared.fragments',
+          );
+        }
+        return null;
+      },
+      resolveUniquePlugHashByName: (_) => null,
+    );
+
+    final plan = socketPlanForApplySync(
+      loadout: loadout,
+      characterId: charId,
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'sub-1',
+          itemHash: subclassHash,
+          location: 'equipped',
+          bucketHash: kSubclassBucketHash,
+          characterId: charId,
+        ),
+      ],
+      liveItems: [live],
+      successfullyEquipped: const [],
+      manifest: manifest,
+      unlockedPlugSetPlugHashes: const {fragA, fragB},
+    );
+
+    expect(plan, isNotNull);
+    final inserts =
+        plan!.subclassPlugs.where((s) => s.shouldCall).toList();
+    expect(inserts, hasLength(1));
+    expect(inserts.single.plugItemHash, fragB);
+    expect(inserts.single.socketIndex, 8);
+    final noop =
+        plan.subclassPlugs.firstWhere((s) => s.plugItemHash == fragA);
+    expect(noop.shouldCall, isFalse);
+    expect(noop.socketIndex, 7);
+  });
 }
 
 Future<WindowsOAuthSession> _signedInSession() async {

@@ -161,6 +161,30 @@ void main() {
       expect(equip.power, 1820);
     });
 
+    test('getFullInventoryWithDiagnostics wires tierTypeByItemHash', () async {
+      final http = BungieHttpClient(
+        apiKey: 'k',
+        transport: (request) async {
+          return BungieHttpResponse(
+            statusCode: 200,
+            body: successBody(_fullInventoryResponse),
+          );
+        },
+      );
+      final client = HttpBungieProfileClient(http: http);
+      final result = await client.getFullInventoryWithDiagnostics(
+        'tok',
+        membership,
+        tierTypeByItemHash: const {
+          // vault1 itemHash from fixture — mark exotic via definition.
+          800001: 6,
+        },
+      );
+      final vault = result.items.firstWhere((i) => i.instanceId == 'vault1');
+      expect(vault.tierType, 6);
+      expect(vault.isExotic, isTrue);
+    });
+
     test('drops unknown buckets and missing instance ids', () async {
       final result = parseFullInventoryResponse({
         'profileInventory': {

@@ -197,8 +197,9 @@ class _EmptyProfileClient implements BungieProfileClient {
   @override
   Future<FullInventoryParseResult> getFullInventoryWithDiagnostics(
     String accessToken,
-    DestinyMembership membership,
-  ) async =>
+    DestinyMembership membership, {
+    Map<int, int>? tierTypeByItemHash,
+  }) async =>
       FullInventoryParseResult(
         items: const [],
         diagnostics: InventoryParseDiagnostics(

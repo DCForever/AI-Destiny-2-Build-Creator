@@ -67,6 +67,7 @@ Future<SyncInventoryResult> syncUserInventory({
   Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
   WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
   WeaponSocketContextBuilder? weaponSocketContextBuilder,
+  Map<int, int>? tierTypeByItemHash,
   String? now,
   InventoryBusyLock? lock,
 }) async {
@@ -84,6 +85,7 @@ Future<SyncInventoryResult> syncUserInventory({
         weaponRollMetaLookup: weaponRollMetaLookup,
         weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
         weaponSocketContextBuilder: weaponSocketContextBuilder,
+        tierTypeByItemHash: tierTypeByItemHash,
         now: now ?? DateTime.now().toUtc().toIso8601String(),
       );
     });
@@ -104,6 +106,7 @@ Future<SyncInventoryResult> _performSync({
   Map<int, RollTagWeaponMeta>? weaponRollMetaLookup,
   WeaponRollMetaLookupBuilder? weaponRollMetaLookupBuilder,
   WeaponSocketContextBuilder? weaponSocketContextBuilder,
+  Map<int, int>? tierTypeByItemHash,
   required String now,
 }) async {
   final memberships = await profileClient.getMemberships(accessToken);
@@ -129,6 +132,7 @@ Future<SyncInventoryResult> _performSync({
   final parsed = await profileClient.getFullInventoryWithDiagnostics(
     accessToken,
     membership,
+    tierTypeByItemHash: tierTypeByItemHash,
   );
 
   final transferHashes = <int>[

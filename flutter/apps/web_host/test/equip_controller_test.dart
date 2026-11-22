@@ -84,8 +84,9 @@ class FakeProfileClient implements BungieProfileClient {
   @override
   Future<FullInventoryParseResult> getFullInventoryWithDiagnostics(
     String accessToken,
-    DestinyMembership membership,
-  ) async {
+    DestinyMembership membership, {
+    Map<int, int>? tierTypeByItemHash,
+  }) async {
     return FullInventoryParseResult(
       items: const [],
       diagnostics: InventoryParseDiagnostics(
