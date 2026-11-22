@@ -646,7 +646,21 @@ void main() {
     expect(equipped, ['inst-vault-1']);
     expect(outcome.progress!.appliedCount, 1);
     expect(outcome.progress!.failedCount, 0);
-    expect(outcome.progress!.items.single.state, ApplyItemState.done);
+    // CHANGED: Apply now emits an auxiliary move side-effect row in addition
+    // to the pin row (truthful from→to reporting).
+    final pinRows = outcome.progress!.items
+        .where((r) => !isAuxiliaryApplyRow(r))
+        .toList();
+    expect(pinRows, hasLength(1));
+    expect(pinRows.single.state, ApplyItemState.done);
+    expect(
+      outcome.progress!.items.any(
+        (r) =>
+            r.id.startsWith(kApplySideEffectRowIdPrefix) &&
+            r.label.contains('Moved'),
+      ),
+      isTrue,
+    );
   });
 
   test(
@@ -844,6 +858,296 @@ void main() {
         plan.subclassPlugs.firstWhere((s) => s.plugItemHash == fragA);
     expect(noop.shouldCall, isFalse);
     expect(noop.socketIndex, 7);
+  });
+
+  group('dequip equipped-elsewhere via FakeProfileClient', () {
+    const otherChar = CharacterSummary(
+      characterId: 'char-other-warlock',
+      classType: 'Warlock',
+      light: 2000,
+    );
+    const targetChar = warlockA;
+    const target = BuildsMockApplyTarget(
+      membership: membership,
+      character: targetChar,
+    );
+
+    test('(a) frees equipped-elsewhere with on-char replacement then equips',
+        () async {
+      final equips = <EquipItemArgs>[];
+      final transfers = <TransferItemArgs>[];
+      final bulk = <List<String>>[];
+      final writeClient = createMockWriteClient(
+        equipItem: (ctx, args) async => equips.add(args),
+        transferItem: (ctx, args) async => transfers.add(args),
+        equipItems: (ctx, args) async {
+          bulk.add(List<String>.from(args.itemIds));
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
+        },
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      final plan = _singleSlotPlan(build, instanceId: 'needed-helm');
+
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          profileClient: FakeProfileClient(
+            characters: const [targetChar, otherChar],
+            items: const [
+              RawInventoryItem(
+                instanceId: 'needed-helm',
+                itemHash: 1001,
+                bucketHash: 3448274439,
+                location: 'equipped',
+                characterId: 'char-other-warlock',
+              ),
+              RawInventoryItem(
+                instanceId: 'spare-helm',
+                itemHash: 1003,
+                bucketHash: 3448274439,
+                location: 'character',
+                characterId: 'char-other-warlock',
+              ),
+            ],
+          ),
+          writeClient: writeClient,
+        ),
+        target: target,
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(outcome.error, isNull);
+      expect(equips.single.instanceId, 'spare-helm');
+      expect(equips.single.characterId, 'char-other-warlock');
+      expect(transfers, hasLength(2));
+      expect(bulk, [
+        ['needed-helm'],
+      ]);
+      expect(outcome.progress?.appliedCount, 1);
+      expect(
+        outcome.progress?.items.any(
+          (r) =>
+              r.id.startsWith(kApplySideEffectRowIdPrefix) &&
+              r.label.contains('Equipped') &&
+              r.label.contains('char-other-warlock'),
+        ),
+        isTrue,
+      );
+    });
+
+    test('(b) no valid replacement fails that item; rest continues', () async {
+      final equips = <EquipItemArgs>[];
+      final bulk = <List<String>>[];
+      final writeClient = createMockWriteClient(
+        equipItem: (ctx, args) async => equips.add(args),
+        equipItems: (ctx, args) async {
+          bulk.add(List<String>.from(args.itemIds));
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
+        },
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      // helmet=stuck-helm (equipped elsewhere, no non-exotic spare);
+      // gauntlets=local-arms (already on target).
+      final plan = _twoSlotPlan(
+        build,
+        presentId: 'stuck-helm',
+        missingId: 'local-arms',
+      );
+
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          profileClient: FakeProfileClient(
+            characters: const [targetChar, otherChar],
+            items: const [
+              RawInventoryItem(
+                instanceId: 'stuck-helm',
+                itemHash: 1001,
+                bucketHash: 3448274439,
+                location: 'equipped',
+                characterId: 'char-other-warlock',
+                tierType: 6,
+              ),
+              RawInventoryItem(
+                instanceId: 'exotic-spare',
+                itemHash: 1009,
+                bucketHash: 3448274439,
+                location: 'character',
+                characterId: 'char-other-warlock',
+                tierType: 6,
+              ),
+              RawInventoryItem(
+                instanceId: 'local-arms',
+                itemHash: 1002,
+                bucketHash: 3551918588,
+                location: 'character',
+                characterId: '2305843009264904821',
+              ),
+            ],
+          ),
+          writeClient: writeClient,
+        ),
+        target: target,
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(equips, isEmpty);
+      expect(bulk, [
+        ['local-arms'],
+      ]);
+      expect(outcome.progress?.appliedCount, 1);
+      expect(outcome.progress?.failedCount, 1);
+      expect(
+        outcome.progress?.items.any(
+          (r) =>
+              r.state == ApplyItemState.failed &&
+              r.reason == kCannotUnequipOnOtherCharacterMessage,
+        ),
+        isTrue,
+      );
+    });
+
+    test('(c) mid-sequence failure lists prior equip and failing step',
+        () async {
+      final writeClient = createMockWriteClient(
+        equipItem: (ctx, args) async {},
+        transferItem: (ctx, args) async {
+          if (args.instanceId == 'needed-helm' && args.transferToVault) {
+            throw const BungiePlatformException(
+              'gone',
+              errorCode: kDestinyItemNotFound,
+              errorStatus: 'DestinyItemNotFound',
+            );
+          }
+        },
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      final plan = _singleSlotPlan(build, instanceId: 'needed-helm');
+
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          profileClient: FakeProfileClient(
+            characters: const [targetChar, otherChar],
+            items: const [
+              RawInventoryItem(
+                instanceId: 'needed-helm',
+                itemHash: 1001,
+                bucketHash: 3448274439,
+                location: 'equipped',
+                characterId: 'char-other-warlock',
+              ),
+              RawInventoryItem(
+                instanceId: 'spare-helm',
+                itemHash: 1003,
+                bucketHash: 3448274439,
+                location: 'character',
+                characterId: 'char-other-warlock',
+              ),
+            ],
+          ),
+          writeClient: writeClient,
+        ),
+        target: target,
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(outcome.progress?.failedCount, 1);
+      expect(
+        outcome.progress?.items.any(
+          (r) =>
+              r.state == ApplyItemState.failed &&
+              r.reason == 'DestinyItemNotFound',
+        ),
+        isTrue,
+      );
+      expect(
+        outcome.progress?.items.any(
+          (r) =>
+              r.id.startsWith(kApplySideEffectRowIdPrefix) &&
+              r.state == ApplyItemState.done &&
+              r.label.contains('Equipped') &&
+              r.label.contains('char-other-warlock'),
+        ),
+        isTrue,
+      );
+    });
+
+    test('(d) exotic spare skipped; legendary replacement equipped', () async {
+      final equips = <EquipItemArgs>[];
+      final writeClient = createMockWriteClient(
+        equipItem: (ctx, args) async => equips.add(args),
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      final plan = _singleSlotPlan(build, instanceId: 'needed-helm');
+
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          profileClient: FakeProfileClient(
+            characters: const [targetChar, otherChar],
+            items: const [
+              RawInventoryItem(
+                instanceId: 'needed-helm',
+                itemHash: 1001,
+                bucketHash: 3448274439,
+                location: 'equipped',
+                characterId: 'char-other-warlock',
+              ),
+              RawInventoryItem(
+                instanceId: 'exotic-spare',
+                itemHash: 1009,
+                bucketHash: 3448274439,
+                location: 'character',
+                characterId: 'char-other-warlock',
+                tierType: 6,
+              ),
+              RawInventoryItem(
+                instanceId: 'legend-spare',
+                itemHash: 1003,
+                bucketHash: 3448274439,
+                location: 'character',
+                characterId: 'char-other-warlock',
+              ),
+            ],
+          ),
+          writeClient: writeClient,
+        ),
+        target: target,
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(equips.single.instanceId, 'legend-spare');
+      expect(outcome.progress?.appliedCount, 1);
+    });
   });
 }
 

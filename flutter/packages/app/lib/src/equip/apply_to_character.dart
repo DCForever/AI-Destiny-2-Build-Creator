@@ -121,6 +121,7 @@ class ApplyInventoryItem {
     this.name = '',
     this.isLocked = false,
     this.isTransferable = true,
+    this.classType,
   });
 
   final String instanceId;
@@ -135,7 +136,7 @@ class ApplyInventoryItem {
   /// Primary-stat power for make-room eviction ordering (lowest first).
   final int power;
 
-  /// Display name when known (make-room outcome rows).
+  /// Display name when known (make-room / side-effect outcome rows).
   final String name;
 
   /// Destiny ItemState Locked bit — never make-room-evict locked items.
@@ -143,6 +144,9 @@ class ApplyInventoryItem {
 
   /// False when DestinyTransferStatus is not CanTransfer.
   final bool isTransferable;
+
+  /// Titan | Hunter | Warlock when known (armor); null/empty/Unknown = any.
+  final String? classType;
 }
 
 /// Optional delay injector (tests record throttle sleeps).
@@ -165,6 +169,14 @@ const int kApplyMakeRoomMaxAttempts = 2;
 /// Id prefix for make-room outcome rows (excluded from applied/failed counts).
 const String kApplyMakeRoomRowIdPrefix = 'make-room:';
 
+/// Id prefix for move/equip side-effect rows (excluded from applied/failed counts).
+const String kApplySideEffectRowIdPrefix = 'apply-side:';
+
+/// True when a progress row is auxiliary (make-room / move / dequip report).
+bool isAuxiliaryApplyRow(ApplyItemProgress row) =>
+    row.id.startsWith(kApplyMakeRoomRowIdPrefix) ||
+    row.id.startsWith(kApplySideEffectRowIdPrefix);
+
 /// Builds a socket plan from items that actually equipped in this run.
 typedef ApplySocketPlanBuilder = ApplySocketPlan? Function(
   List<ApplyToCharacterItem> successfullyEquipped,
@@ -180,6 +192,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
   required String characterId,
   required List<ApplyToCharacterItem> items,
   List<ApplyInventoryItem> inventory = const [],
+  Map<String, String> characterClassById = const {},
   ApplySocketPlan? socketPlan,
   ApplySocketPlanBuilder? socketPlanBuilder,
   void Function(ApplyToCharacterProgress progress)? onProgress,
@@ -256,6 +269,7 @@ Future<ApplyToCharacterProgress> applyToCharacter({
         byInstance: byInstance,
         inventory: workingInventory,
         plannedIds: plannedIds,
+        characterClassById: characterClassById,
         characterReserved: characterReserved,
         vaultReserved: () => vaultReserved,
         reserveVault: () => vaultReserved += 1,
@@ -311,11 +325,43 @@ Future<ApplyToCharacterProgress> applyToCharacter({
 
     var reachedVault = false;
     try {
+      for (final prep in p.prepTransferSteps) {
+        await runWriteWithThrottleBackoff(
+          () => writeClient.transferItem(ctx, prep),
+          delay: sleeper,
+        );
+        final prepName = _itemDisplayName(workingInventory, prep.instanceId);
+        rows.add(
+          ApplyItemProgress(
+            id: '$kApplySideEffectRowIdPrefix${prep.instanceId}:vault-to-char',
+            label: kApplyMovedItemMessage(
+              prepName,
+              'vault',
+              'character ${prep.characterId}',
+            ),
+            state: ApplyItemState.done,
+          ),
+        );
+        emit(index: index, running: true);
+      }
       for (final dequip in p.dequipSteps) {
         await runWriteWithThrottleBackoff(
           () => writeClient.equipItem(ctx, dequip),
           delay: sleeper,
         );
+        final dequipName =
+            _itemDisplayName(workingInventory, dequip.instanceId);
+        rows.add(
+          ApplyItemProgress(
+            id: '$kApplySideEffectRowIdPrefix${dequip.instanceId}:equip',
+            label: kApplyEquippedOnOtherCharacterMessage(
+              dequipName,
+              dequip.characterId,
+            ),
+            state: ApplyItemState.done,
+          ),
+        );
+        emit(index: index, running: true);
       }
       final transferResult = await _runTransfersWithMakeRoom(
         writeClient: writeClient,
@@ -333,6 +379,18 @@ Future<ApplyToCharacterProgress> applyToCharacter({
             ApplyItemProgress(
               id: '$kApplyMakeRoomRowIdPrefix$evicteeId',
               label: message,
+              state: ApplyItemState.done,
+            ),
+          );
+          emit(index: index, running: true);
+        },
+        onPlanItemMoved: (from, to) {
+          final pinName =
+              _itemDisplayName(workingInventory, p.instanceId);
+          rows.add(
+            ApplyItemProgress(
+              id: '$kApplySideEffectRowIdPrefix${p.instanceId}:$from-$to',
+              label: kApplyMovedItemMessage(pinName, from, to),
               state: ApplyItemState.done,
             ),
           );
@@ -529,16 +587,13 @@ ApplyToCharacterProgress _finish(
   return done;
 }
 
-bool _isMakeRoomRow(ApplyItemProgress row) =>
-    row.id.startsWith(kApplyMakeRoomRowIdPrefix);
-
 int _planItemCount(List<ApplyItemProgress> rows) =>
-    rows.where((r) => !_isMakeRoomRow(r)).length;
+    rows.where((r) => !isAuxiliaryApplyRow(r)).length;
 
 int _countPlanRows(List<ApplyItemProgress> rows, ApplyItemState state) {
   var n = 0;
   for (final row in rows) {
-    if (_isMakeRoomRow(row)) continue;
+    if (isAuxiliaryApplyRow(row)) continue;
     if (row.state == state) n += 1;
   }
   return n;
@@ -550,7 +605,7 @@ void _failRemainingWaiting(
   required String reason,
 }) {
   for (var i = fromIndex; i < rows.length; i++) {
-    if (_isMakeRoomRow(rows[i])) continue;
+    if (isAuxiliaryApplyRow(rows[i])) continue;
     if (rows[i].state == ApplyItemState.waiting ||
         rows[i].state == ApplyItemState.applying) {
       rows[i] = rows[i].copyWith(state: ApplyItemState.failed, reason: reason);
@@ -565,6 +620,7 @@ class _ApplyItemPlan {
     required this.itemHash,
     required this.bucketHash,
     required this.isExotic,
+    required this.prepTransferSteps,
     required this.dequipSteps,
     required this.transferSteps,
     this.refusalReason,
@@ -575,6 +631,9 @@ class _ApplyItemPlan {
   final int itemHash;
   final int bucketHash;
   final bool isExotic;
+
+  /// Vault → other-character pulls before dequip (replacement was in vault).
+  final List<TransferItemArgs> prepTransferSteps;
   final List<EquipItemArgs> dequipSteps;
   final List<TransferItemArgs> transferSteps;
   final String? refusalReason;
@@ -587,6 +646,7 @@ _ApplyItemPlan _planItem({
   required Map<String, ApplyInventoryItem> byInstance,
   required List<ApplyInventoryItem> inventory,
   required Set<String> plannedIds,
+  required Map<String, String> characterClassById,
   required Map<int, int> characterReserved,
   required int Function() vaultReserved,
   required void Function() reserveVault,
@@ -600,6 +660,7 @@ _ApplyItemPlan _planItem({
       itemHash: item.itemHash,
       bucketHash: 0,
       isExotic: false,
+      prepTransferSteps: const [],
       dequipSteps: const [],
       transferSteps: const [],
       refusalReason: errorStatusName(kDestinyItemNotFound),
@@ -613,6 +674,7 @@ _ApplyItemPlan _planItem({
       itemHash: item.itemHash,
       bucketHash: live.bucketHash,
       isExotic: live.isExotic,
+      prepTransferSteps: const [],
       dequipSteps: const [],
       transferSteps: const [],
       refusalReason: kItemHashMismatchMessage,
@@ -634,11 +696,13 @@ _ApplyItemPlan _planItem({
       itemHash: item.itemHash,
       bucketHash: live.bucketHash,
       isExotic: live.isExotic,
+      prepTransferSteps: const [],
       dequipSteps: const [],
       transferSteps: const [],
     );
   }
 
+  final prepTransfers = <TransferItemArgs>[];
   final dequips = <EquipItemArgs>[];
   final transfers = <TransferItemArgs>[];
 
@@ -658,6 +722,7 @@ _ApplyItemPlan _planItem({
           itemHash: item.itemHash,
           bucketHash: live.bucketHash,
           isExotic: live.isExotic,
+          prepTransferSteps: const [],
           dequipSteps: const [],
           transferSteps: const [],
           refusalReason: kNoRoomInVaultMessage,
@@ -676,6 +741,7 @@ _ApplyItemPlan _planItem({
           itemHash: item.itemHash,
           bucketHash: live.bucketHash,
           isExotic: live.isExotic,
+          prepTransferSteps: const [],
           dequipSteps: const [],
           transferSteps: const [],
           refusalReason: kNoRoomOnCharacterMessage,
@@ -696,6 +762,7 @@ _ApplyItemPlan _planItem({
         itemHash: item.itemHash,
         bucketHash: live.bucketHash,
         isExotic: live.isExotic,
+        prepTransferSteps: const [],
         dequipSteps: const [],
         transferSteps: const [],
         refusalReason: kNoRoomInVaultMessage,
@@ -704,11 +771,13 @@ _ApplyItemPlan _planItem({
   }
 
   if (equippedOnOther) {
+    final sourceCharacterId = live.characterId!;
     final replacement = _findDequipReplacement(
       inventory: inventory,
-      sourceCharacterId: live.characterId!,
+      sourceCharacterId: sourceCharacterId,
       bucketHash: live.bucketHash,
       excludeIds: plannedIds,
+      sourceClassType: characterClassById[sourceCharacterId],
     );
     if (replacement == null) {
       return _ApplyItemPlan(
@@ -717,16 +786,47 @@ _ApplyItemPlan _planItem({
         itemHash: item.itemHash,
         bucketHash: live.bucketHash,
         isExotic: live.isExotic,
+        prepTransferSteps: const [],
         dequipSteps: const [],
         transferSteps: const [],
-        refusalReason: 'Cannot unequip on other character',
+        refusalReason: kCannotUnequipOnOtherCharacterMessage,
+      );
+    }
+    if (replacement.location == 'vault') {
+      final otherOccupied =
+          _bucketCount(inventory, sourceCharacterId, live.bucketHash);
+      if (otherOccupied >= kApplyCharacterBucketCapacity) {
+        return _ApplyItemPlan(
+          rowIndex: rowIndex,
+          instanceId: item.instanceId,
+          itemHash: item.itemHash,
+          bucketHash: live.bucketHash,
+          isExotic: live.isExotic,
+          prepTransferSteps: const [],
+          dequipSteps: const [],
+          transferSteps: const [],
+          refusalReason: kCannotUnequipOnOtherCharacterMessage,
+        );
+      }
+      prepTransfers.add(
+        TransferItemArgs(
+          itemHash: replacement.itemHash,
+          instanceId: replacement.instanceId,
+          characterId: sourceCharacterId,
+          transferToVault: false,
+        ),
+      );
+      _markInventoryMovedToCharacter(
+        inventory,
+        replacement.instanceId,
+        sourceCharacterId,
       );
     }
     dequips.add(
       EquipItemArgs(
         itemHash: replacement.itemHash,
         instanceId: replacement.instanceId,
-        characterId: live.characterId!,
+        characterId: sourceCharacterId,
       ),
     );
   }
@@ -783,6 +883,7 @@ _ApplyItemPlan _planItem({
       itemHash: item.itemHash,
       bucketHash: live.bucketHash,
       isExotic: live.isExotic,
+      prepTransferSteps: const [],
       dequipSteps: const [],
       transferSteps: const [],
       refusalReason: errorStatusName(kDestinyItemNotFound),
@@ -795,6 +896,7 @@ _ApplyItemPlan _planItem({
     itemHash: item.itemHash,
     bucketHash: live.bucketHash,
     isExotic: live.isExotic,
+    prepTransferSteps: prepTransfers,
     dequipSteps: dequips,
     transferSteps: transfers,
   );
@@ -816,6 +918,7 @@ Future<String?> _runTransfersWithMakeRoom({
   required ApplyDelay sleeper,
   required String itemLabel,
   required void Function(String message, String evicteeId) onMakeRoom,
+  required void Function(String from, String to) onPlanItemMoved,
   required void Function() onReachedVault,
 }) async {
   // Planned make-room transfers count toward the per-item limit of 2.
@@ -831,9 +934,19 @@ Future<String?> _runTransfersWithMakeRoom({
       );
       if (step.transferToVault && step.instanceId == plan.instanceId) {
         onReachedVault();
+        onPlanItemMoved(
+          'character ${step.characterId}',
+          'vault',
+        );
+      } else if (!step.transferToVault &&
+          step.instanceId == plan.instanceId) {
+        onPlanItemMoved(
+          'vault',
+          'character ${step.characterId}',
+        );
       }
       if (step.instanceId != plan.instanceId && step.transferToVault) {
-        final name = _evicteeDisplayName(inventory, step.instanceId);
+        final name = _itemDisplayName(inventory, step.instanceId);
         onMakeRoom(kMakeRoomMovedToVaultMessage(name), step.instanceId);
         _markInventoryMovedToVault(inventory, step.instanceId);
       }
@@ -891,13 +1004,20 @@ Future<String?> _runTransfersWithMakeRoom({
         reservedEvicteeIds.add(evictee.instanceId);
         // Inventory mutation tracks vault occupancy; skip vaultReserved bump.
         _markInventoryMovedToVault(inventory, evictee.instanceId);
-        final name = _evicteeDisplayName(inventory, evictee.instanceId);
+        final name = _itemDisplayName(inventory, evictee.instanceId);
         onMakeRoom(kMakeRoomMovedToVaultMessage(name), evictee.instanceId);
         try {
           await runWriteWithThrottleBackoff(
             () => writeClient.transferItem(ctx, step),
             delay: sleeper,
           );
+          if (step.transferToVault && step.instanceId == plan.instanceId) {
+            onReachedVault();
+            onPlanItemMoved('character ${step.characterId}', 'vault');
+          } else if (!step.transferToVault &&
+              step.instanceId == plan.instanceId) {
+            onPlanItemMoved('vault', 'character ${step.characterId}');
+          }
           break;
         } catch (retryError) {
           if (!_isNoRoomError(retryError)) {
@@ -969,7 +1089,7 @@ ApplyInventoryItem? _pickMakeRoomEvictee({
   return best;
 }
 
-String _evicteeDisplayName(
+String _itemDisplayName(
   List<ApplyInventoryItem> inventory,
   String instanceId,
 ) {
@@ -999,6 +1119,32 @@ void _markInventoryMovedToVault(
       name: row.name,
       isLocked: row.isLocked,
       isTransferable: row.isTransferable,
+      classType: row.classType,
+    );
+    return;
+  }
+}
+
+void _markInventoryMovedToCharacter(
+  List<ApplyInventoryItem> inventory,
+  String instanceId,
+  String characterId,
+) {
+  for (var i = 0; i < inventory.length; i++) {
+    final row = inventory[i];
+    if (row.instanceId != instanceId) continue;
+    inventory[i] = ApplyInventoryItem(
+      instanceId: row.instanceId,
+      itemHash: row.itemHash,
+      location: 'character',
+      bucketHash: row.bucketHash,
+      characterId: characterId,
+      isExotic: row.isExotic,
+      power: row.power,
+      name: row.name,
+      isLocked: row.isLocked,
+      isTransferable: row.isTransferable,
+      classType: row.classType,
     );
     return;
   }
@@ -1028,21 +1174,43 @@ int _vaultCount(List<ApplyInventoryItem> inventory) {
   return count;
 }
 
+/// Prefer unequipped non-exotic same-bucket on [sourceCharacterId], then vault.
+///
+/// Skips exotics so the other character's one-exotic-weapon / one-exotic-armor
+/// rule cannot be broken by the replacement. Vault armor must match
+/// [sourceClassType] when the item declares a class.
 ApplyInventoryItem? _findDequipReplacement({
   required List<ApplyInventoryItem> inventory,
   required String sourceCharacterId,
   required int bucketHash,
   required Set<String> excludeIds,
+  String? sourceClassType,
 }) {
+  ApplyInventoryItem? vaultPick;
   for (final row in inventory) {
-    if (row.characterId != sourceCharacterId) continue;
     if (row.bucketHash != bucketHash) continue;
-    if (row.location != 'character') continue;
     if (row.isExotic) continue;
     if (excludeIds.contains(row.instanceId)) continue;
-    return row;
+    if (row.location == 'character' &&
+        row.characterId == sourceCharacterId) {
+      return row;
+    }
+    if (row.location != 'vault') continue;
+    if (!row.isTransferable) continue;
+    if (!_itemClassCompatible(row, sourceClassType)) continue;
+    vaultPick ??= row;
   }
-  return null;
+  return vaultPick;
+}
+
+bool _itemClassCompatible(ApplyInventoryItem row, String? characterClass) {
+  final itemClass = row.classType?.trim() ?? '';
+  if (itemClass.isEmpty || itemClass.toLowerCase() == 'unknown') {
+    return true;
+  }
+  final guardian = characterClass?.trim() ?? '';
+  if (guardian.isEmpty) return false;
+  return itemClass.toLowerCase() == guardian.toLowerCase();
 }
 
 class _MappedWriteError {

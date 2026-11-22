@@ -1,7 +1,7 @@
 # Domain Business Rules — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-11-08 (DBR-PLT-001–004 offline contrasting-build pilot)  
+**Updated**: 2026-11-22 (DBR-EQP-006 dequip-via-replacement on other characters)  
 **Status**: Canonical domain layer  
 **Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; presentation North Star 2026-07-27; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29** (Domains + Destiny Objects in ProjectTracker vault)
 
@@ -307,7 +307,7 @@ User-authored **roll targets** on Catalog weapon identities. **Not** DBR-ROLL wi
 | DBR-EQP-003 | Both equip and DIM export require **owned, instance-pinned** slots for everything being applied; wishlist-only variants are blocked. |
 | DBR-EQP-004 | DIM export includes: subclass kit, weapons/armor, mods, fashion, artifact config. |
 | DBR-EQP-005 | At equip, user **always chooses** the target character among class-matching characters. |
-| DBR-EQP-006 | Equip **transfers** required items from vault/other characters, then equips. |
+| DBR-EQP-006 | Equip **transfers** required items from vault/other characters, then equips. When a needed item is **equipped on another character**, Apply first equips a **non-exotic same-bucket** replacement on that character (prefer items already there, then vault; class-compatible; never break that character's one-exotic-weapon / one-exotic-armor rule), then vault-hops the needed item. If no valid replacement exists, that item fails with a clear reason and the rest of Apply continues (DBR-EQP-008). Report every move and every equip (including replacements on other characters); no rollback when a later step fails. Allowed writes stay TransferItem / EquipItem / EquipItems / InsertSocketPlugFree only. |
 | DBR-EQP-007 | Inventory is **refreshed on equip**, subject to Bungie rate limits (~**once per minute**); reuse a fresh-enough sync within that window. |
 | DBR-EQP-008 | Equip is **best-effort partial**: apply what succeeded, report failures, leave character as-is; **retry** until it works. No hard rollback requirement. |
 

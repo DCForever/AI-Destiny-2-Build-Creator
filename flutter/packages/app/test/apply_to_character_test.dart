@@ -175,7 +175,7 @@ void main() {
       transferItem: (c, a) async => transfers.add(a),
     );
 
-    await applyToCharacter(
+    final result = await applyToCharacter(
       writeClient: client,
       ctx: ctx,
       characterId: target,
@@ -195,6 +195,7 @@ void main() {
           bucketHash: helmetBucket,
           characterId: 'char-other',
           isExotic: true,
+          name: 'Exotic Helm',
         ),
         ApplyInventoryItem(
           instanceId: 'replacement',
@@ -202,6 +203,7 @@ void main() {
           location: 'character',
           bucketHash: helmetBucket,
           characterId: 'char-other',
+          name: 'Spare Helm',
         ),
       ],
     );
@@ -210,6 +212,269 @@ void main() {
     expect(equips.single.instanceId, 'replacement');
     expect(equips.single.characterId, 'char-other');
     expect(transfers, hasLength(2));
+    expect(
+      result.items.any(
+        (r) =>
+            r.id.startsWith(kApplySideEffectRowIdPrefix) &&
+            r.label.contains('Equipped Spare Helm on character char-other'),
+      ),
+      isTrue,
+    );
+    expect(
+      result.items.any(
+        (r) =>
+            r.id.startsWith(kApplySideEffectRowIdPrefix) &&
+            r.label.contains('Moved Exotic Helm from character char-other'),
+      ),
+      isTrue,
+    );
+    expect(result.appliedCount, 1);
+  });
+
+  test('equipped-on-other-char: vault replacement pulled then dequip', () async {
+    final equips = <EquipItemArgs>[];
+    final transfers = <TransferItemArgs>[];
+    final client = createMockWriteClient(
+      equipItem: (c, a) async => equips.add(a),
+      transferItem: (c, a) async => transfers.add(a),
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      characterClassById: const {'char-other': 'Warlock'},
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Needed Helm',
+          itemHash: 99,
+          instanceId: 'eq-other',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'eq-other',
+          itemHash: 99,
+          location: 'equipped',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+          name: 'Needed Helm',
+          classType: 'Warlock',
+        ),
+        ApplyInventoryItem(
+          instanceId: 'vault-spare',
+          itemHash: 12,
+          location: 'vault',
+          bucketHash: helmetBucket,
+          name: 'Vault Spare',
+          classType: 'Warlock',
+        ),
+      ],
+    );
+
+    expect(transfers.first.instanceId, 'vault-spare');
+    expect(transfers.first.transferToVault, isFalse);
+    expect(transfers.first.characterId, 'char-other');
+    expect(equips.single.instanceId, 'vault-spare');
+    expect(equips.single.characterId, 'char-other');
+    expect(result.appliedCount, 1);
+    expect(
+      result.items.any(
+        (r) => r.label.contains('Moved Vault Spare from vault'),
+      ),
+      isTrue,
+    );
+  });
+
+  test('equipped-on-other-char: no valid replacement fails item, rest continues',
+      () async {
+    final equips = <EquipItemArgs>[];
+    final transfers = <TransferItemArgs>[];
+    final bulk = <List<String>>[];
+    final client = createMockWriteClient(
+      equipItem: (c, a) async => equips.add(a),
+      transferItem: (c, a) async => transfers.add(a),
+      equipItems: (c, a) async {
+        bulk.add(List<String>.from(a.itemIds));
+        return [
+          for (final id in a.itemIds)
+            EquipItemResultEntry(
+              instanceId: id,
+              equipStatus: kPlatformErrorSuccess,
+            ),
+        ];
+      },
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'stuck',
+          label: 'Stuck Helm',
+          itemHash: 99,
+          instanceId: 'eq-other',
+        ),
+        ApplyToCharacterItem(
+          id: 'local',
+          label: 'Local Arms',
+          itemHash: 2,
+          instanceId: 'local-arms',
+          slot: 'arms',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'eq-other',
+          itemHash: 99,
+          location: 'equipped',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+          isExotic: true,
+        ),
+        // Only exotic spare — not a valid replacement.
+        ApplyInventoryItem(
+          instanceId: 'exotic-spare',
+          itemHash: 88,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+          isExotic: true,
+        ),
+        ApplyInventoryItem(
+          instanceId: 'local-arms',
+          itemHash: 2,
+          location: 'character',
+          bucketHash: armsBucket,
+          characterId: target,
+        ),
+      ],
+    );
+
+    expect(equips, isEmpty);
+    expect(transfers, isEmpty);
+    expect(result.items[0].state, ApplyItemState.failed);
+    expect(result.items[0].reason, kCannotUnequipOnOtherCharacterMessage);
+    expect(bulk, [
+      ['local-arms'],
+    ]);
+    expect(result.items[1].state, ApplyItemState.done);
+    expect(result.appliedCount, 1);
+    expect(result.failedCount, 1);
+  });
+
+  test('equipped-on-other-char: mid-sequence failure keeps prior move/equip rows',
+      () async {
+    final client = createMockWriteClient(
+      equipItem: (c, a) async {},
+      transferItem: (c, a) async {
+        if (a.instanceId == 'eq-other' && a.transferToVault) {
+          throw const BungiePlatformException(
+            'Item gone',
+            errorCode: kDestinyItemNotFound,
+            errorStatus: 'DestinyItemNotFound',
+          );
+        }
+      },
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Needed Helm',
+          itemHash: 99,
+          instanceId: 'eq-other',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'eq-other',
+          itemHash: 99,
+          location: 'equipped',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+          name: 'Needed Helm',
+        ),
+        ApplyInventoryItem(
+          instanceId: 'replacement',
+          itemHash: 11,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+          name: 'Spare Helm',
+        ),
+      ],
+    );
+
+    expect(result.items[0].state, ApplyItemState.failed);
+    expect(result.items[0].reason, 'DestinyItemNotFound');
+    expect(
+      result.items.any(
+        (r) =>
+            r.state == ApplyItemState.done &&
+            r.label.contains('Equipped Spare Helm on character char-other'),
+      ),
+      isTrue,
+    );
+    expect(result.failedCount, 1);
+    expect(result.appliedCount, 0);
+  });
+
+  test('equipped-on-other-char: exotic replacement skipped (exotic rule)',
+      () async {
+    final equips = <EquipItemArgs>[];
+    final client = createMockWriteClient(
+      equipItem: (c, a) async => equips.add(a),
+    );
+
+    final result = await applyToCharacter(
+      writeClient: client,
+      ctx: ctx,
+      characterId: target,
+      items: const [
+        ApplyToCharacterItem(
+          id: 'helmet',
+          label: 'Needed',
+          itemHash: 99,
+          instanceId: 'eq-other',
+        ),
+      ],
+      inventory: const [
+        ApplyInventoryItem(
+          instanceId: 'eq-other',
+          itemHash: 99,
+          location: 'equipped',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+        ),
+        ApplyInventoryItem(
+          instanceId: 'exotic-only',
+          itemHash: 77,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+          isExotic: true,
+        ),
+        ApplyInventoryItem(
+          instanceId: 'legendary',
+          itemHash: 11,
+          location: 'character',
+          bucketHash: helmetBucket,
+          characterId: 'char-other',
+          name: 'Legendary Spare',
+        ),
+      ],
+    );
+
+    expect(equips.single.instanceId, 'legendary');
+    expect(result.appliedCount, 1);
   });
 
   test('exotic ordering: non-exotics before exotics in EquipItems', () async {

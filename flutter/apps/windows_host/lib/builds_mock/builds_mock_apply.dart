@@ -275,6 +275,7 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
       characterId: target.characterId,
       items: gated.items,
       inventory: gated.inventory,
+      characterClassById: gated.characterClassById,
       socketPlanBuilder: (equipped) {
         if (socketPlan != null) {
           return filterApplySocketPlanToEquipped(
@@ -320,6 +321,7 @@ class _GatedApplyItems {
     required this.inventory,
     this.liveItems = const [],
     this.unlockedPlugSetPlugHashes = const {},
+    this.characterClassById = const {},
   });
 
   final List<ApplyToCharacterItem> items;
@@ -330,6 +332,9 @@ class _GatedApplyItems {
 
   /// Profile (104) + character (105) plug-set hashes (read-only ownership).
   final Set<int> unlockedPlugSetPlugHashes;
+
+  /// characterId → Titan|Hunter|Warlock for dequip replacement class checks.
+  final Map<String, String> characterClassById;
 }
 
 /// Reads live inventory once. Returns present items + snapshot, or `null` when
@@ -399,6 +404,20 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   };
   final exoticHashes = _exoticHashesForApply(ports);
   final nameByHash = _catalogNamesByHash(ports);
+  final classByHash = _catalogClassByHash(ports);
+  final characterClassById = await _characterClassById(
+    ports: ports,
+    accessToken: accessToken,
+    membership: membership,
+  );
+  if (!isMounted()) {
+    return const _GatedApplyItems(
+      items: [],
+      inventory: [],
+      liveItems: [],
+      unlockedPlugSetPlugHashes: {},
+    );
+  }
   final snapshot = <ApplyInventoryItem>[
     for (final item in inventory)
       if (item.instanceId.isNotEmpty)
@@ -415,6 +434,7 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
           name: nameByHash[item.itemHash] ?? '',
           isLocked: item.isLocked,
           isTransferable: item.isTransferable,
+          classType: classByHash[item.itemHash],
         ),
   ];
   final liveByInstance = <String, ApplyInventoryItem>{
@@ -474,6 +494,7 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
     // 105 limited to the Apply character (Skeptic should-fix).
     unlockedPlugSetPlugHashes:
         parsed.unlockedPlugSetPlugHashesForCharacter(characterId),
+    characterClassById: characterClassById,
   );
 }
 
@@ -1030,8 +1051,8 @@ ApplyToCharacterProgress _mergeApplyProgress(
       knownIds.add(row.id);
     }
   }
-  final applied = _countNonMakeRoom(rows, ApplyItemState.done);
-  final failed = _countNonMakeRoom(rows, ApplyItemState.failed);
+  final applied = _countNonAuxiliary(rows, ApplyItemState.done);
+  final failed = _countNonAuxiliary(rows, ApplyItemState.failed);
   var currentIndex = 0;
   if (!partial.running) {
     currentIndex = rows.isEmpty ? 0 : rows.length - 1;
@@ -1046,7 +1067,7 @@ ApplyToCharacterProgress _mergeApplyProgress(
   return ApplyToCharacterProgress(
     items: List<ApplyItemProgress>.unmodifiable(rows),
     currentIndex: currentIndex,
-    total: rows.where((r) => !r.id.startsWith(kApplyMakeRoomRowIdPrefix)).length,
+    total: rows.where((r) => !isAuxiliaryApplyRow(r)).length,
     running: partial.running,
     appliedCount: applied,
     failedCount: failed,
@@ -1054,10 +1075,10 @@ ApplyToCharacterProgress _mergeApplyProgress(
   );
 }
 
-int _countNonMakeRoom(List<ApplyItemProgress> rows, ApplyItemState state) {
+int _countNonAuxiliary(List<ApplyItemProgress> rows, ApplyItemState state) {
   var n = 0;
   for (final row in rows) {
-    if (row.id.startsWith(kApplyMakeRoomRowIdPrefix)) continue;
+    if (isAuxiliaryApplyRow(row)) continue;
     if (row.state == state) n += 1;
   }
   return n;
@@ -1067,17 +1088,17 @@ ApplyToCharacterProgress _finishedProgress(List<ApplyItemProgress> rows) {
   return ApplyToCharacterProgress(
     items: List<ApplyItemProgress>.unmodifiable(rows),
     currentIndex: rows.isEmpty ? 0 : rows.length - 1,
-    total: rows.where((r) => !r.id.startsWith(kApplyMakeRoomRowIdPrefix)).length,
+    total: rows.where((r) => !isAuxiliaryApplyRow(r)).length,
     running: false,
-    appliedCount: _countNonMakeRoom(rows, ApplyItemState.done),
-    failedCount: _countNonMakeRoom(rows, ApplyItemState.failed),
+    appliedCount: _countNonAuxiliary(rows, ApplyItemState.done),
+    failedCount: _countNonAuxiliary(rows, ApplyItemState.failed),
     summary: _summaryForRows(rows),
   );
 }
 
 String _summaryForRows(List<ApplyItemProgress> rows) {
-  final applied = _countNonMakeRoom(rows, ApplyItemState.done);
-  final failed = _countNonMakeRoom(rows, ApplyItemState.failed);
+  final applied = _countNonAuxiliary(rows, ApplyItemState.done);
+  final failed = _countNonAuxiliary(rows, ApplyItemState.failed);
   return '$applied applied, $failed failed';
 }
 
@@ -1139,4 +1160,34 @@ Map<int, String> _catalogNamesByHash(BuildsMockApplyPorts ports) {
     if (name.isNotEmpty) out[item.hash] = name;
   }
   return out;
+}
+
+Map<int, String> _catalogClassByHash(BuildsMockApplyPorts ports) {
+  final out = <int, String>{};
+  final catalog = ports.services?.offlineCatalog;
+  if (catalog == null) return out;
+  for (final item in catalog.baseItems) {
+    final classType = item.classType?.trim() ?? '';
+    if (classType.isNotEmpty) out[item.hash] = classType;
+  }
+  return out;
+}
+
+Future<Map<String, String>> _characterClassById({
+  required BuildsMockApplyPorts ports,
+  required String accessToken,
+  required DestinyMembership membership,
+}) async {
+  final profile = ports.resolvedProfile;
+  if (profile == null) return const {};
+  try {
+    final characters = await profile.getCharacters(accessToken, membership);
+    return {
+      for (final c in characters)
+        if (c.characterId.isNotEmpty && c.classType.trim().isNotEmpty)
+          c.characterId: c.classType,
+    };
+  } catch (_) {
+    return const {};
+  }
 }
