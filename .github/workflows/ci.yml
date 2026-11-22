@@ -189,14 +189,17 @@ jobs:
         run: gitleaks detect --no-git --redact --source . --exit-code 1
 
       # Negative: planted FAKE secret must be detected (temp dir only — not committed).
+      # Built via split parts so this workflow file itself does not trip the rule.
       - name: Negative test — planted FAKE Bungie secret fails gitleaks
         run: |
           set -euo pipefail
           tmp="$(mktemp -d)"
-          printf '%s\n' \
-            "BUNGIE_CLIENT_SECRET='fake_bungie_secret_for_gitleaks_neg_test_xx'" \
-            > "$tmp/planted_fake.dart"
-          if gitleaks detect --no-git --redact --source "$tmp" --exit-code 1; then
+          key="$(printf '%s_%s_%s' BUNGIE CLIENT SECRET)"
+          val='fake_bungie_secret_for_gitleaks_neg_test_xx'
+          printf "%s='%s'\n" "$key" "$val" > "$tmp/planted_fake.dart"
+          # --config required: custom bungie-client-secret-assign rule lives in repo.
+          if gitleaks detect --no-git --redact --source "$tmp" \
+            --config "$GITHUB_WORKSPACE/.gitleaks.toml" --exit-code 1; then
             echo "::error::gitleaks returned 0 — planted FAKE secret was not detected"
             exit 1
           fi
