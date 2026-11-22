@@ -110,28 +110,28 @@ export function measureSizeRisk(input) {
   if (allPaths.some((p) => isCiGatePath(p))) {
     flags.add("ci-runner");
   }
-  if (gone.length || /\b(dismantle|DeleteItem)\b/.test(input.prodPatch)) {
+  // Content flags ignore scripts/ci detector source (still counted for size + ci-runner).
+  const productScan = stripCiGateHunks(input.prodPatch || "");
+  if (gone.length || /\b(dismantle|DeleteItem)\b/.test(productScan)) {
     flags.add("deletes");
   }
-  if (/(migration|schemaVersion|ALTER TABLE)/i.test(input.prodPatch)) {
+  if (/(migration|schemaVersion|ALTER TABLE)/i.test(productScan)) {
     flags.add("migrations");
   }
   if (
-    /\b(EquipItems?|TransferItem|InsertSocketPlugFree)\b/.test(input.prodPatch) ||
-    /[Dd]:\\| [Ee]:\\| [Zz]:\\|\/Volumes\//.test(input.prodPatch)
+    /\b(EquipItems?|TransferItem|InsertSocketPlugFree)\b/.test(productScan) ||
+    /[Dd]:\\| [Ee]:\\| [Zz]:\\|\/Volumes\//.test(productScan)
   ) {
     flags.add("dest-write");
   }
   if (
     /(CLIENT_SECRET|SESSION_SECRET|Bearer\s|refresh[_-]?token|access[_-]?token|token[_-]?store|api[_-]?key)/i.test(
-      input.prodPatch,
+      productScan,
     )
   ) {
     flags.add("auth-secrets");
   }
-  if (
-    /(0\.0\.0\.0|HttpServer\.bind|listen\(|HOST\s*=)/i.test(input.prodPatch)
-  ) {
+  if (/(0\.0\.0\.0|HttpServer\.bind|listen\(|HOST\s*=)/i.test(productScan)) {
     flags.add("network-bind");
   }
 
