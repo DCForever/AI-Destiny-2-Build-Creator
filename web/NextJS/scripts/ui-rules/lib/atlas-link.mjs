@@ -255,6 +255,8 @@ function unique(arr) {
  *
  * @param {object} inventory
  * @param {Map<string, { ids: string[], inheritedFrom: string|null }>} atlasIndex
+ * @param {{ generatedAt?: string }} [options] Stable stamp for CI dirty checks
+ *   (avoid daily date churn). Defaults to hub-style caller stamp when provided.
  * @returns {{
  *   generatedAt: string,
  *   companionHint: string,
@@ -262,7 +264,7 @@ function unique(arr) {
  *   byNode: Record<string, string[]>
  * }}
  */
-export function buildReverseAtlasMap(inventory, atlasIndex) {
+export function buildReverseAtlasMap(inventory, atlasIndex, options = {}) {
   /** @type {Map<string, { id: string, title: string, kind: string, page: string|null }>} */
   const nodeMeta = new Map();
   for (const page of inventory.pages || []) {
@@ -325,8 +327,11 @@ export function buildReverseAtlasMap(inventory, atlasIndex) {
     };
   }
 
+  const stamp =
+    (typeof options.generatedAt === "string" && options.generatedAt.trim()) ||
+    "1";
   return {
-    generatedAt: new Date().toISOString().slice(0, 10),
+    generatedAt: stamp,
     companionHint: "http://127.0.0.1:4174/?node=<inventory-node-id>",
     byScreen,
     byNode,

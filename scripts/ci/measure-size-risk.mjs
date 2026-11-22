@@ -1,0 +1,72 @@
+#!/usr/bin/env node
+/** CI entry: size/risk labels. */
+import { execSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import {
+  isExcludedFromProduction,
+  isTestPath,
+  measureSizeRisk,
+  resolveBase,
+  SMALL,
+} from "./measure-size-risk-lib.mjs";
+
+const preferred = process.argv[2] || process.env.BASE_REF || "origin/main";
+const base = resolveBase(preferred);
+const sh = (c) => execSync(c, { encoding: "utf8" }).trim();
+const numstat = sh(`git diff --numstat ${base}...HEAD`);
+const nameStatus = sh(`git diff --name-status ${base}...HEAD`);
+const allPaths = [];
+for (const line of nameStatus.split("\n")) {
+  if (!line.trim()) continue;
+  const parts = line.split("\t");
+  // Renames: check both from and to columns for gate paths.
+  for (let i = 1; i < parts.length; i++) allPaths.push(parts[i]);
+}
+const uniquePaths = [...new Set(allPaths)];
+const prodPaths = uniquePaths.filter((p) => !isExcludedFromProduction(p));
+const testPaths = uniquePaths.filter((p) => isTestPath(p));
+const prodPatch = prodPaths.length
+  ? sh(`git diff ${base}...HEAD -- ${prodPaths.map((p) => JSON.stringify(p)).join(" ")}`)
+  : "";
+const testPatch = testPaths.length
+  ? sh(`git diff ${base}...HEAD -- ${testPaths.map((p) => JSON.stringify(p)).join(" ")}`)
+  : "";
+const { added, deleted, prod, flags, size, reviewRequired } = measureSizeRisk({
+  numstat,
+  nameStatus,
+  prodPatch,
+  testPatch,
+  allPaths: uniquePaths,
+});
+const labels = [`size/${size.toLowerCase()}`, ...flags.map((f) => `risk/${f}`)];
+const summary = [
+  "## Size / risk labels",
+  "",
+  `Base: \`${base}\``,
+  "",
+  `- Production added lines (exclude tests + docs): **${added}**`,
+  `- Production deleted lines: **${deleted}**`,
+  `- Size: **${size}** (Small ≤ ${SMALL}; otherwise Large — honest count)`,
+  `- Flags: ${flags.length ? flags.map((f) => `\`${f}\``).join(", ") : "_none_"}`,
+  `- Label hints: ${labels.map((l) => `\`${l}\``).join(", ")}`,
+  `- Review required: **${reviewRequired ? "yes" : "no"}**`,
+  "",
+  prod.length
+    ? `Production files (${prod.length}):\n${prod.map((f) => `- \`${f}\``).join("\n")}`
+    : "No production files in diff.",
+  "",
+].join("\n");
+if (process.env.GITHUB_STEP_SUMMARY) {
+  writeFileSync(process.env.GITHUB_STEP_SUMMARY, summary, { flag: "a" });
+}
+console.log(summary);
+console.log(`SIZE=${size}`);
+console.log(`ADDED=${added}`);
+console.log(`FLAGS=${flags.join(",")}`);
+console.log(`LABELS=${labels.join(",")}`);
+console.log(`REVIEW_REQUIRED=${reviewRequired}`);
+if (reviewRequired) {
+  console.log(
+    `REVIEW_REQUIRED_REASON=size=${size};flags=${flags.length ? flags.join(",") : "none"}`,
+  );
+}

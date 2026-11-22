@@ -10,6 +10,43 @@ permissions:
   contents: read
 
 jobs:
+  # Thin shared CI: size/risk + weakened-test. contents:read only; no secrets.
+  size-risk:
+    name: size · risk labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Self-test size/risk fail-closed fixtures
+        run: node test/ci/measure-size-risk.self-test.mjs
+
+      - name: Measure production-diff size and risk flags
+        run: node scripts/ci/measure-size-risk.mjs
+        env:
+          BASE_REF: origin/${{ github.base_ref || 'main' }}
+
+  weakened-tests:
+    name: weakened-test heuristic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Self-test weakened-test fail-closed fixtures
+        run: node test/ci/check-weakened-tests.self-test.mjs
+
+      - name: Check for weakened safety tests
+        run: node scripts/ci/check-weakened-tests.mjs
+        env:
+          BASE_REF: origin/${{ github.base_ref || 'main' }}
+
   quality:
     name: product-map · typecheck · lint · test · build
     runs-on: ubuntu-latest
@@ -18,10 +55,12 @@ jobs:
         working-directory: web/NextJS
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        # actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
           cache: npm
@@ -55,7 +94,8 @@ jobs:
         working-directory: flutter
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
 
@@ -125,7 +165,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Install gitleaks
         run: |
@@ -137,3 +178,28 @@ jobs:
 
       - name: Scan committed files for secrets
         run: gitleaks detect --no-git --redact --source . --exit-code 1
+
+  do-not-request-review:
+    name: do not request review when red
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [quality, flutter-test, gitleaks, size-risk, weakened-tests]
+    steps:
+      - name: Block review request when required checks failed
+        run: |
+          set -euo pipefail
+          red=0
+          for entry in \
+            "quality=${{ needs.quality.result }}" \
+            "flutter-test=${{ needs.flutter-test.result }}" \
+            "gitleaks=${{ needs.gitleaks.result }}" \
+            "size-risk=${{ needs.size-risk.result }}" \
+            "weakened-tests=${{ needs.weakened-tests.result }}"
+          do
+            echo "$entry" | tee -a "$GITHUB_STEP_SUMMARY"
+            [[ "${entry#*=}" == success ]] || red=1
+          done
+          if [[ "$red" -ne 0 ]]; then
+            echo "::error::DO NOT REQUEST REVIEW — required checks are red"
+            exit 1
+          fi
