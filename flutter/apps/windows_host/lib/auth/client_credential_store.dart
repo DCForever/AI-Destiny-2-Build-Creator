@@ -11,6 +11,10 @@ abstract class ClientCredentialStore {
   Future<String?> read();
   Future<void> write(String value);
   Future<void> clear();
+
+  /// Removes any stored credential (same as [clear]). Prefer this name from UI.
+  Future<void> forget();
+
   Future<bool> get hasCredential;
 }
 
@@ -35,6 +39,9 @@ class MemoryClientCredentialStore implements ClientCredentialStore {
   Future<void> clear() async {
     _value = null;
   }
+
+  @override
+  Future<void> forget() => clear();
 
   @override
   Future<bool> get hasCredential async =>
@@ -75,6 +82,9 @@ class SecureClientCredentialStore implements ClientCredentialStore {
   Future<void> clear() async {
     await _storage.delete(key: storageKey);
   }
+
+  @override
+  Future<void> forget() => clear();
 
   @override
   Future<bool> get hasCredential async {

@@ -255,8 +255,10 @@ class WindowsOAuthSession extends ChangeNotifier {
   }
 
   /// Removes the Confidential app credential. Tokens are left untouched.
+  ///
+  /// UI may call this when [promptForgetCredential] is set after `invalid_client`.
   Future<void> forgetClientCredential() async {
-    await _credentialStore.clear();
+    await _credentialStore.forget();
     _promptForgetCredential = false;
     await _refreshConfidentialFlag();
     notifyListeners();
