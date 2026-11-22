@@ -55,9 +55,10 @@ Slice roadmap: [`../docs/multiplatform-dart-slice-roadmap.md`](../docs/multiplat
 
 ## Auth / secrets
 
-- Dart shells: **Public + PKCE** only. **Never** embed `BUNGIE_CLIENT_SECRET` or `SESSION_SECRET` in Flutter/Jaspr.
-- Scan: `dart run tool/client_secret_scan.dart` (from this workspace root).
-- Next.js confidential OAuth is a **different** stack (`web/NextJS`); do not copy confidential patterns into clients.
+- Dart shells default to **Public + PKCE**. **Never** embed `BUNGIE_CLIENT_SECRET` / `SESSION_SECRET` via `fromEnvironment`, dart-define, or source literals.
+- Windows host only: optional Confidential mode — user pastes an app credential into Settings; it lives in Credential Manager under `destiny2.bungie.oauth.client`. CI/release builds stay Public when unset.
+- Scan: `dart run tool/client_secret_scan.dart` (from this workspace root); wired in `.github/workflows/ci.yml`.
+- Next.js confidential OAuth remains a **different** stack (`web/NextJS`); do not ship Next’s secret into Flutter binaries.
 
 ## Gates & tools
 

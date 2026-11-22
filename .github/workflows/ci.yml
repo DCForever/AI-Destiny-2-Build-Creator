@@ -119,6 +119,15 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      # Public+PKCE gate: no confidential secret assignment / fromEnvironment
+      # in Flutter/Jaspr client trees. Optional Credential Manager secret is
+      # runtime-only (never dart-define / fromEnvironment).
+      - name: Client secret scan (Dart hosts)
+        run: |
+          set -euo pipefail
+          dart test tool/test/client_secret_scan_test.dart
+          dart run tool/client_secret_scan.dart
+
       # Package-local cwd so package assets resolve (ui_flutter bungie icons).
       - name: Dart package tests
         run: |
@@ -178,6 +187,23 @@ jobs:
 
       - name: Scan committed files for secrets
         run: gitleaks detect --no-git --redact --source . --exit-code 1
+
+      # Negative: planted FAKE secret must be detected (temp dir only — not committed).
+      # Built via split parts so this workflow file itself does not trip the rule.
+      - name: Negative test — planted FAKE Bungie secret fails gitleaks
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          key="$(printf '%s_%s_%s' BUNGIE CLIENT SECRET)"
+          val='fake_bungie_secret_for_gitleaks_neg_test_xx'
+          printf "%s='%s'\n" "$key" "$val" > "$tmp/planted_fake.dart"
+          # --config required: custom bungie-client-secret-assign rule lives in repo.
+          if gitleaks detect --no-git --redact --source "$tmp" \
+            --config "$GITHUB_WORKSPACE/.gitleaks.toml" --exit-code 1; then
+            echo "::error::gitleaks returned 0 — planted FAKE secret was not detected"
+            exit 1
+          fi
+          echo "negative gitleaks fixture OK"
 
   do-not-request-review:
     name: do not request review when red

@@ -3,6 +3,14 @@ title = "AI Destiny 2 Build Creator"
 [extend]
 useDefault = true
 
+[[rules]]
+id = "bungie-client-secret-assign"
+description = "Bungie OAuth client secret assignment (must not be committed)"
+# Require a secret-looking quoted value (alnum/_/-). Avoids FP on test
+# assertions like find.textContaining('BUNGIE_CLIENT_SECRET=').
+regex = '''(?i)(?:BUNGIE_CLIENT_SECRET\s*=\s*['"][A-Za-z0-9_\-]{12,}['"]|['"]client_secret['"]\s*:\s*['"][A-Za-z0-9_\-]{12,}['"])'''
+keywords = ["BUNGIE_CLIENT_SECRET", "client_secret"]
+
 [[allowlists]]
 description = "generic-api-key FP in PRD prose"
 targetRules = ["generic-api-key"]

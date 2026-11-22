@@ -221,14 +221,6 @@ class InventorySyncController extends ChangeNotifier {
       return;
     }
 
-    final accessToken = _session.tokens!.accessToken;
-    if (accessToken.isEmpty) {
-      _phase = InventorySyncPhase.error;
-      _errorMessage = 'Missing access token';
-      notifyListeners();
-      return;
-    }
-
     _phase = InventorySyncPhase.syncing;
     _errorMessage = null;
     notifyListeners();
@@ -237,19 +229,22 @@ class InventorySyncController extends ChangeNotifier {
       final user = await _ensureLocalUser();
       _localUserId = user.id;
 
-      final result = await syncUserInventory(
-        db: _db,
-        userId: user.id,
-        accessToken: accessToken,
-        profileClient: _profileClient,
-        equipmentBucketLookup: equipmentBucketLookup,
-        equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
-        perkNameMap: perkNameMap,
-        perkNameMapBuilder: perkNameMapBuilder,
-        weaponRollMetaLookup: weaponRollMetaLookup,
-        weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
-        weaponSocketContextBuilder: weaponSocketContextBuilder,
-        lock: _lock,
+      // One coalesced refresh per 401; concurrent syncs share in-flight refresh.
+      final result = await _session.runAuthorized(
+        (accessToken) => syncUserInventory(
+          db: _db,
+          userId: user.id,
+          accessToken: accessToken,
+          profileClient: _profileClient,
+          equipmentBucketLookup: equipmentBucketLookup,
+          equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
+          perkNameMap: perkNameMap,
+          perkNameMapBuilder: perkNameMapBuilder,
+          weaponRollMetaLookup: weaponRollMetaLookup,
+          weaponRollMetaLookupBuilder: weaponRollMetaLookupBuilder,
+          weaponSocketContextBuilder: weaponSocketContextBuilder,
+          lock: _lock,
+        ),
       );
 
       _itemCount = result.itemCount;
@@ -270,8 +265,14 @@ class InventorySyncController extends ChangeNotifier {
       _phase = InventorySyncPhase.error;
       _errorMessage = e.message;
     } catch (e, st) {
-      // Surface real failure without process kill when possible.
-      debugPrint('InventorySyncController.syncNow failed: $e\n$st');
+      // Type only — never echo exception text (may carry token material).
+      debugPrint(
+        'InventorySyncController.syncNow failed: ${e.runtimeType}',
+      );
+      assert(() {
+        debugPrint('$st');
+        return true;
+      }());
       _phase = InventorySyncPhase.error;
       _errorMessage = _safeErrorMessage(e);
     }

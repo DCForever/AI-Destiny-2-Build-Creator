@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:destiny2_db/destiny2_db.dart';
 import 'package:destiny2_manifest/destiny2_manifest.dart';
@@ -5,6 +7,7 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'auth/browser_launcher.dart';
+import 'auth/client_credential_store.dart';
 import 'auth/loopback_callback_server.dart';
 import 'auth/token_store.dart';
 import 'auth/windows_oauth_session.dart';
@@ -91,6 +94,7 @@ class HostBootstrap {
     String? clientId,
     String? redirectUri,
     TokenStore? tokenStore,
+    ClientCredentialStore? credentialStore,
     BungieOAuthClient? oauthClient,
     BrowserLauncher? browserLauncher,
     LoopbackCallbackServer? loopbackServer,
@@ -137,10 +141,18 @@ class HostBootstrap {
           redirectUri: resolvedRedirect,
         );
 
+    // Confidential Credential Manager storage is Windows-only (plan b2).
+    // Non-Windows (CI flutter_tester on Linux) stays Public — avoid hanging
+    // flutter_secure_storage plugin calls when the plugin is absent.
+    final resolvedCredentials = credentialStore ??
+        (Platform.isWindows
+            ? SecureClientCredentialStore()
+            : MemoryClientCredentialStore());
     final session = WindowsOAuthSession(
       clientId: resolvedClientId,
       redirectUri: resolvedRedirect,
       tokenStore: store,
+      credentialStore: resolvedCredentials,
       oauthClient: client,
       browserLauncher: browserLauncher,
       loopbackServer: loopbackServer,

@@ -5,11 +5,13 @@ import 'package:destiny2_bungie/destiny2_bungie.dart';
 import 'package:flutter/foundation.dart';
 
 import 'browser_launcher.dart';
+import 'client_credential_store.dart';
 import 'loopback_callback_server.dart';
 import 'token_store.dart';
 
 export 'browser_launcher.dart'
     show isAllowedBungieAuthorizeUrl, kUnsafeAuthorizeUrlMessage;
+export 'client_credential_store.dart';
 
 /// High-level session status for Settings UI.
 enum OAuthSessionStatus {
@@ -56,6 +58,8 @@ class OAuthSignInFailure implements Exception {
 /// Sign-in / sign-out orchestration for Flutter Windows (DART-023).
 ///
 /// Uses DART-022 [BungieOAuthClient] + loopback callback + [TokenStore].
+/// Optional [ClientCredentialStore] enables Confidential desktop mode (plan
+/// b2): credential lives in Credential Manager; absent → Public+PKCE.
 /// Injectable [BrowserLauncher], [LoopbackCallbackServer], and optional
 /// [waitForCallbackOverride] keep CI free of live Bungie / real browser.
 class WindowsOAuthSession extends ChangeNotifier {
@@ -64,6 +68,7 @@ class WindowsOAuthSession extends ChangeNotifier {
     required this.redirectUri,
     required TokenStore tokenStore,
     required BungieOAuthClient oauthClient,
+    ClientCredentialStore? credentialStore,
     BrowserLauncher? browserLauncher,
     LoopbackCallbackServer? loopbackServer,
     Future<LoopbackCallbackResult> Function()? waitForCallbackOverride,
@@ -71,6 +76,7 @@ class WindowsOAuthSession extends ChangeNotifier {
     void Function(String message)? log,
   })  : _tokenStore = tokenStore,
         _oauthClient = oauthClient,
+        _credentialStore = credentialStore ?? MemoryClientCredentialStore(),
         _browser = browserLauncher ?? const UrlLauncherBrowser(),
         _loopback = loopbackServer ?? LoopbackCallbackServer(),
         _waitForCallbackOverride = waitForCallbackOverride,
@@ -82,6 +88,7 @@ class WindowsOAuthSession extends ChangeNotifier {
 
   final TokenStore _tokenStore;
   final BungieOAuthClient _oauthClient;
+  final ClientCredentialStore _credentialStore;
   final BrowserLauncher _browser;
   final LoopbackCallbackServer _loopback;
   final Future<LoopbackCallbackResult> Function()? _waitForCallbackOverride;
@@ -103,6 +110,9 @@ class WindowsOAuthSession extends ChangeNotifier {
   Completer<void>? _signInCancelGate;
   /// True from [signIn] entry until its `finally` finishes (blocks overlap).
   bool _signInBusy = false;
+  bool _confidentialMode = false;
+  bool _promptForgetCredential = false;
+  Future<void>? _refreshInFlight;
 
   OAuthSessionStatus get status => _status;
   BungieTokens? get tokens => _tokens;
@@ -111,6 +121,12 @@ class WindowsOAuthSession extends ChangeNotifier {
       _tokens != null && _status == OAuthSessionStatus.signedIn;
   bool get isConfigured => clientId.trim().isNotEmpty && redirectUri.trim().isNotEmpty;
   String? get membershipId => _tokens?.bungieMembershipId;
+
+  /// True when a Confidential app credential is stored (never log the value).
+  bool get isConfidentialMode => _confidentialMode;
+
+  /// UI should offer "Forget client secret" after `invalid_client`.
+  bool get promptForgetCredential => _promptForgetCredential;
 
   /// Authorize URL opened for the in-flight Public+PKCE sign-in (copy-link).
   ///
@@ -127,16 +143,21 @@ class WindowsOAuthSession extends ChangeNotifier {
   /// - Access still valid → signed in immediately.
   /// - Access near/expired + live refresh token → refresh and persist.
   /// - No refresh and access expired → clear (re-auth required).
-  /// - Transient network/refresh errors → **do not clear** stored credentials
+  /// - Transient network/refresh errors → **do not clear** stored tokens
   ///   so the next launch can retry without a full browser sign-in.
+  /// - Token-store write failure after refresh → sign out (never use unsaved).
   Future<void> restore() async {
     try {
+      await _refreshConfidentialFlag();
       final existing = await _tokenStore.read();
       if (existing == null) {
         _tokens = null;
         _status = OAuthSessionStatus.signedOut;
         _errorMessage = null;
-        _log('OAuth: restore — no stored tokens');
+        _log(
+          'OAuth: restore — no stored tokens '
+          'confidential=${_confidentialMode ? 'on' : 'off'}',
+        );
         return;
       }
 
@@ -145,7 +166,8 @@ class WindowsOAuthSession extends ChangeNotifier {
         'accessLen=${existing.accessToken.length} '
         'refreshLen=${existing.refreshToken.length} '
         'needsRefresh=${needsRefresh(existing)} '
-        'sessionExpired=${isSessionExpired(existing)}',
+        'sessionExpired=${isSessionExpired(existing)} '
+        'confidential=${_confidentialMode ? 'on' : 'off'}',
       );
 
       if (!needsRefresh(existing)) {
@@ -183,48 +205,22 @@ class WindowsOAuthSession extends ChangeNotifier {
         return;
       }
 
+      _tokens = existing;
       _log('OAuth: restore — refreshing access token…');
       try {
-        final refreshed = await _oauthClient.refreshTokens(existing).timeout(
-              const Duration(seconds: 45),
-              onTimeout: () => throw const BungieOAuthException(
-                'Token refresh timed out after 45s',
-              ),
-            );
-        await _tokenStore.write(refreshed);
-        _tokens = refreshed;
-        _status = OAuthSessionStatus.signedIn;
-        _errorMessage = null;
-        _log(
-          'OAuth: restore — refresh OK membership=${refreshed.bungieMembershipId} '
-          'refreshLen=${refreshed.refreshToken.length}',
-        );
-      } on BungieOAuthException catch (e) {
-        // invalid_grant / revoked → clear; network/timeout → keep store.
-        final msg = e.message.toLowerCase();
-        final definitive = msg.contains('invalid_grant') ||
-            msg.contains('invalid_token') ||
-            (e.statusCode != null &&
-                (e.statusCode == 400 || e.statusCode == 401));
-        _log(
-          'OAuth: restore — refresh failed definitive=$definitive '
-          'type=${e.runtimeType}',
-        );
-        if (definitive) {
-          try {
-            await _tokenStore.clearSecureOnly();
-          } catch (_) {}
-          _tokens = null;
-          _status = OAuthSessionStatus.signedOut;
+        await _refreshCoalesced();
+        if (_tokens != null) {
+          _status = OAuthSessionStatus.signedIn;
           _errorMessage = null;
-        } else {
-          // Keep credentials for next launch; UI shows signed-out until online.
-          _tokens = null;
-          _status = OAuthSessionStatus.error;
-          _errorMessage =
-              'Could not refresh session (network). Try again when online — '
-              'you should not need to re-authorize.';
+          _log(
+            'OAuth: restore — refresh OK '
+            'membership=${_tokens!.bungieMembershipId}',
+          );
         }
+      } on BungieOAuthException catch (e) {
+        await _handleRefreshFailure(e, fromRestore: true);
+      } on _TokenPersistFailed {
+        // Already signed out inside _persistTokensOrSignOut.
       }
     } on TokenStoreCorruptException catch (e) {
       // Fail closed: treat as signed out; clear Locker only so a legacy
@@ -250,6 +246,202 @@ class WindowsOAuthSession extends ChangeNotifier {
   }
 
   bool get hasRestored => _loaded;
+
+  /// Saves the Confidential app credential (Credential Manager). Does not log it.
+  Future<void> saveClientCredential(String value) async {
+    await _credentialStore.write(value);
+    await _refreshConfidentialFlag();
+    notifyListeners();
+  }
+
+  /// Removes the Confidential app credential. Tokens are left untouched.
+  ///
+  /// UI may call this when [promptForgetCredential] is set after `invalid_client`.
+  Future<void> forgetClientCredential() async {
+    await _credentialStore.forget();
+    _promptForgetCredential = false;
+    await _refreshConfidentialFlag();
+    notifyListeners();
+  }
+
+  /// Runs [action] with a live access token.
+  ///
+  /// On Platform/HTTP 401: at most one coalesced refresh, then one retry.
+  /// A second 401 on that retry, `invalid_grant`, or `invalid_client` forces
+  /// sign-in (and prompts Forget credential for `invalid_client`). Network
+  /// errors keep tokens. Concurrent callers share one in-flight refresh.
+  Future<T> runAuthorized<T>(
+    Future<T> Function(String accessToken) action,
+  ) async {
+    if (_tokens == null) {
+      throw const BungieConfigException('Not signed in');
+    }
+    if (needsRefresh(_tokens!)) {
+      // Public access-only (empty refresh): force normal sign-in — do not
+      // throw refresh_token-must-be-non-empty while leaving status signedIn.
+      if (_tokens!.refreshToken.isEmpty) {
+        await _forceSignOutForAuthFailure(invalidClient: false);
+        throw const BungieConfigException('Not signed in');
+      }
+      try {
+        await _refreshCoalesced();
+      } on BungieOAuthException catch (oauthErr) {
+        await _handleRefreshFailure(oauthErr, fromRestore: false);
+        rethrow;
+      }
+    }
+    final first = _tokens;
+    if (first == null) {
+      throw const BungieConfigException('Not signed in');
+    }
+    try {
+      return await action(first.accessToken);
+    } catch (e) {
+      if (!_isUnauthorized(e)) rethrow;
+      try {
+        await _refreshCoalesced();
+      } on BungieOAuthException catch (oauthErr) {
+        await _handleRefreshFailure(oauthErr, fromRestore: false);
+        rethrow;
+      }
+      final second = _tokens;
+      if (second == null) {
+        throw const BungieConfigException('Not signed in');
+      }
+      try {
+        return await action(second.accessToken);
+      } catch (e2) {
+        if (_isUnauthorized(e2)) {
+          await _forceSignOutForAuthFailure(invalidClient: false);
+        }
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _refreshConfidentialFlag() async {
+    try {
+      _confidentialMode = await _credentialStore.hasCredential
+          .timeout(const Duration(seconds: 2));
+    } catch (_) {
+      // Plugin missing / hung in flutter_tester — treat as Public.
+      _confidentialMode = false;
+    }
+  }
+
+  Future<String?> _readCredentialSafe() async {
+    try {
+      return await _credentialStore.read()
+          .timeout(const Duration(seconds: 2));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Shared in-flight refresh — concurrent callers await the same Future.
+  Future<void> _refreshCoalesced() {
+    final existing = _refreshInFlight;
+    if (existing != null) return existing;
+    final future = _refreshOnce();
+    _refreshInFlight = future.whenComplete(() {
+      _refreshInFlight = null;
+    });
+    return _refreshInFlight!;
+  }
+
+  Future<void> _refreshOnce() async {
+    final current = _tokens;
+    if (current == null || current.refreshToken.isEmpty) {
+      throw const BungieConfigException('refresh_token must be non-empty');
+    }
+    final credential = await _readCredentialSafe();
+    final refreshed = await _oauthClient
+        .refreshTokens(current, appCredential: credential)
+        .timeout(
+          const Duration(seconds: 45),
+          onTimeout: () => throw const BungieOAuthException(
+            'Token refresh timed out after 45s',
+          ),
+        );
+    await _persistTokensOrSignOut(refreshed);
+  }
+
+  Future<void> _persistTokensOrSignOut(BungieTokens tokens) async {
+    try {
+      await _tokenStore.write(tokens).timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw const BungieOAuthException(
+              'Secure token storage write timed out',
+            ),
+          );
+      _tokens = tokens;
+      _status = OAuthSessionStatus.signedIn;
+      _errorMessage = null;
+    } catch (e) {
+      _log(
+        'OAuth: token persist failed — signing out (${e.runtimeType})',
+      );
+      try {
+        await _tokenStore.clearSecureOnly();
+      } catch (_) {}
+      _tokens = null;
+      _status = OAuthSessionStatus.signedOut;
+      _errorMessage = 'Could not save session securely. Please sign in again.';
+      notifyListeners();
+      throw const _TokenPersistFailed();
+    }
+  }
+
+  Future<void> _handleRefreshFailure(
+    BungieOAuthException e, {
+    required bool fromRestore,
+  }) async {
+    final msg = e.message.toLowerCase();
+    final invalidClient = msg.contains('invalid_client');
+    final definitive = invalidClient ||
+        msg.contains('invalid_grant') ||
+        msg.contains('invalid_token') ||
+        (e.statusCode != null &&
+            (e.statusCode == 400 || e.statusCode == 401));
+    _log(
+      'OAuth: refresh failed definitive=$definitive '
+      'invalid_client=$invalidClient type=${e.runtimeType}',
+    );
+    if (definitive) {
+      await _forceSignOutForAuthFailure(invalidClient: invalidClient);
+      return;
+    }
+    // Network / transient — keep stored tokens.
+    _tokens = null;
+    _status = OAuthSessionStatus.error;
+    _errorMessage = fromRestore
+        ? 'Could not refresh session (network). Try again when online — '
+            'you should not need to re-authorize.'
+        : 'Could not refresh session (network). Try again when online.';
+    notifyListeners();
+  }
+
+  Future<void> _forceSignOutForAuthFailure({
+    required bool invalidClient,
+  }) async {
+    try {
+      await _tokenStore.clearSecureOnly();
+    } catch (_) {}
+    _tokens = null;
+    _status = OAuthSessionStatus.signedOut;
+    _promptForgetCredential = invalidClient;
+    _errorMessage = invalidClient
+        ? 'Bungie rejected the app credential. Forget client secret and '
+            'paste a new one, then sign in again.'
+        : null;
+    notifyListeners();
+  }
+
+  static bool _isUnauthorized(Object e) {
+    if (e is BungieHttpException && e.statusCode == 401) return true;
+    if (e is BungiePlatformException && e.statusCode == 401) return true;
+    return false;
+  }
 
   void _throwIfSignInCancelled() {
     if (_signInCancelled) {
@@ -442,11 +634,13 @@ class WindowsOAuthSession extends ChangeNotifier {
 
       _log('OAuth: exchanging code for tokens…');
       final BungieTokens tokens;
+      final exchangeCredential = await _readCredentialSafe();
       try {
         tokens = await _oauthClient
             .exchangeCode(
               code: callback.code!,
               codeVerifier: pending.codeVerifier,
+              appCredential: exchangeCredential,
             )
             .timeout(
               const Duration(seconds: 45),
@@ -456,7 +650,11 @@ class WindowsOAuthSession extends ChangeNotifier {
             );
       } on OAuthSignInFailure {
         rethrow;
-      } on BungieOAuthException {
+      } on BungieOAuthException catch (e) {
+        final msg = e.message.toLowerCase();
+        if (msg.contains('invalid_client')) {
+          _promptForgetCredential = true;
+        }
         throw const OAuthSignInFailure(
           OAuthSignInFailureKind.tokenExchangeFailed,
         );
@@ -480,23 +678,20 @@ class WindowsOAuthSession extends ChangeNotifier {
       _log(
         'OAuth: token exchange OK accessLen=${tokens.accessToken.length} '
         'refreshLen=${tokens.refreshToken.length} '
-        'membership=${tokens.bungieMembershipId}; writing secure storage…',
+        'membership=${tokens.bungieMembershipId} '
+        'confidential=${_confidentialMode ? 'on' : 'off'}; '
+        'writing secure storage…',
       );
       if (tokens.refreshToken.isEmpty) {
         // Bungie portal docs: Public clients are not issued refresh_token.
-        // Confidential (Next) gets ~90d refresh. Live API re-auth ~hourly;
+        // Confidential gets ~90d refresh. Live API re-auth ~hourly without it;
         // local inventory browse must not depend on this (see OwnedCatalogBridge).
         _log(
           'OAuth: empty refresh_token (Bungie Public clients do not receive one) — '
           'live access lasts ~1h; re-sign-in only required for Sync/API, not local Owned',
         );
       }
-      await _tokenStore.write(tokens).timeout(
-            const Duration(seconds: 15),
-            onTimeout: () => throw const BungieOAuthException(
-              'Secure token storage write timed out',
-            ),
-          );
+      await _persistTokensOrSignOut(tokens);
       didWrite = true;
 
       // Cancel between write and verify → roll Locker back to pre-write snapshot.
@@ -539,7 +734,10 @@ class WindowsOAuthSession extends ChangeNotifier {
       _log('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       debugPrint('WindowsOAuthSession.signIn failed: ${e.runtimeType}');
       final failureKind = e is OAuthSignInFailure ? e.kind : null;
-      if (_signInCancelled ||
+      if (e is _TokenPersistFailed) {
+        // Already signed out by _persistTokensOrSignOut — keep that state.
+        _lastFailureKind = OAuthSignInFailureKind.tokenExchangeFailed;
+      } else if (_signInCancelled ||
           (e is OAuthSignInFailure &&
               e.kind == OAuthSignInFailureKind.cancelled &&
               _status == OAuthSessionStatus.signedOut)) {
@@ -616,6 +814,8 @@ class WindowsOAuthSession extends ChangeNotifier {
   }
 
   /// Clears secure tokens and returns to signed-out.
+  ///
+  /// Keeps any Confidential app credential (use [forgetClientCredential]).
   Future<void> signOut() async {
     try {
       await _tokenStore.clear();
@@ -666,4 +866,9 @@ class WindowsOAuthSession extends ChangeNotifier {
         e is TlsException ||
         e is OSError;
   }
+}
+
+/// Marker: token pair could not be persisted after a successful grant.
+class _TokenPersistFailed implements Exception {
+  const _TokenPersistFailed();
 }

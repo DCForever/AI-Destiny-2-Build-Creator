@@ -13,11 +13,17 @@ final Uri kBungieAuthorizeBaseUrl =
 final Uri kBungieTokenEndpoint =
     Uri.parse('https://www.bungie.net/platform/app/oauth/token/');
 
+/// When `true` (default), confidential token exchange still sends PKCE
+/// `code_verifier`. Flip to `false` on the confidential path only if Daniel's
+/// manual check shows Bungie rejects PKCE when a credential is present.
+const bool kConfidentialExchangeUsesPkce = true;
+
 /// Public + PKCE OAuth client for Bungie.
 ///
 /// Host injects the **public** `clientId` and active `redirectUri`.
-/// There is **no** client secret parameter — confidential OAuth stays on
-/// legacy Next only.
+/// Optional per-call [appCredential] enables Confidential token POSTs
+/// (Basic auth) for desktop operator mode — never stored on this class,
+/// never loaded via `fromEnvironment` / dart-define.
 class BungieOAuthClient {
   BungieOAuthClient({
     required String clientId,
@@ -72,15 +78,25 @@ class BungieOAuthClient {
   }
 
   /// Exchanges an authorization code + PKCE verifier for tokens.
+  ///
+  /// Pass a non-empty [appCredential] for Confidential desktop mode (Basic
+  /// auth). Omit it for Public+PKCE (default).
   Future<BungieTokens> exchangeCode({
     required String code,
     required String codeVerifier,
+    String? appCredential,
     DateTime? now,
   }) async {
     if (code.isEmpty) {
       throw const BungieConfigException('Authorization code must be non-empty');
     }
-    if (codeVerifier.isEmpty) {
+    final confidential = appCredential != null && appCredential.isNotEmpty;
+    if (!confidential && codeVerifier.isEmpty) {
+      throw const BungieConfigException('PKCE code_verifier must be non-empty');
+    }
+    if (confidential &&
+        kConfidentialExchangeUsesPkce &&
+        codeVerifier.isEmpty) {
       throw const BungieConfigException('PKCE code_verifier must be non-empty');
     }
 
@@ -88,19 +104,22 @@ class BungieOAuthClient {
       'grant_type': 'authorization_code',
       'code': code,
       'client_id': clientId,
-      'code_verifier': codeVerifier,
       'redirect_uri': redirectUri,
     };
-    return _postToken(body, now: now);
+    if (!confidential || kConfidentialExchangeUsesPkce) {
+      body['code_verifier'] = codeVerifier;
+    }
+    return _postToken(body, appCredential: appCredential, now: now);
   }
 
-  /// Refreshes tokens using the refresh token grant (public client).
+  /// Refreshes tokens using the refresh token grant.
   ///
-  /// When Bungie omits `refresh_token` on the response (common for non-rotating
-  /// refresh grants), the previous refresh token and its expiry are preserved so
-  /// cold starts can keep refreshing instead of forcing re-auth.
+  /// Pass [appCredential] for Confidential refresh (Basic auth). When Bungie
+  /// omits `refresh_token` on the response, the previous refresh credential is
+  /// preserved so cold starts keep working.
   Future<BungieTokens> refreshTokens(
     BungieTokens tokens, {
+    String? appCredential,
     DateTime? now,
   }) async {
     if (tokens.refreshToken.isEmpty) {
@@ -112,25 +131,35 @@ class BungieOAuthClient {
       'refresh_token': tokens.refreshToken,
       'client_id': clientId,
     };
-    final mapped = await _postToken(body, now: now);
+    final mapped =
+        await _postToken(body, appCredential: appCredential, now: now);
     return preserveRefreshCredentials(previous: tokens, next: mapped);
   }
 
   Future<BungieTokens> _postToken(
     Map<String, String> form, {
+    String? appCredential,
     DateTime? now,
   }) async {
-    // Public clients: form body only — never client_secret, never Basic secret.
+    final confidential = appCredential != null && appCredential.isNotEmpty;
+    // Public: form body only. Confidential: Basic auth (id:credential) — never
+    // put the credential in the form body (keeps client trees scan-clean).
+    final headers = <String, String>{
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'User-Agent': confidential
+          ? 'Destiny2BuildCreator-WindowsHost/0.1 (Confidential)'
+          : 'Destiny2BuildCreator-WindowsHost/0.1 (Public+PKCE)',
+    };
+    if (confidential) {
+      final raw = utf8.encode('$clientId:$appCredential');
+      headers['Authorization'] = 'Basic ${base64Encode(raw)}';
+    }
     final encoded = _encodeForm(form);
     final request = BungieHttpRequest(
       method: 'POST',
       uri: tokenEndpoint,
-      headers: const {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-        // Some edge networks treat missing UA poorly; identify as desktop host.
-        'User-Agent': 'Destiny2BuildCreator-WindowsHost/0.1 (Public+PKCE)',
-      },
+      headers: headers,
       body: encoded,
     );
 
@@ -237,12 +266,15 @@ class BungieOAuthClient {
   }
 
   static String _snippet(String body, [int max = 200]) {
-    // Redact bearer material if a 4xx body ever echoes it.
-    final redacted = body
-        .replaceAllMapped(
-          RegExp(r'"(access_token|refresh_token)"\s*:\s*"[^"]*"'),
-          (m) => '"${m[1]}":"[redacted]"',
-        );
+    // Redact bearer / credential material if a 4xx body ever echoes it.
+    var redacted = body.replaceAllMapped(
+      RegExp(r'"(access_token|refresh_token)"\s*:\s*"[^"]*"'),
+      (m) => '"${m[1]}":"[redacted]"',
+    );
+    redacted = redacted.replaceAllMapped(
+      RegExp(r'Basic\s+[A-Za-z0-9+/=]+'),
+      (_) => 'Basic [redacted]',
+    );
     if (redacted.length <= max) return redacted;
     return '${redacted.substring(0, max)}…';
   }
