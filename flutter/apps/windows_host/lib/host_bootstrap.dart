@@ -5,6 +5,7 @@ import 'package:destiny2_storage/destiny2_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'auth/browser_launcher.dart';
+import 'auth/client_credential_store.dart';
 import 'auth/loopback_callback_server.dart';
 import 'auth/token_store.dart';
 import 'auth/windows_oauth_session.dart';
@@ -91,6 +92,7 @@ class HostBootstrap {
     String? clientId,
     String? redirectUri,
     TokenStore? tokenStore,
+    ClientCredentialStore? credentialStore,
     BungieOAuthClient? oauthClient,
     BrowserLauncher? browserLauncher,
     LoopbackCallbackServer? loopbackServer,
@@ -141,6 +143,7 @@ class HostBootstrap {
       clientId: resolvedClientId,
       redirectUri: resolvedRedirect,
       tokenStore: store,
+      credentialStore: credentialStore ?? SecureClientCredentialStore(),
       oauthClient: client,
       browserLauncher: browserLauncher,
       loopbackServer: loopbackServer,

@@ -313,4 +313,76 @@ void main() {
       expect(tokenJson.toLowerCase(), isNot(contains('secret')));
     });
   });
+
+  group('optional confidential appCredential (Basic auth)', () {
+    test('exchange sends Basic auth and keeps PKCE when credential present',
+        () async {
+      BungieHttpRequest? seen;
+      final client = BungieOAuthClient(
+        clientId: 'client123',
+        redirectUri: 'http://127.0.0.1:8765/callback',
+        transport: (request) async {
+          seen = request;
+          return BungieHttpResponse(
+            statusCode: 200,
+            body: jsonEncode(rawTokenResponse()),
+          );
+        },
+      );
+
+      await client.exchangeCode(
+        code: 'my-code',
+        codeVerifier: 'verifier-xyz',
+        appCredential: 'FAKESECRET_m3n4o5p6q7r8s9t0u1v2',
+      );
+
+      expect(seen!.headers['Authorization'], startsWith('Basic '));
+      expect(seen!.body, contains('code_verifier=verifier-xyz'));
+      expect(seen!.body!.toLowerCase(), isNot(contains('fake-conf')));
+      expect(seen!.headers['Authorization'], isNot(contains('fake-conf')));
+    });
+
+    test('refresh sends Basic auth when credential present', () async {
+      BungieHttpRequest? seen;
+      final client = BungieOAuthClient(
+        clientId: 'client123',
+        redirectUri: 'http://127.0.0.1/cb',
+        transport: (request) async {
+          seen = request;
+          return BungieHttpResponse(
+            statusCode: 200,
+            body: jsonEncode(rawTokenResponse(access: 'new-acc')),
+          );
+        },
+      );
+      final old = BungieTokens(
+        accessToken: 'old',
+        refreshToken: 'refresh-abc',
+        expiresAt: DateTime.utc(2020),
+        refreshExpiresAt: DateTime.utc(2030),
+        bungieMembershipId: 'm',
+      );
+      await client.refreshTokens(old, appCredential: 'FAKESECRET_o1p2q3r4s5t6u7v8w9x0');
+      expect(seen!.headers['Authorization'], startsWith('Basic '));
+      expect(seen!.body!.toLowerCase(), isNot(contains('fake-refresh')));
+    });
+
+    test('omit credential keeps Public body without Authorization', () async {
+      BungieHttpRequest? seen;
+      final client = BungieOAuthClient(
+        clientId: 'client123',
+        redirectUri: 'http://127.0.0.1/cb',
+        transport: (request) async {
+          seen = request;
+          return BungieHttpResponse(
+            statusCode: 200,
+            body: jsonEncode(rawTokenResponse()),
+          );
+        },
+      );
+      await client.exchangeCode(code: 'c', codeVerifier: 'v');
+      expect(seen!.headers.containsKey('Authorization'), isFalse);
+      expect(seen!.body!.toLowerCase(), isNot(contains('client_secret')));
+    });
+  });
 }

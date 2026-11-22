@@ -66,6 +66,30 @@ final body = <String, String>{
     test('runClientSecretScan returns 0', () {
       expect(runClientSecretScan(), 0);
     });
+
+    test('negative: planted FAKE secret assignment fails the scan', () {
+      // Generated at test time — not committed (avoids tripping gitleaks on repo).
+      final dir = Directory.systemTemp.createTempSync('client-secret-neg-');
+      addTearDown(() {
+        try {
+          dir.deleteSync(recursive: true);
+        } catch (_) {}
+      });
+      final planted = File('${dir.path}/planted_fake.dart');
+      planted.writeAsStringSync(
+        "const planted = 'BUNGIE_CLIENT_SECRET=fake_scan_only_not_a_real_secret';\n"
+        "final body = {'client_secret': 'fake_scan_only_value'};\n",
+      );
+      final findings = scanClientSecretText(
+        'planted_fake.dart',
+        planted.readAsStringSync(),
+      );
+      expect(findings, isNotEmpty);
+      expect(
+        findings.map((f) => f.pattern),
+        contains('secret-assign'),
+      );
+    });
   });
 
   group('findWorkspaceRoot', () {

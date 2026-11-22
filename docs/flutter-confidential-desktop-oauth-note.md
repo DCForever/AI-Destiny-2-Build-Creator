@@ -1,10 +1,11 @@
 # Note — Potential Confidential desktop OAuth for Flutter
 
-**Status:** design note (not implemented)  
-**Updated:** 2026-08-04  
+**Status:** plan **b2** implemented on Windows host (optional Credential Manager credential)  
+**Updated:** 2026-11-22  
 **Audience:** agents + operators considering DIM-like multi-day login on Windows  
 **Current default:** Public + PKCE — [multiplatform-dart-prod-public-oauth-matrix.md](./multiplatform-dart-prod-public-oauth-matrix.md), `D-WEB-AUTH` / `D-BUNGIE` in [multiplatform-dart-port-decisions.md](./multiplatform-dart-port-decisions.md)  
-**Host README:** `flutter/apps/windows_host/README.md`
+**Host README:** `flutter/apps/windows_host/README.md`  
+**Approval:** Daniel, Nov 17, 2026, 9:40 PM PT — chose “a new desktop-only Confidential Bungie app” (plan b2).
 
 ## Why this note exists
 
