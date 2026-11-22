@@ -1,6 +1,6 @@
 # Parity: flutter-windows
 
-Generated: 2026-11-15
+Generated: 2026-11-22
 
 | Metric | Value |
 |--------|-------|

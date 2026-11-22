@@ -83,6 +83,22 @@ String kMakeRoomStillFullMessage(String itemLabel) =>
 String kMakeRoomMovedToVaultMessage(String evicteeName) =>
     'Moved $evicteeName to vault to make room';
 
+/// Needed item is equipped on another character and no valid replacement exists
+/// (non-exotic, same bucket, class-compatible, on that character or vault).
+const String kCannotUnequipOnOtherCharacterMessage =
+    'Cannot unequip on other character: no valid non-exotic replacement';
+
+/// Side-effect row: an item was transferred during Apply.
+String kApplyMovedItemMessage(String name, String from, String to) =>
+    'Moved $name from $from to $to';
+
+/// Side-effect row: a replacement was equipped on another character to free a pin.
+String kApplyEquippedOnOtherCharacterMessage(
+  String name,
+  String characterId,
+) =>
+    'Equipped $name on character $characterId';
+
 /// True for Bungie codes that mean the destination inventory/bucket is full.
 bool isNoRoomInDestinationErrorCode(int code) {
   return code == kDestinyNoRoomInDestination || code == kDestinyInventoryFull;

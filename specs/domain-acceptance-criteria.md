@@ -1,7 +1,7 @@
 # Domain Acceptance Criteria — Destiny 2 Builds
 
 **Created**: 2026-07-10  
-**Updated**: 2026-11-08 (DAC-PLT-001–003 offline contrasting-build pilot)  
+**Updated**: 2026-11-22 (DAC-P1-007 dequip-via-replacement on other characters)  
 **Status**: Canonical domain layer  
 **Source**: Clarification session 2026-07-09 → 2026-07-10; product reconciliation 2026-07-14; Set minimum occupancy 2026-07-29; **Obsidian product packs re-sync 2026-07-29**
 
@@ -77,8 +77,8 @@ Feature specs under `specs/00N-*/` remain the place for implementation slices; t
 
 **Given** an equip-ready default variant (owned instance pins on all applied slots)  
 **When** the user equips  
-**Then** inventory refreshes (respecting ~1/min rate limit), the user picks a class-matching character, items transfer from vault/other characters as needed, and the loadout + artifact config (+ fashion if specified) are applied via Bungie API  
-**And** failures are reported as best-effort partial apply; retry is the recovery path  
+**Then** inventory refreshes (respecting ~1/min rate limit), the user picks a class-matching character, items transfer from vault/other characters as needed (including unequipping a needed item on another character by first equipping a valid non-exotic replacement there), and the loadout + artifact config (+ fashion if specified) are applied via Bungie API  
+**And** failures are reported as best-effort partial apply with truthful move/equip outcome rows; retry is the recovery path  
 **Refs**: DBR-EQP-001, DBR-EQP-005–008, DBR-ART-002–003, DBR-FASH-001
 
 ### DAC-P1-008 — DIM export
