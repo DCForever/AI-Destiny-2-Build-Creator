@@ -329,6 +329,176 @@ void main() {
     ]);
   });
 
+  test(
+    'two applied rows for same slot: first-wins selects that itemHash family',
+    () {
+      final build = bare();
+      final plan = const FillInSavedBuildPlan(
+        buildId: 'b1',
+        missing: [],
+        applied: [
+          FillInAppliedSlot(
+            slotWire: 'helmet',
+            label: 'Shared Helm',
+            originalLabel: '',
+            itemHash: 11,
+            instanceId: 'a',
+          ),
+          // Second applied for same slot must not override first-wins.
+          FillInAppliedSlot(
+            slotWire: 'helmet',
+            label: 'Shared Helm',
+            originalLabel: '',
+            itemHash: 22,
+            instanceId: 'b',
+          ),
+        ],
+        rows: [
+          FillInSavedSlotRow(
+            slotWire: 'helmet',
+            slotLabel: 'Helmet',
+            state: 'filled',
+            itemName: 'Shared Helm',
+          ),
+          FillInSavedSlotRow(
+            slotWire: 'arms',
+            slotLabel: 'Gauntlets',
+            state: 'filled',
+            itemName: 'Techsec Arms',
+          ),
+          FillInSavedSlotRow(
+            slotWire: 'chest',
+            slotLabel: 'Chest',
+            state: 'filled',
+            itemName: 'Techsec Chest',
+          ),
+          FillInSavedSlotRow(
+            slotWire: 'legs',
+            slotLabel: 'Legs',
+            state: 'filled',
+            itemName: 'Techsec Legs',
+          ),
+        ],
+      );
+      final armor = [
+        const FillInInventoryItem(
+          instanceId: 'a',
+          itemHash: 11,
+          slot: EquipmentSlot.helmet,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          name: 'Shared Helm',
+          location: 'vault',
+        ),
+        const FillInInventoryItem(
+          instanceId: 'b',
+          itemHash: 22,
+          slot: EquipmentSlot.helmet,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          name: 'Shared Helm',
+          location: 'character',
+        ),
+        const FillInInventoryItem(
+          instanceId: 'c',
+          itemHash: 12,
+          slot: EquipmentSlot.arms,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          name: 'Techsec Arms',
+          location: 'vault',
+        ),
+        const FillInInventoryItem(
+          instanceId: 'd',
+          itemHash: 13,
+          slot: EquipmentSlot.chest,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          name: 'Techsec Chest',
+          location: 'vault',
+        ),
+        const FillInInventoryItem(
+          instanceId: 'e',
+          itemHash: 14,
+          slot: EquipmentSlot.legs,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          name: 'Techsec Legs',
+          location: 'vault',
+        ),
+      ];
+      final keyByHash = {
+        11: 'Techsec',
+        22: 'OtherFamily',
+        12: 'Techsec',
+        13: 'Techsec',
+        14: 'Techsec',
+      };
+      final goals = proposedSetBonusGoalsFor(
+        build: build,
+        plan: plan,
+        armorItems: armor,
+        setBonusKeyByItemHash: keyByHash,
+      );
+      expect(goals, [
+        const SetBonusCoverageGoal(setBonusKey: 'Techsec', minPieces: 4),
+      ]);
+    },
+  );
+
+  test(
+    'inventory miss falls back to raw non-placeholder slot setId',
+    () {
+      // No inventory match for piece names → _slotSetPieceCounts uses setId.
+      final build = bare(
+        slots: const [
+          MockSlotAssignment(
+            slot: 'helmet',
+            setId: 'Brazen Promise',
+            pieceName: 'Unknown Helm',
+          ),
+          MockSlotAssignment(
+            slot: 'arms',
+            setId: 'Brazen Promise',
+            pieceName: 'Unknown Arms',
+          ),
+          MockSlotAssignment(
+            slot: 'chest',
+            setId: 'Walk of the Light',
+            pieceName: 'Unknown Chest',
+          ),
+          MockSlotAssignment(
+            slot: 'legs',
+            setId: 'Walk of the Light',
+            pieceName: 'Unknown Legs',
+          ),
+        ],
+      );
+      final armor = [
+        const FillInInventoryItem(
+          instanceId: 'x',
+          itemHash: 99,
+          slot: EquipmentSlot.helmet,
+          isExotic: false,
+          guardianClass: GuardianClass.warlock,
+          name: 'Different Name',
+          location: 'vault',
+        ),
+      ];
+      final goals = proposedSetBonusGoalsFor(
+        build: build,
+        armorItems: armor,
+        setBonusKeyByItemHash: const {99: 'Ignored'},
+      );
+      expect(goals, hasLength(2));
+      expect(
+        goals.map((g) => g.setBonusKey).toSet(),
+        {'Brazen Promise', 'Walk of the Light'},
+      );
+      expect(goals.every((g) => g.minPieces == 2), isTrue);
+    },
+  );
+
   test('set-key matches candidatesFromDimArmorItems (catalog + set:hash)', () {
     final item = const FillInInventoryItem(
       instanceId: 'i1',
