@@ -86,9 +86,16 @@ Future<WeaponFillInApplyResult?> applyWeaponFillInAfterOptimize({
     plan: existingPlan,
     inventory: mapped.inventory,
   );
+  // Same as Fill In dialog: demoted exotic-need slots keep isExotic so
+  // labels stay "Exotic Kinetic" (not plain Kinetic).
+  final exoticWeaponNeedSlots = {
+    for (final s in mapped.requirement.slots)
+      if (s.isExotic && _isWeaponSlot(s.slot)) s.slot,
+  };
   diffs = enforceAtMostOneExoticWeapon(
     diffs: diffs,
     inventory: mapped.inventory,
+    exoticWeaponNeedSlots: exoticWeaponNeedSlots,
   );
 
   final weaponDiffs = [
