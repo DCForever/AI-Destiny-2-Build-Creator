@@ -375,6 +375,154 @@ void main() {
       expect(session.isSignedIn, isFalse);
       expect(await store.read(), isNull);
     });
+
+    test(
+      'proactive needsRefresh invalid_grant signs out without loop',
+      () async {
+        final store = MemoryTokenStore();
+        final now = DateTime.now().toUtc();
+        await store.write(
+          _tokens(now: now, accessTtl: const Duration(milliseconds: 300)),
+        );
+        var refreshCalls = 0;
+        final session = WindowsOAuthSession(
+          clientId: 'cid',
+          redirectUri: 'https://127.0.0.1:8765/callback',
+          tokenStore: store,
+          credentialStore: MemoryClientCredentialStore(),
+          oauthClient: BungieOAuthClient(
+            clientId: 'cid',
+            redirectUri: 'https://127.0.0.1:8765/callback',
+            transport: (_) async {
+              refreshCalls++;
+              return const BungieHttpResponse(
+                statusCode: 400,
+                body: '{"error":"invalid_grant"}',
+              );
+            },
+          ),
+        );
+        await session.restore();
+        expect(session.isSignedIn, isTrue);
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+
+        await expectLater(
+          () => session.runAuthorized((token) async => token),
+          throwsA(isA<BungieOAuthException>()),
+        );
+        expect(session.isSignedIn, isFalse);
+        expect(session.tokens, isNull);
+        expect(await store.read(), isNull);
+        expect(session.promptForgetCredential, isFalse);
+        final callsAfterFail = refreshCalls;
+
+        await expectLater(
+          () => session.runAuthorized((token) async => token),
+          throwsA(isA<BungieConfigException>()),
+        );
+        expect(refreshCalls, callsAfterFail);
+      },
+    );
+
+    test(
+      'proactive needsRefresh invalid_client signs out and prompts Forget',
+      () async {
+        final store = MemoryTokenStore();
+        final creds = MemoryClientCredentialStore();
+        await creds.write(_fakeCredential);
+        final now = DateTime.now().toUtc();
+        await store.write(
+          _tokens(now: now, accessTtl: const Duration(milliseconds: 300)),
+        );
+        var refreshCalls = 0;
+        final session = WindowsOAuthSession(
+          clientId: 'cid',
+          redirectUri: 'https://127.0.0.1:8765/callback',
+          tokenStore: store,
+          credentialStore: creds,
+          oauthClient: BungieOAuthClient(
+            clientId: 'cid',
+            redirectUri: 'https://127.0.0.1:8765/callback',
+            transport: (_) async {
+              refreshCalls++;
+              return const BungieHttpResponse(
+                statusCode: 401,
+                body: '{"error":"invalid_client"}',
+              );
+            },
+          ),
+        );
+        await session.restore();
+        expect(session.isSignedIn, isTrue);
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+
+        await expectLater(
+          () => session.runAuthorized((token) async => token),
+          throwsA(isA<BungieOAuthException>()),
+        );
+        expect(session.isSignedIn, isFalse);
+        expect(session.tokens, isNull);
+        expect(await store.read(), isNull);
+        expect(session.promptForgetCredential, isTrue);
+        expect(await creds.hasCredential, isTrue);
+        final callsAfterFail = refreshCalls;
+
+        await expectLater(
+          () => session.runAuthorized((token) async => token),
+          throwsA(isA<BungieConfigException>()),
+        );
+        expect(refreshCalls, callsAfterFail);
+      },
+    );
+
+    test(
+      'proactive needsRefresh Public empty refreshToken signs out',
+      () async {
+        final store = MemoryTokenStore();
+        final now = DateTime.now().toUtc();
+        await store.write(
+          _tokens(
+            now: now,
+            refresh: '',
+            accessTtl: const Duration(milliseconds: 300),
+          ),
+        );
+        var refreshCalls = 0;
+        final session = WindowsOAuthSession(
+          clientId: 'cid',
+          redirectUri: 'https://127.0.0.1:8765/callback',
+          tokenStore: store,
+          credentialStore: MemoryClientCredentialStore(),
+          oauthClient: BungieOAuthClient(
+            clientId: 'cid',
+            redirectUri: 'https://127.0.0.1:8765/callback',
+            transport: (_) async {
+              refreshCalls++;
+              throw StateError('refresh must not be called for empty RT');
+            },
+          ),
+        );
+        await session.restore();
+        expect(session.isSignedIn, isTrue);
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+
+        await expectLater(
+          () => session.runAuthorized((token) async => token),
+          throwsA(isA<BungieConfigException>()),
+        );
+        expect(session.isSignedIn, isFalse);
+        expect(session.tokens, isNull);
+        expect(await store.read(), isNull);
+        expect(session.promptForgetCredential, isFalse);
+        expect(refreshCalls, 0);
+
+        await expectLater(
+          () => session.runAuthorized((token) async => token),
+          throwsA(isA<BungieConfigException>()),
+        );
+        expect(refreshCalls, 0);
+      },
+    );
   });
 
   group('C6 public default + forget keeps tokens on sign-out', () {

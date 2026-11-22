@@ -277,7 +277,18 @@ class WindowsOAuthSession extends ChangeNotifier {
       throw const BungieConfigException('Not signed in');
     }
     if (needsRefresh(_tokens!)) {
-      await _refreshCoalesced();
+      // Public access-only (empty refresh): force normal sign-in — do not
+      // throw refresh_token-must-be-non-empty while leaving status signedIn.
+      if (_tokens!.refreshToken.isEmpty) {
+        await _forceSignOutForAuthFailure(invalidClient: false);
+        throw const BungieConfigException('Not signed in');
+      }
+      try {
+        await _refreshCoalesced();
+      } on BungieOAuthException catch (oauthErr) {
+        await _handleRefreshFailure(oauthErr, fromRestore: false);
+        rethrow;
+      }
     }
     final first = _tokens;
     if (first == null) {
