@@ -19,15 +19,22 @@ export function resolveBase(preferred) {
   }
 }
 
-/** Gate / CI paths — always set ci-runner; pattern source allowlisted. */
+/**
+ * Gate / CI paths — always set ci-runner; pattern source allowlisted.
+ * Includes test/ci/ so gutting detector self-tests still flags review.
+ */
 export function isCiGatePath(path) {
   if (!path) return false;
-  return path.startsWith("scripts/ci/") || path.startsWith(".github/");
+  return (
+    path.startsWith("scripts/ci/") ||
+    path.startsWith(".github/") ||
+    path.startsWith("test/ci/")
+  );
 }
 
-/** Intentional detector fixtures — excluded from test-weakening content scan. */
+/** @deprecated use isCiGatePath — test/ci/ is now a gate path. */
 export function isDetectorSelfTestPath(path) {
-  return /^test\/ci\/.*\.self-test\.mjs$/.test(path || "");
+  return isCiGatePath(path) && path.startsWith("test/ci/");
 }
 
 /** Top-level docs/test + named tests only — nested docs/fixtures/*.md do not hide prod. */
@@ -47,7 +54,6 @@ export function isExcludedFromProduction(path) {
 export function isTestPath(path) {
   if (!path) return false;
   if (isCiGatePath(path)) return false;
-  if (isDetectorSelfTestPath(path)) return false;
   if (/(^|\/)__tests__\//.test(path)) return true;
   if (/(^|\/)test(s)?\//.test(path)) return true;
   if (/_test\.(dart|ts|tsx|js|mjs|py|go)$/i.test(path)) return true;
@@ -66,8 +72,8 @@ export function addedOrRemovedBodies(patch) {
 }
 
 /**
- * Drop unified-diff hunks for CI gate libs (ci-runner allowlist) and
- * detector self-tests that intentionally embed pattern fixtures.
+ * Drop unified-diff hunks for CI gate paths (ci-runner allowlist), including
+ * scripts/ci and test/ci detector fixtures.
  */
 export function stripCiGateHunks(patch) {
   const lines = patch.split("\n");
@@ -76,7 +82,7 @@ export function stripCiGateHunks(patch) {
   for (const line of lines) {
     const m = line.match(/^diff --git a\/(.+) b\/(.+)$/);
     if (m) {
-      skip = isCiGatePath(m[2]) || isDetectorSelfTestPath(m[2]);
+      skip = isCiGatePath(m[1]) || isCiGatePath(m[2]);
       if (!skip) keep.push(line);
       continue;
     }
@@ -84,6 +90,12 @@ export function stripCiGateHunks(patch) {
   }
   return keep.join("\n");
 }
+
+/** Windows drive letters for dest-write (quoted, raw, forward/back slash). */
+export const DEST_DRIVE_RE = /(?<![A-Za-z])[DdEeZz]:[\\/]/
+
+/** File delete / rename APIs used in this repo. */
+export const DELETE_API_RE = /\.(delete|deleteSync|rename|renameSync)\s*\(/;
 
 export function measureSizeRisk(input) {
   let added = 0;
@@ -110,9 +122,13 @@ export function measureSizeRisk(input) {
   if (allPaths.some((p) => isCiGatePath(p))) {
     flags.add("ci-runner");
   }
-  // Content flags ignore scripts/ci detector source (still counted for size + ci-runner).
+  // Content flags ignore gate detector source (still counted for size + ci-runner).
   const productScan = stripCiGateHunks(input.prodPatch || "");
-  if (gone.length || /\b(dismantle|DeleteItem)\b/.test(productScan)) {
+  if (
+    gone.length ||
+    /\b(dismantle|DeleteItem)\b/.test(productScan) ||
+    DELETE_API_RE.test(productScan)
+  ) {
     flags.add("deletes");
   }
   if (/(migration|schemaVersion|ALTER TABLE)/i.test(productScan)) {
@@ -120,7 +136,8 @@ export function measureSizeRisk(input) {
   }
   if (
     /\b(EquipItems?|TransferItem|InsertSocketPlugFree)\b/.test(productScan) ||
-    /[Dd]:\\| [Ee]:\\| [Zz]:\\|\/Volumes\//.test(productScan)
+    DEST_DRIVE_RE.test(productScan) ||
+    /\/Volumes\//.test(productScan)
   ) {
     flags.add("dest-write");
   }
@@ -148,11 +165,15 @@ export function measureSizeRisk(input) {
     flags.add("test-weakening");
   }
 
+  const size = added <= SMALL ? "Small" : "Large";
+  const flagList = [...flags].sort();
+  const reviewRequired = size === "Large" || flagList.length > 0;
   return {
     added,
     deleted,
     prod,
-    flags: [...flags].sort(),
-    size: added <= SMALL ? "Small" : "Large",
+    flags: flagList,
+    size,
+    reviewRequired,
   };
 }

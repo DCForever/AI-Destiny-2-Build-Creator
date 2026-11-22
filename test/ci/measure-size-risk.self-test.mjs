@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
  * Regression fixtures for scripts/ci/measure-size-risk-lib.mjs.
- * Under top-level test/ (not production size).
+ * Under top-level test/ci/ (gate path → ci-runner; excluded from production size).
  */
 import {
+  DEST_DRIVE_RE,
+  DELETE_API_RE,
   addedOrRemovedBodies,
   isCiGatePath,
   isExcludedFromProduction,
@@ -26,6 +28,7 @@ ok("ci-runner on .github without runs-on", () => {
     allPaths: [".github/workflows/ci.yml"],
   });
   if (!r.flags.includes("ci-runner")) throw new Error(JSON.stringify(r));
+  if (!r.reviewRequired) throw new Error("expected REVIEW_REQUIRED");
 });
 
 ok("ci-runner on scripts/ci libs", () => {
@@ -37,9 +40,20 @@ ok("ci-runner on scripts/ci libs", () => {
     allPaths: ["scripts/ci/check-weakened-tests-lib.mjs"],
   });
   if (!r.flags.includes("ci-runner")) throw new Error(JSON.stringify(r));
-  if (!isCiGatePath("scripts/ci/check-weakened-tests-lib.mjs")) {
-    throw new Error("lib must be ci gate path");
+});
+
+ok("ci-runner on test/ci self-tests (gate path)", () => {
+  if (!isCiGatePath("test/ci/measure-size-risk.self-test.mjs")) {
+    throw new Error("test/ci must be a ci gate path");
   }
+  const r = measureSizeRisk({
+    numstat: "1\t0\tlib/x.dart",
+    nameStatus: "M\tlib/x.dart\nM\ttest/ci/measure-size-risk.self-test.mjs",
+    prodPatch: "void f() {}",
+    testPatch: "",
+    allPaths: ["lib/x.dart", "test/ci/measure-size-risk.self-test.mjs"],
+  });
+  if (!r.flags.includes("ci-runner")) throw new Error(JSON.stringify(r));
 });
 
 ok("auth-secrets patterns", () => {
@@ -73,6 +87,66 @@ ok("dest-write covers Bungie write APIs", () => {
     allPaths: ["src/apply.dart"],
   });
   if (!r.flags.includes("dest-write")) throw new Error(JSON.stringify(r));
+});
+
+ok("dest-write matches quoted/raw/forward-slash D E Z drives", () => {
+  const samples = [
+    '"D:\\\\Rips"',
+    '"E:\\\\Rips"',
+    '"Z:\\\\Media"',
+    'r"E:\\Rips"',
+    '"E:/Rips"',
+    'Directory("D:/RippedDiscs")',
+    "'Z:/Media'",
+  ];
+  for (const s of samples) {
+    if (!DEST_DRIVE_RE.test(s)) throw new Error(`DEST_DRIVE_RE missed: ${s}`);
+    const r = measureSizeRisk({
+      numstat: "1\t0\tsrc/path.dart",
+      nameStatus: "M\tsrc/path.dart",
+      prodPatch: `final p = ${s};\n`,
+      testPatch: "",
+      allPaths: ["src/path.dart"],
+    });
+    if (!r.flags.includes("dest-write")) {
+      throw new Error(`dest-write missed for ${s}: ${JSON.stringify(r)}`);
+    }
+  }
+});
+
+ok("deletes flag matches .delete / .deleteSync / .rename / .renameSync", () => {
+  const samples = [
+    "await file.delete();",
+    "file.deleteSync();",
+    "await file.rename(other);",
+    "file.renameSync(other);",
+  ];
+  for (const s of samples) {
+    if (!DELETE_API_RE.test(s)) throw new Error(`DELETE_API_RE missed: ${s}`);
+    const r = measureSizeRisk({
+      numstat: "1\t0\tsrc/io.dart",
+      nameStatus: "M\tsrc/io.dart",
+      prodPatch: `${s}\n`,
+      testPatch: "",
+      allPaths: ["src/io.dart"],
+    });
+    if (!r.flags.includes("deletes")) {
+      throw new Error(`deletes missed for ${s}: ${JSON.stringify(r)}`);
+    }
+  }
+});
+
+ok("Large or any flag sets reviewRequired", () => {
+  const large = measureSizeRisk({
+    numstat: "400\t0\tlib/big.dart",
+    nameStatus: "A\tlib/big.dart",
+    prodPatch: "x\n",
+    testPatch: "",
+    allPaths: ["lib/big.dart"],
+  });
+  if (large.size !== "Large" || !large.reviewRequired) {
+    throw new Error(JSON.stringify(large));
+  }
 });
 
 ok("test-weakening scans +/- lines only (not context)", () => {

@@ -155,9 +155,12 @@ ok("rename test→non-test treated as deletion", () => {
   }
 });
 
-ok("scripts/ci pattern source is ci-gate (allowlisted from test scan)", () => {
+ok("scripts/ci and test/ci are ci-gate (allowlisted from test scan)", () => {
   if (!isCiGatePath("scripts/ci/check-weakened-tests-lib.mjs")) {
-    throw new Error("expected ci gate path");
+    throw new Error("expected scripts/ci gate path");
+  }
+  if (!isCiGatePath("test/ci/check-weakened-tests.self-test.mjs")) {
+    throw new Error("expected test/ci gate path");
   }
   const diff = [
     "diff --git a/scripts/ci/check-weakened-tests-lib.mjs b/scripts/ci/check-weakened-tests-lib.mjs",
@@ -166,6 +169,12 @@ ok("scripts/ci pattern source is ci-gate (allowlisted from test scan)", () => {
     "@@ -1 +1 @@",
     "-const x = 1;",
     "+const SKIP = /skip: true/;",
+    "diff --git a/test/ci/check-weakened-tests.self-test.mjs b/test/ci/check-weakened-tests.self-test.mjs",
+    "--- a/test/ci/check-weakened-tests.self-test.mjs",
+    "+++ b/test/ci/check-weakened-tests.self-test.mjs",
+    "@@ -1 +1 @@",
+    "-old",
+    "+skip: true;",
   ].join("\n");
   const f = analyzeWeakenedDiff(diff);
   if (f.length) throw new Error(`ci gate must not yield findings: ${JSON.stringify(f)}`);

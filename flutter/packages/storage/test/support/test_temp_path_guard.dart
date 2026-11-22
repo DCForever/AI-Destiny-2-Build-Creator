@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 /// Test-only helper (not part of the storage public API). Resolves through
 /// symlinks; for paths that do not exist yet, resolves the nearest existing
 /// ancestor and rejoins the remainder so `link/to/outside/new.csv` fails.
+/// A dangling / unresolvable symlink fails closed (does not fall back).
 void assertResolvedPathIsUnderSystemTemp(String path) {
   final resolved = resolvePathForTempGuard(path);
   final tempRoot = resolvePathForTempGuard(Directory.systemTemp.path);
@@ -31,8 +32,10 @@ String resolvePathForTempGuard(String path) {
         final resolved = _resolveExisting(current, type);
         if (missing.isEmpty) return resolved;
         return p.normalize(p.join(resolved, p.joinAll(missing.reversed)));
-      } on FileSystemException {
-        return absolute;
+      } on FileSystemException catch (e) {
+        throw StateError(
+          'Path could not be resolved (fail closed): $absolute ($e)',
+        );
       }
     }
     final parent = p.dirname(current);

@@ -43,14 +43,27 @@ void main() {
   test(
     'Skeptic #2: symlink escape via non-existent child fails closed',
     () async {
+      final varTmp = Directory('/var/tmp');
+      final systemTemp = Directory.systemTemp.path;
+      final varTmpResolved = varTmp.existsSync()
+          ? p.normalize(varTmp.resolveSymbolicLinksSync())
+          : '';
+      final systemResolved = p.normalize(
+        Directory.systemTemp.resolveSymbolicLinksSync(),
+      );
+      if (!varTmp.existsSync() || varTmpResolved == systemResolved) {
+        // Posix hosts where /var/tmp is missing or aliases systemTemp.
+        return;
+      }
+
       final temp = await Directory.systemTemp.createTemp('skeptic_link_');
       // Outside systemTemp without touching Directory.current (repo cwd).
-      final outside = await Directory('/var/tmp').createTemp('skeptic_outside_');
+      final outside = await varTmp.createTemp('skeptic_outside_');
       addTearDown(() async {
         if (await temp.exists()) await temp.delete(recursive: true);
         if (await outside.exists()) await outside.delete(recursive: true);
       });
-      final tempRoot = resolvePathForTempGuard(Directory.systemTemp.path);
+      final tempRoot = resolvePathForTempGuard(systemTemp);
       final outsideResolved = resolvePathForTempGuard(outside.path);
       expect(
         outsideResolved == tempRoot || p.isWithin(tempRoot, outsideResolved),
@@ -68,6 +81,30 @@ void main() {
             (e) => e.message,
             'message',
             contains('outside system temp'),
+          ),
+        ),
+      );
+    },
+    testOn: 'posix',
+  );
+
+  test(
+    'Skeptic #2: dangling symlink that points outside fails closed',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('skeptic_dangling_');
+      addTearDown(() async {
+        if (await temp.exists()) await temp.delete(recursive: true);
+      });
+      final dangling = Link(p.join(temp.path, 'dangling'));
+      // Target does not exist — resolveSymbolicLinksSync throws.
+      await dangling.create('/opt/cursor/artifacts/no-such-skeptic-target');
+      expect(
+        () => assertResolvedPathIsUnderSystemTemp(dangling.path),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('could not be resolved'),
           ),
         ),
       );

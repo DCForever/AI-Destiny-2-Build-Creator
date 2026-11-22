@@ -19,22 +19,24 @@ const allPaths = [];
 for (const line of nameStatus.split("\n")) {
   if (!line.trim()) continue;
   const parts = line.split("\t");
-  allPaths.push(parts[parts.length - 1]);
+  // Renames: check both from and to columns for gate paths.
+  for (let i = 1; i < parts.length; i++) allPaths.push(parts[i]);
 }
-const prodPaths = allPaths.filter((p) => !isExcludedFromProduction(p));
-const testPaths = allPaths.filter((p) => isTestPath(p));
+const uniquePaths = [...new Set(allPaths)];
+const prodPaths = uniquePaths.filter((p) => !isExcludedFromProduction(p));
+const testPaths = uniquePaths.filter((p) => isTestPath(p));
 const prodPatch = prodPaths.length
   ? sh(`git diff ${base}...HEAD -- ${prodPaths.map((p) => JSON.stringify(p)).join(" ")}`)
   : "";
 const testPatch = testPaths.length
   ? sh(`git diff ${base}...HEAD -- ${testPaths.map((p) => JSON.stringify(p)).join(" ")}`)
   : "";
-const { added, deleted, prod, flags, size } = measureSizeRisk({
+const { added, deleted, prod, flags, size, reviewRequired } = measureSizeRisk({
   numstat,
   nameStatus,
   prodPatch,
   testPatch,
-  allPaths,
+  allPaths: uniquePaths,
 });
 const labels = [`size/${size.toLowerCase()}`, ...flags.map((f) => `risk/${f}`)];
 const summary = [
@@ -47,6 +49,7 @@ const summary = [
   `- Size: **${size}** (Small ≤ ${SMALL}; otherwise Large — honest count)`,
   `- Flags: ${flags.length ? flags.map((f) => `\`${f}\``).join(", ") : "_none_"}`,
   `- Label hints: ${labels.map((l) => `\`${l}\``).join(", ")}`,
+  `- Review required: **${reviewRequired ? "yes" : "no"}**`,
   "",
   prod.length
     ? `Production files (${prod.length}):\n${prod.map((f) => `- \`${f}\``).join("\n")}`
@@ -61,3 +64,9 @@ console.log(`SIZE=${size}`);
 console.log(`ADDED=${added}`);
 console.log(`FLAGS=${flags.join(",")}`);
 console.log(`LABELS=${labels.join(",")}`);
+console.log(`REVIEW_REQUIRED=${reviewRequired}`);
+if (reviewRequired) {
+  console.log(
+    `REVIEW_REQUIRED_REASON=size=${size};flags=${flags.length ? flags.join(",") : "none"}`,
+  );
+}

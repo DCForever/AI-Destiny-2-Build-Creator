@@ -31,21 +31,27 @@ const SKIP_WEAK_RE =
 const NEGATIVE_ASSERT_RE =
   /\b(expectLater|expect|verify|assert\w*)\s*\([\s\S]{0,200}?\b(isFalse|isEmpty|throwsA|throws|refuse|ReadFailed|instanceNotOwned|doesNotFit|EnergyCostUnknown|notUnlocked|failClosed|isNull)\b/i;
 
-/** Gate / CI paths — pattern sources here must set ci-runner, not fail tests. */
+/**
+ * Gate / CI paths — pattern sources here must set ci-runner, not fail tests.
+ * Includes test/ci/ so gutting detector self-tests still flags review.
+ */
 export function isCiGatePath(path) {
   if (!path) return false;
-  return path.startsWith("scripts/ci/") || path.startsWith(".github/");
+  return (
+    path.startsWith("scripts/ci/") ||
+    path.startsWith(".github/") ||
+    path.startsWith("test/ci/")
+  );
 }
 
-/** Intentional detector fixtures under test/ci — not product test weakening. */
+/** @deprecated use isCiGatePath — test/ci/ is now a gate path. */
 export function isDetectorSelfTestPath(path) {
-  return /^test\/ci\/.*\.self-test\.mjs$/.test(path || "");
+  return isCiGatePath(path) && path.startsWith("test/ci/");
 }
 
 export function isTestPath(path) {
   if (!path) return false;
   if (isCiGatePath(path)) return false;
-  if (isDetectorSelfTestPath(path)) return false;
   if (/(^|\/)__tests__\//.test(path)) return true;
   if (/(^|\/)test(s)?\//.test(path)) return true;
   if (/_test\.(dart|ts|tsx|js|mjs|py|go)$/i.test(path)) return true;
@@ -172,7 +178,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = []) {
       endHunk();
       continue;
     }
-    if (!cur || isCiGatePath(cur) || isDetectorSelfTestPath(cur) || !isTestPath(cur)) {
+    if (!cur || isCiGatePath(cur) || !isTestPath(cur)) {
       continue;
     }
     const st = state(cur);

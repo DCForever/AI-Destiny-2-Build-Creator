@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -35,13 +36,21 @@ void main() {
       final before = await File(importer.cachePath).readAsBytes();
       final beforeHash = sha256.convert(before);
 
+      // Different CSV so a successful overwrite would change cache bytes.
+      final mutated = await _copyMutatedCsv(
+        tempDir,
+        sourceName: 'destiny-armor-mut.csv',
+        fixturePath: _armorFixturePath(),
+        marker: 'Techsec Helmet',
+        replacement: 'Mutated Helmet',
+      );
       final failing = DimArmorCsvImporter(
         root: root,
         beforeCacheRename: () async {
           throw StateError('simulated write failure');
         },
       );
-      final second = await failing.importFromPath(source.path);
+      final second = await failing.importFromPath(mutated.path);
       expect(second.isOk, isFalse);
       expect(second.error, contains("Couldn't write cache"));
 
@@ -66,19 +75,31 @@ void main() {
       final before = await File(importer.cachePath).readAsBytes();
       final beforeHash = sha256.convert(before);
 
+      final mutated = await _copyMutatedCsv(
+        tempDir,
+        sourceName: 'destiny-weapons-mut.csv',
+        fixturePath: _weaponsFixturePath(),
+        marker: 'Sunshot',
+        replacement: 'MutatedShot',
+      );
       final failing = DimWeaponsCsvImporter(
         root: root,
         beforeCacheRename: () async {
           throw StateError('simulated write failure');
         },
       );
-      final second = await failing.importFromPath(source.path);
+      final second = await failing.importFromPath(mutated.path);
       expect(second.isOk, isFalse);
       expect(second.error, contains("Couldn't write cache"));
 
       final after = await File(importer.cachePath).readAsBytes();
       expect(sha256.convert(after).toString(), beforeHash.toString());
       expect(after, before);
+      expect(
+        await File('${importer.cachePath}.tmp').exists(),
+        isFalse,
+        reason: 'failed rename must not leave a Force-overwrite path',
+      );
     },
   );
 }
@@ -94,6 +115,23 @@ Future<File> _copyWeaponsFixture(Directory dir, String name) async {
   final bytes = await File(_weaponsFixturePath()).readAsBytes();
   final out = File(p.join(dir.path, name));
   await out.writeAsBytes(bytes, flush: true);
+  return out;
+}
+
+/// Copy fixture with one data-row field changed so a live overwrite would differ.
+Future<File> _copyMutatedCsv(
+  Directory dir, {
+  required String sourceName,
+  required String fixturePath,
+  required String marker,
+  required String replacement,
+}) async {
+  final text = await File(fixturePath).readAsString();
+  expect(text.contains(marker), isTrue, reason: 'fixture must contain $marker');
+  final mutated = text.replaceFirst(marker, replacement);
+  expect(mutated, isNot(text));
+  final out = File(p.join(dir.path, sourceName));
+  await out.writeAsString(mutated, encoding: utf8, flush: true);
   return out;
 }
 
