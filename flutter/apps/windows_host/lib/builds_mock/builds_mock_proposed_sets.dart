@@ -2,7 +2,6 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_storage/destiny2_storage.dart';
 
 import 'builds_mock_derived_name.dart';
-import 'builds_mock_matrix.dart';
 import 'builds_mock_models.dart';
 
 const _kArmorSlotWires = {'helmet', 'arms', 'chest', 'legs', 'class_item'};
@@ -231,18 +230,27 @@ List<MockSetBonus> proposedSetBonusesFor({
   if (build.setBonuses.isNotEmpty) {
     return combineBuildsMockSetBonuses(build.setBonuses);
   }
-  // Rematch Mario proposal when catalog keys arrived after matrix import.
+  // Mario proposal → catalog keys (import may have run before catalog load).
   final proposal = build.armorSetProposal?.trim() ?? '';
   if (proposal.isNotEmpty && setBonusKeyByItemHash.isNotEmpty) {
-    final mapped = mockSetBonusesFromArmorSetProposal(
-      proposal: proposal,
-      catalogSetBonusNames: {
+    final resolved = resolveArmorSetProposal(
+      raw: proposal,
+      catalogNames: {
         for (final n in setBonusKeyByItemHash.values)
           if (n.trim().isNotEmpty) n.trim(),
       },
     );
-    if (mapped.bonuses.isNotEmpty) {
-      return combineBuildsMockSetBonuses(mapped.bonuses);
+    if (resolved.goals.isNotEmpty) {
+      return combineBuildsMockSetBonuses([
+        for (final g in resolved.goals)
+          MockSetBonus(
+            setId: g.setBonusKey,
+            setName: g.setBonusKey,
+            pieces: g.minPieces,
+            tier: g.minPieces >= 4 ? '4pc' : '2pc',
+            text: '${g.minPieces}pc ${g.setBonusKey}',
+          ),
+      ]);
     }
   }
   if (plan != null && plan.rows.isNotEmpty && armorItems.isNotEmpty) {

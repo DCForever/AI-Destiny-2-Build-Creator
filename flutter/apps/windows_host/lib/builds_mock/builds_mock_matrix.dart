@@ -14,22 +14,14 @@ BuildsMockFixture emptyBuildsMockFixture() {
 
 /// Map Warlock matrix rows into the Builds page fixture shape.
 ///
-/// [catalogSetBonusNames] maps Mario proposal labels to catalog keys. Empty
-/// catalog leaves parseable proposals without setBonuses until Optimize
-/// rematch via [proposedSetBonusesFor].
-BuildsMockFixture buildsMockFixtureFromMatrix(
-  List<WarlockMatrixBuild> rows, {
-  Iterable<String> catalogSetBonusNames = const [],
-}) {
+/// Mario's `armor_set_proposal` is kept on [MockBuild.armorSetProposal];
+/// Optimize rematches it to catalog keys in [proposedSetBonusesFor].
+BuildsMockFixture buildsMockFixtureFromMatrix(List<WarlockMatrixBuild> rows) {
   return BuildsMockFixture(
     sets: const [],
     builds: [
       for (var i = 0; i < rows.length; i++)
-        mockBuildFromWarlockMatrix(
-          rows[i],
-          index: i,
-          catalogSetBonusNames: catalogSetBonusNames,
-        ),
+        mockBuildFromWarlockMatrix(rows[i], index: i),
     ],
     held: const [],
     swaps: const [],
@@ -40,13 +32,17 @@ BuildsMockFixture buildsMockFixtureFromMatrix(
 MockBuild mockBuildFromWarlockMatrix(
   WarlockMatrixBuild row, {
   required int index,
-  Iterable<String> catalogSetBonusNames = const [],
 }) {
   final creator = row.creator;
-  final mapped = mockSetBonusesFromArmorSetProposal(
-    proposal: row.armorSetProposal,
-    catalogSetBonusNames: catalogSetBonusNames,
+  final resolved = resolveArmorSetProposal(
+    raw: row.armorSetProposal,
+    catalogNames: const [],
   );
+  // Catalog-backed goals land later via proposedSetBonusesFor; note only for
+  // no-strong-fit / unparseable so the detail pane can show a reason.
+  final note = resolved.noStrongFit || resolved.unparseable
+      ? resolved.unresolvedNote
+      : null;
   return MockBuild(
     id: 'matrix_$index',
     name: row.name,
@@ -58,59 +54,12 @@ MockBuild mockBuildFromWarlockMatrix(
         ? row.name
         : '${row.name} · $creator',
     artifact: const MockArtifact(name: '—', season: '—'),
-    setBonuses: mapped.bonuses,
+    setBonuses: const [],
     stats: const [],
     creator: creator,
     dimLink: row.dimLink,
     armorSetProposal: row.armorSetProposal,
-    setBonusUnresolvedNote: mapped.unresolvedNote,
-  );
-}
-
-/// Map Mario's proposal into [MockSetBonus] goals using catalog family names.
-({List<MockSetBonus> bonuses, String? unresolvedNote})
-    mockSetBonusesFromArmorSetProposal({
-  required String? proposal,
-  required Iterable<String> catalogSetBonusNames,
-}) {
-  if (proposal == null || proposal.trim().isEmpty) {
-    return (bonuses: const [], unresolvedNote: null);
-  }
-  final catalog = [
-    for (final n in catalogSetBonusNames)
-      if (n.trim().isNotEmpty) n.trim(),
-  ];
-  if (catalog.isEmpty) {
-    final parsed = parseArmorSetProposal(proposal);
-    if (parsed.hasGoals) return (bonuses: const [], unresolvedNote: null);
-    return (
-      bonuses: const [],
-      unresolvedNote: resolveArmorSetProposal(
-        raw: proposal,
-        catalogNames: const [],
-      ).unresolvedNote,
-    );
-  }
-  final resolved = resolveArmorSetProposal(
-    raw: proposal,
-    catalogNames: catalog,
-  );
-  if (resolved.goals.isEmpty) {
-    return (bonuses: const [], unresolvedNote: resolved.unresolvedNote);
-  }
-  return (
-    bonuses: List<MockSetBonus>.unmodifiable([
-      for (final g in resolved.goals)
-        MockSetBonus(
-          setId: g.setBonusKey,
-          setName: g.setBonusKey,
-          pieces: g.minPieces,
-          tier: g.minPieces >= 4 ? '4pc' : '2pc',
-          text: '${g.minPieces}pc ${g.setBonusKey}',
-        ),
-    ]),
-    unresolvedNote:
-        resolved.unmatchedNames.isEmpty ? null : resolved.unresolvedNote,
+    setBonusUnresolvedNote: note,
   );
 }
 

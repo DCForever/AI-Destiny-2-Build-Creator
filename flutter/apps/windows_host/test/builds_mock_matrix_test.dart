@@ -5,7 +5,6 @@ import 'package:destiny2_domain/destiny2_domain.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_controller.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_matrix.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_matrix_loader.dart';
-import 'package:destiny2_windows_host/builds_mock/builds_mock_models.dart';
 import 'package:destiny2_windows_host/builds_mock/builds_mock_page.dart';
 import 'package:destiny2_windows_host/theme/flap_theme.dart';
 import 'package:flutter/material.dart';
@@ -44,69 +43,22 @@ void main() {
     expect(weapon.exoticArmor, isEmpty);
   });
 
-  test('maps armor_set_proposal into setBonuses via catalog names', () {
+  test('carries armor_set_proposal; no-strong-fit sets unresolved note', () {
     final rows = parseWarlockMatrix(
       jsonDecode(File(_fixturePath()).readAsStringSync()),
     );
-    const catalog = [
-      'Seventh Seraph Set',
-      'CODA',
-      "Apostate's Blade",
-    ];
-    final fixture = buildsMockFixtureFromMatrix(
-      rows,
-      catalogSetBonusNames: catalog,
-    );
+    final fixture = buildsMockFixtureFromMatrix(rows);
 
     final aeon = fixture.builds.firstWhere((b) => b.name == 'Aeon solar sample');
     expect(aeon.armorSetProposal, '4pc Seventh Seraph');
-    expect(aeon.setBonuses, hasLength(1));
-    expect(aeon.setBonuses.single.setId, 'Seventh Seraph Set');
-    expect(aeon.setBonuses.single.pieces, 4);
+    expect(aeon.setBonuses, isEmpty);
     expect(aeon.setBonusUnresolvedNote, isNull);
-
-    final necrotic =
-        fixture.builds.firstWhere((b) => b.name == 'Necrotic strand sample');
-    expect(necrotic.setBonuses.map((b) => '${b.pieces}:${b.setId}'), [
-      '2:CODA',
-      "2:Apostate's Blade",
-    ]);
 
     final prism = fixture.builds.firstWhere(
       (b) => b.name == 'Solipsism prismatic sample',
     );
     expect(prism.armorSetProposal, 'no strong fit');
-    expect(prism.setBonuses, isEmpty);
     expect(prism.setBonusUnresolvedNote, contains('no strong fit'));
-
-    // Without catalog names, parseable proposals stay empty (rematch later).
-    final pending = buildsMockFixtureFromMatrix(rows);
-    final pendingAeon =
-        pending.builds.firstWhere((b) => b.name == 'Aeon solar sample');
-    expect(pendingAeon.setBonuses, isEmpty);
-    expect(pendingAeon.setBonusUnresolvedNote, isNull);
-  });
-
-  test('user/optimize setBonuses win over empty-catalog matrix import', () {
-    final rows = parseWarlockMatrix(
-      jsonDecode(File(_fixturePath()).readAsStringSync()),
-    );
-    final fixture = buildsMockFixtureFromMatrix(rows);
-    final aeon = fixture.builds.firstWhere((b) => b.name == 'Aeon solar sample');
-    expect(aeon.setBonuses, isEmpty);
-    expect(aeon.armorSetProposal, '4pc Seventh Seraph');
-    final withUser = aeon.copyWith(
-      setBonuses: const [
-        MockSetBonus(
-          setId: 'User Saved Set',
-          setName: 'User Saved Set',
-          pieces: 4,
-          tier: '4pc',
-          text: '4pc User Saved Set',
-        ),
-      ],
-    );
-    expect(withUser.setBonuses.single.setId, 'User Saved Set');
   });
 
   testWidgets('missing matrix path shows error, not sample builds', (
