@@ -14,9 +14,9 @@ BuildsMockFixture emptyBuildsMockFixture() {
 
 /// Map Warlock matrix rows into the Builds page fixture shape.
 ///
-/// [catalogSetBonusNames] maps Mario proposal labels to catalog keys. When
-/// empty, parseable proposals stay without setBonuses until Optimize rematch
-/// (via [proposedSetBonusesFor] + catalog item-hash map).
+/// [catalogSetBonusNames] maps Mario proposal labels to catalog keys. Empty
+/// catalog leaves parseable proposals without setBonuses until Optimize
+/// rematch via [proposedSetBonusesFor].
 BuildsMockFixture buildsMockFixtureFromMatrix(
   List<WarlockMatrixBuild> rows, {
   Iterable<String> catalogSetBonusNames = const [],
@@ -80,7 +80,6 @@ MockBuild mockBuildFromWarlockMatrix(
     for (final n in catalogSetBonusNames)
       if (n.trim().isNotEmpty) n.trim(),
   ];
-  // Catalog not loaded — stay silent for parseable proposals (rematch later).
   if (catalog.isEmpty) {
     final parsed = parseArmorSetProposal(proposal);
     if (parsed.hasGoals) return (bonuses: const [], unresolvedNote: null);
@@ -113,25 +112,6 @@ MockBuild mockBuildFromWarlockMatrix(
     unresolvedNote:
         resolved.unmatchedNames.isEmpty ? null : resolved.unresolvedNote,
   );
-}
-
-/// Visible note when Mario's proposal did not fully map (import or rematch).
-String? armorSetProposalDisplayNote(
-  MockBuild build, {
-  Map<int, String> setBonusKeyByItemHash = const {},
-}) {
-  if (build.setBonuses.isNotEmpty) return null;
-  final proposal = build.armorSetProposal?.trim() ?? '';
-  if (proposal.isEmpty) return build.setBonusUnresolvedNote;
-  if (setBonusKeyByItemHash.isEmpty) return build.setBonusUnresolvedNote;
-  final catalog = <String>{
-    for (final n in setBonusKeyByItemHash.values)
-      if (n.trim().isNotEmpty) n.trim(),
-  };
-  return resolveArmorSetProposal(
-    raw: proposal,
-    catalogNames: catalog,
-  ).unresolvedNote;
 }
 
 String _subclassLabel(WarlockMatrixBuild row) {

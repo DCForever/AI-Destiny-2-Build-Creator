@@ -406,22 +406,17 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     final target = _applyTarget;
     if (target == null) return;
 
-    // Highlighted Optimize result (panel open) counts as the Apply source even
-    // without pressing "Use this result". Confirm the same way that button
-    // does so Undo still restores the prior Fill In / Optimize snapshots.
-    // Never auto-fires Apply from select / Use this result — only from this
-    // click. Keeps applying the DIM build's mods (no optimizer mod assignment).
+    // Confirm highlighted Optimize result (same as Use this result) so Undo
+    // works. Never auto-fires Apply from select/Use this result. DIM mods stay.
     var applyBuild = build;
     if (shouldConfirmHighlightedOptimizeBeforeApply(
       panelOpen: _optimize.panelOpen,
       combinationCount: _optimize.combinations.length,
       applying: _optimize.applying,
     )) {
-      final confirmed = await _optimize.applySelectedResult(
-        build: applyBuild,
-      );
-      if (!mounted) return;
-      if (confirmed == null) return;
+      final confirmed =
+          await _optimize.applySelectedResult(build: applyBuild);
+      if (!mounted || confirmed == null) return;
       _controller.replaceBuild(confirmed);
       applyBuild = confirmed;
       final root = widget.storageRoot;

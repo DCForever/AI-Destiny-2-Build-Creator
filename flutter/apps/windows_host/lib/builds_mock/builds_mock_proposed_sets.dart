@@ -231,17 +231,15 @@ List<MockSetBonus> proposedSetBonusesFor({
   if (build.setBonuses.isNotEmpty) {
     return combineBuildsMockSetBonuses(build.setBonuses);
   }
-  // Rematch Mario's proposal once catalog keys are available (import may have
-  // run before the set-bonus catalog finished loading).
+  // Rematch Mario proposal when catalog keys arrived after matrix import.
   final proposal = build.armorSetProposal?.trim() ?? '';
   if (proposal.isNotEmpty && setBonusKeyByItemHash.isNotEmpty) {
-    final catalogNames = <String>{
-      for (final n in setBonusKeyByItemHash.values)
-        if (n.trim().isNotEmpty) n.trim(),
-    };
     final mapped = mockSetBonusesFromArmorSetProposal(
       proposal: proposal,
-      catalogSetBonusNames: catalogNames,
+      catalogSetBonusNames: {
+        for (final n in setBonusKeyByItemHash.values)
+          if (n.trim().isNotEmpty) n.trim(),
+      },
     );
     if (mapped.bonuses.isNotEmpty) {
       return combineBuildsMockSetBonuses(mapped.bonuses);

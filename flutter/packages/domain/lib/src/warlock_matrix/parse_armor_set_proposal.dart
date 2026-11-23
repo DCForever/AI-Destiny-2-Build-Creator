@@ -15,27 +15,25 @@ class ArmorSetProposalParseResult {
     this.noStrongFit = false,
     this.unparseable = false,
   });
-
   final List<ParsedArmorSetPiece> pieces;
   final bool noStrongFit;
   final bool unparseable;
   bool get hasGoals => pieces.isNotEmpty;
 }
 
-/// Catalog display-name match: exact (case-insensitive) or trailing ` Set`.
-/// Null when zero or multiple matches — never guesses.
+/// Exact (case-insensitive) or trailing ` Set` catalog match; never guesses.
 String? matchCatalogSetBonusKey(
   String parsedName, {
   required Iterable<String> catalogNames,
 }) {
-  final want = _normalizeSetFamily(parsedName);
+  final want = _normFamily(parsedName);
   if (want.isEmpty) return null;
   final exact = <String>[];
   final soft = <String>[];
   for (final raw in catalogNames) {
     final name = raw.trim();
     if (name.isEmpty) continue;
-    final norm = _normalizeSetFamily(name);
+    final norm = _normFamily(name);
     if (norm.isEmpty) continue;
     if (name.toLowerCase() == parsedName.trim().toLowerCase()) {
       exact.add(name);
@@ -56,7 +54,6 @@ class ResolvedArmorSetProposal {
     this.noStrongFit = false,
     this.unparseable = false,
   });
-
   final List<SetBonusCoverageGoal> goals;
   final List<String> unmatchedNames;
   final bool noStrongFit;
@@ -116,19 +113,19 @@ ResolvedArmorSetProposal resolveArmorSetProposal({
 /// Primary phrase only → 4pc or 2+2. Blank / no strong fit / junk → no pieces.
 ArmorSetProposalParseResult parseArmorSetProposal(String? raw) {
   if (raw == null) return const ArmorSetProposalParseResult();
-  var text = _stripAltSuffix(raw.trim()).trim();
+  var text = _stripAlt(raw.trim()).trim();
   if (text.isEmpty) return const ArmorSetProposalParseResult();
-  if (_normalizeLoose(text) == 'no strong fit') {
+  if (_loose(text) == 'no strong fit') {
     return const ArmorSetProposalParseResult(noStrongFit: true);
   }
   final pieces = <ParsedArmorSetPiece>[];
   for (final part in text.split('+')) {
     final trimmed = part.trim();
     if (trimmed.isEmpty) continue;
-    final match = _piecePattern.firstMatch(trimmed);
-    if (match == null) return const ArmorSetProposalParseResult(unparseable: true);
-    final count = int.tryParse(match.group(1)!);
-    final name = match.group(2)!.trim();
+    final m = _pieceRe.firstMatch(trimmed);
+    if (m == null) return const ArmorSetProposalParseResult(unparseable: true);
+    final count = int.tryParse(m.group(1)!);
+    final name = m.group(2)!.trim();
     if (count == null || (count != 2 && count != 4) || name.isEmpty) {
       return const ArmorSetProposalParseResult(unparseable: true);
     }
@@ -141,8 +138,7 @@ ArmorSetProposalParseResult parseArmorSetProposal(String? raw) {
     if (pieces[0].pieces != 2 || pieces[1].pieces != 2) {
       return const ArmorSetProposalParseResult(unparseable: true);
     }
-    if (_normalizeSetFamily(pieces[0].familyName) ==
-        _normalizeSetFamily(pieces[1].familyName)) {
+    if (_normFamily(pieces[0].familyName) == _normFamily(pieces[1].familyName)) {
       return const ArmorSetProposalParseResult(unparseable: true);
     }
   }
@@ -151,21 +147,18 @@ ArmorSetProposalParseResult parseArmorSetProposal(String? raw) {
   );
 }
 
-final RegExp _piecePattern = RegExp(
-  r'^(\d+)\s*pc\s+(.+)$',
-  caseSensitive: false,
-);
+final RegExp _pieceRe = RegExp(r'^(\d+)\s*pc\s+(.+)$', caseSensitive: false);
 
-String _stripAltSuffix(String text) {
-  final idx = text.toLowerCase().indexOf('(alt:');
-  return idx < 0 ? text : text.substring(0, idx).trimRight();
+String _stripAlt(String text) {
+  final i = text.toLowerCase().indexOf('(alt:');
+  return i < 0 ? text : text.substring(0, i).trimRight();
 }
 
-String _normalizeLoose(String text) =>
+String _loose(String text) =>
     text.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
-String _normalizeSetFamily(String name) {
-  var n = _normalizeLoose(name);
+String _normFamily(String name) {
+  var n = _loose(name);
   if (n.endsWith(' set')) n = n.substring(0, n.length - 4).trimRight();
   return n;
 }

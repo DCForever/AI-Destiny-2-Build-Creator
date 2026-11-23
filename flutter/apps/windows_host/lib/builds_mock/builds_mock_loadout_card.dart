@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'builds_mock_derived_name.dart';
 import 'builds_mock_derived_title.dart';
 import 'builds_mock_gear_tables.dart';
-import 'builds_mock_matrix.dart';
 import 'builds_mock_models.dart';
 import 'builds_mock_presentation.dart';
 
@@ -175,12 +174,6 @@ class _BrowseCard extends StatelessWidget {
       armorItems: armorItemsForProposedSets,
       setBonusKeyByItemHash: setBonusKeyByItemHash,
     );
-    final setNote = bonuses.isEmpty
-        ? armorSetProposalDisplayNote(
-            loadout,
-            setBonusKeyByItemHash: setBonusKeyByItemHash,
-          )
-        : null;
     final artifactName = loadout.artifact.name.trim();
     final showArtifact =
         artifactName.isNotEmpty && artifactName != '—' && artifactName.toLowerCase() != 'none';
@@ -261,15 +254,6 @@ class _BrowseCard extends StatelessWidget {
                   BuildsMockSetBonusBoxes(
                     bonuses: bonuses,
                     iconByLowerName: setBonusIconByLowerName,
-                  ),
-                ] else if ((setNote ?? '').trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    setNote!.trim(),
-                    key: Key('builds_mock_set_unresolved_${loadout.id}'),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: neonMono(color: palette.muted, fontSize: 10),
                   ),
                 ],
                 if (showArtifact) ...[
@@ -407,12 +391,6 @@ class _DetailBody extends StatelessWidget {
       armorItems: armorItemsForProposedSets,
       setBonusKeyByItemHash: setBonusKeyByItemHash,
     );
-    final setNote = bonuses.isEmpty
-        ? armorSetProposalDisplayNote(
-            loadout,
-            setBonusKeyByItemHash: setBonusKeyByItemHash,
-          )
-        : null;
     final artifactName = loadout.artifact.name.trim();
     final showArtifact =
         artifactName.isNotEmpty && artifactName != '—' && artifactName.toLowerCase() != 'none';
@@ -502,15 +480,6 @@ class _DetailBody extends StatelessWidget {
                 BuildsMockSetBonusBoxes(
                   bonuses: bonuses,
                   iconByLowerName: setBonusIconByLowerName,
-                ),
-              ] else if ((setNote ?? '').trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  setNote!.trim(),
-                  key: Key('builds_mock_set_unresolved_${loadout.id}'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: neonMono(color: palette.muted, fontSize: 11),
                 ),
               ],
               if (showArtifact) ...[
