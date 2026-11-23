@@ -312,6 +312,8 @@ void main() {
       expect(find.byKey(const Key('equip_step_report'), skipOffstage: false), findsNothing);
       expect(find.byKey(const Key('dim_export_json_preview'), skipOffstage: false), findsNothing);
       expect(find.byKey(const Key('dim_export_status_message'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_soft_advisory'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_soft_advisory'), skipOffstage: false), findsNothing);
     });
 
     testWidgets('Settings destination shows trust chrome', (tester) async {
