@@ -71,17 +71,20 @@ const List<MobileSurfaceEntry> kMobileSurfaceMatrix = [
   MobileSurfaceEntry(
     key: 'loadouts',
     status: MobileSurfaceStatus.deferred,
-    note: 'Windows-first historically; mobile deferred until rebuild',
+    note:
+        'Retired in-game Loadouts shell — Apply/build screens supersede (key kept for matrix)',
   ),
   MobileSurfaceEntry(
     key: 'equip',
     status: MobileSurfaceStatus.na,
-    note: 'Requires OAuth + write clients + equip-ready pins — use Windows/Jaspr',
+    note:
+        'Retired Equip panel — Apply-to-character on build mock/supersedes (Windows)',
   ),
   MobileSurfaceEntry(
     key: 'dim',
     status: MobileSurfaceStatus.na,
-    note: 'DIM jsonOnly needs equip-ready owned pins; path is Windows/Jaspr',
+    note:
+        'Retired DIM jsonOnly panel — domain export + Apply path remain on Windows',
   ),
   MobileSurfaceEntry(
     key: 'optimizer',

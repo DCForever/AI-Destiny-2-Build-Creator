@@ -12,7 +12,6 @@ class ShellHeader extends StatelessComponent {
 
   /// Product AppShell short labels + order (DART-068 / GAP-UI-SHELL-01).
   static const routes = [
-    (label: 'Loadouts', path: '/loadouts'),
     (label: 'Build', path: '/builds'),
     (label: 'Synergy', path: '/synergies'),
     (label: 'Sets', path: '/sets'),

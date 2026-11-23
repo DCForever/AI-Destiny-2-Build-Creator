@@ -13,7 +13,6 @@ void main() {
       expect(
         labels,
         [
-          'Loadouts',
           'Build',
           'Synergy',
           'Sets',
@@ -25,7 +24,6 @@ void main() {
       expect(
         paths,
         [
-          '/loadouts',
           '/builds',
           '/synergies',
           '/sets',
@@ -50,7 +48,6 @@ void main() {
       expect(find.text('Build'), findsOneComponent);
       expect(find.text('Sets'), findsOneComponent);
       expect(find.text('Synergy'), findsOneComponent);
-      expect(find.text('Loadouts'), findsOneComponent);
       expect(find.text('Settings'), findsOneComponent);
     });
   });
