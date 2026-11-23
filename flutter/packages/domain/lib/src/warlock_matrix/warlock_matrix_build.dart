@@ -8,6 +8,7 @@ class WarlockMatrixBuild {
     required this.name,
     this.creator,
     this.dimLink,
+    this.armorSetProposal,
     this.isWeaponExotic = false,
   });
 
@@ -25,6 +26,9 @@ class WarlockMatrixBuild {
 
   /// Optional `dim.gg/…` share URL from the matrix `dim` field.
   final String? dimLink;
+
+  /// Mario's free-text armor set proposal (`armor_set_proposal`), when present.
+  final String? armorSetProposal;
 
   /// True when the row came from `weapons.cells` (exotic weapon filing).
   final bool isWeaponExotic;

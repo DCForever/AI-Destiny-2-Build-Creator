@@ -221,6 +221,16 @@ extension _BuildsMockBuildDetail on _BuildsMockPageState {
                         ),
                       ),
                     ],
+                    if ((build.setBonusUnresolvedNote ?? '')
+                        .trim()
+                        .isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        build.setBonusUnresolvedNote!.trim(),
+                        key: Key('builds_mock_set_unresolved_${build.id}'),
+                        style: neonMono(color: palette.muted, fontSize: 11),
+                      ),
+                    ],
                     if (_optimize.panelOpen &&
                         _optimize.combinations.isNotEmpty) ...[
                       const SizedBox(height: 12),

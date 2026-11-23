@@ -175,6 +175,8 @@ class MockBuild {
     this.exoticWeaponType,
     this.exoticWeaponDamageType,
     this.exoticWeaponSlot,
+    this.armorSetProposal,
+    this.setBonusUnresolvedNote,
     this.isOptimized = false,
   });
 
@@ -206,6 +208,12 @@ class MockBuild {
 
   /// Weapon slot wire name (`primary` / `special` / `heavy`) when known.
   final String? exoticWeaponSlot;
+
+  /// Raw Mario `armor_set_proposal` from the matrix (default set constraint).
+  final String? armorSetProposal;
+
+  /// Visible reason when Mario's proposal did not map to catalog goals.
+  final String? setBonusUnresolvedNote;
 
   /// Optimize readiness hook — set when a confirmed Optimize result is applied.
   final bool isOptimized;
@@ -239,6 +247,8 @@ class MockBuild {
     String? exoticWeaponType,
     String? exoticWeaponDamageType,
     String? exoticWeaponSlot,
+    String? armorSetProposal,
+    String? setBonusUnresolvedNote,
     bool? isOptimized,
   }) {
     return MockBuild(
@@ -259,6 +269,9 @@ class MockBuild {
       exoticWeaponDamageType:
           exoticWeaponDamageType ?? this.exoticWeaponDamageType,
       exoticWeaponSlot: exoticWeaponSlot ?? this.exoticWeaponSlot,
+      armorSetProposal: armorSetProposal ?? this.armorSetProposal,
+      setBonusUnresolvedNote:
+          setBonusUnresolvedNote ?? this.setBonusUnresolvedNote,
       isOptimized: isOptimized ?? this.isOptimized,
     );
   }

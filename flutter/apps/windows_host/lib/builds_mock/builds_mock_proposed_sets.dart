@@ -214,9 +214,13 @@ List<MockSetBonus> _bonusesFromCounts(
 /// Proposed armor set bonuses for a build (display + Optimize goals).
 ///
 /// Interpretation (Daniel Nov 15 2026): the armor set(s) / set-bonus the build
-/// specifies — [MockBuild.setBonuses] when present (4pc or 2+2), else Fill In
+/// specifies — [MockBuild.setBonuses] when present (4pc or 2+2), else Mario's
+/// [MockBuild.armorSetProposal] rematched via catalog keys, else Fill In
 /// `proposed`/`filled` armor rows resolved via inventory set keys, else
 /// legendary slot [MockSlotAssignment.setId] counts that form 4pc or 2+2.
+///
+/// Mario's proposal is the default; non-empty [MockBuild.setBonuses] (user /
+/// Optimize / fixture) win and are not overwritten here.
 List<MockSetBonus> proposedSetBonusesFor({
   required MockBuild build,
   FillInSavedBuildPlan? plan,
@@ -225,6 +229,29 @@ List<MockSetBonus> proposedSetBonusesFor({
 }) {
   if (build.setBonuses.isNotEmpty) {
     return combineBuildsMockSetBonuses(build.setBonuses);
+  }
+  // Mario proposal → catalog keys (import may have run before catalog load).
+  final proposal = build.armorSetProposal?.trim() ?? '';
+  if (proposal.isNotEmpty && setBonusKeyByItemHash.isNotEmpty) {
+    final resolved = resolveArmorSetProposal(
+      raw: proposal,
+      catalogNames: {
+        for (final n in setBonusKeyByItemHash.values)
+          if (n.trim().isNotEmpty) n.trim(),
+      },
+    );
+    if (resolved.goals.isNotEmpty) {
+      return combineBuildsMockSetBonuses([
+        for (final g in resolved.goals)
+          MockSetBonus(
+            setId: g.setBonusKey,
+            setName: g.setBonusKey,
+            pieces: g.minPieces,
+            tier: g.minPieces >= 4 ? '4pc' : '2pc',
+            text: '${g.minPieces}pc ${g.setBonusKey}',
+          ),
+      ]);
+    }
   }
   if (plan != null && plan.rows.isNotEmpty && armorItems.isNotEmpty) {
     final fromPlan = _bonusesFromCounts(

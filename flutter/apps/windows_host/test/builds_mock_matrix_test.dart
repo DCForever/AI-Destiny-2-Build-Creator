@@ -43,6 +43,24 @@ void main() {
     expect(weapon.exoticArmor, isEmpty);
   });
 
+  test('carries armor_set_proposal; no-strong-fit sets unresolved note', () {
+    final rows = parseWarlockMatrix(
+      jsonDecode(File(_fixturePath()).readAsStringSync()),
+    );
+    final fixture = buildsMockFixtureFromMatrix(rows);
+
+    final aeon = fixture.builds.firstWhere((b) => b.name == 'Aeon solar sample');
+    expect(aeon.armorSetProposal, '4pc Seventh Seraph');
+    expect(aeon.setBonuses, isEmpty);
+    expect(aeon.setBonusUnresolvedNote, isNull);
+
+    final prism = fixture.builds.firstWhere(
+      (b) => b.name == 'Solipsism prismatic sample',
+    );
+    expect(prism.armorSetProposal, 'no strong fit');
+    expect(prism.setBonusUnresolvedNote, contains('no strong fit'));
+  });
+
   testWidgets('missing matrix path shows error, not sample builds', (
     tester,
   ) async {

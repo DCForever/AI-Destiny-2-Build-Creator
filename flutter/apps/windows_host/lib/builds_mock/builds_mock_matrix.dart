@@ -14,11 +14,9 @@ BuildsMockFixture emptyBuildsMockFixture() {
 
 /// Map Warlock matrix rows into the Builds page fixture shape.
 ///
-/// Armor pool / readiness / swap data stay empty — matrix rows only carry
-/// name, exotic, subclass, creator, and DIM link.
-BuildsMockFixture buildsMockFixtureFromMatrix(
-  List<WarlockMatrixBuild> rows,
-) {
+/// Mario's `armor_set_proposal` is kept on [MockBuild.armorSetProposal];
+/// Optimize rematches it to catalog keys in [proposedSetBonusesFor].
+BuildsMockFixture buildsMockFixtureFromMatrix(List<WarlockMatrixBuild> rows) {
   return BuildsMockFixture(
     sets: const [],
     builds: [
@@ -35,34 +33,38 @@ MockBuild mockBuildFromWarlockMatrix(
   WarlockMatrixBuild row, {
   required int index,
 }) {
-  final subclass = _subclassLabel(row);
-  final exoticArmor = row.isWeaponExotic ? '' : row.exoticName;
-  final exoticWeapon = row.isWeaponExotic ? row.exoticName : '';
   final creator = row.creator;
-  final loop = creator == null || creator.isEmpty
-      ? row.name
-      : '${row.name} · $creator';
+  final resolved = resolveArmorSetProposal(
+    raw: row.armorSetProposal,
+    catalogNames: const [],
+  );
+  // Catalog-backed goals land later via proposedSetBonusesFor; note only for
+  // no-strong-fit / unparseable so the detail pane can show a reason.
+  final note = resolved.noStrongFit || resolved.unparseable
+      ? resolved.unresolvedNote
+      : null;
   return MockBuild(
     id: 'matrix_$index',
     name: row.name,
-    subclass: subclass,
-    exoticArmor: exoticArmor,
-    exoticWeapon: exoticWeapon,
+    subclass: _subclassLabel(row),
+    exoticArmor: row.isWeaponExotic ? '' : row.exoticName,
+    exoticWeapon: row.isWeaponExotic ? row.exoticName : '',
     slots: const [],
-    loop: loop,
+    loop: creator == null || creator.isEmpty
+        ? row.name
+        : '${row.name} · $creator',
     artifact: const MockArtifact(name: '—', season: '—'),
     setBonuses: const [],
     stats: const [],
     creator: creator,
     dimLink: row.dimLink,
+    armorSetProposal: row.armorSetProposal,
+    setBonusUnresolvedNote: note,
   );
 }
 
 String _subclassLabel(WarlockMatrixBuild row) {
-  if (row.subclassRecognized) {
-    return warlockSubclassLabel(row.subclassKey);
-  }
+  if (row.subclassRecognized) return warlockSubclassLabel(row.subclassKey);
   final raw = row.subclassKey.trim();
-  if (raw.isEmpty) return 'Unresolved';
-  return raw;
+  return raw.isEmpty ? 'Unresolved' : raw;
 }

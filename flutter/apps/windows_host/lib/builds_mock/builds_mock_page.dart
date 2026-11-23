@@ -225,6 +225,7 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
         map.putIfAbsent(name, () => icon);
       }
       // Stamp optimizer candidates so proposed-set goals match inventory keys.
+      // proposedSetBonusesFor rematches Mario proposals from this map.
       _optimize.setBonusKeyByItemHash =
           setBonusKeyByItemHashFromCatalog(rows);
       setState(() => _setIconByLowerName = map);
@@ -405,21 +406,39 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     final target = _applyTarget;
     if (target == null) return;
 
+    // Confirm highlighted Optimize result (same as Use this result) so Undo
+    // works. Never auto-fires Apply from select/Use this result. DIM mods stay.
+    var applyBuild = build;
+    if (shouldConfirmHighlightedOptimizeBeforeApply(
+      panelOpen: _optimize.panelOpen,
+      combinationCount: _optimize.combinations.length,
+      applying: _optimize.applying,
+    )) {
+      final confirmed =
+          await _optimize.applySelectedResult(build: applyBuild);
+      if (!mounted || confirmed == null) return;
+      _controller.replaceBuild(confirmed);
+      applyBuild = confirmed;
+      final root = widget.storageRoot;
+      if (root != null) await _loadFillInPlans(root);
+      if (!mounted) return;
+    }
+
     setState(() {
-      _applyingBuildId = build.id;
-      _applyErrorByBuild.remove(build.id);
+      _applyingBuildId = applyBuild.id;
+      _applyErrorByBuild.remove(applyBuild.id);
     });
 
     final outcome = await runBuildsMockApplyToCharacter(
-      build: build,
-      plan: _savedFillInPlans[build.id],
+      build: applyBuild,
+      plan: _savedFillInPlans[applyBuild.id],
       ports: ports,
       target: target,
-      loadout: _controller.dimLoadoutFor(build),
+      loadout: _controller.dimLoadoutFor(applyBuild),
       isMounted: () => mounted,
       onProgress: (progress) {
         if (!mounted) return;
-        setState(() => _applyProgressByBuild[build.id] = progress);
+        setState(() => _applyProgressByBuild[applyBuild.id] = progress);
       },
     );
 
@@ -427,10 +446,10 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     setState(() {
       _applyingBuildId = null;
       if (outcome.progress != null) {
-        _applyProgressByBuild[build.id] = outcome.progress!;
+        _applyProgressByBuild[applyBuild.id] = outcome.progress!;
       }
       if (outcome.error != null) {
-        _applyErrorByBuild[build.id] = outcome.error!;
+        _applyErrorByBuild[applyBuild.id] = outcome.error!;
       }
     });
     // Refresh in case memberships/characters changed mid-session.
