@@ -457,7 +457,7 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
     );
   }
 
-  /// Finish readiness rail (mock #readiness-rail): three-gate · gaps · soft · equip · DIM.
+  /// Finish readiness rail (mock #readiness-rail): three-gate · gaps · soft.
   Widget _buildReadinessRail(BuildContext context) {
     return NeonZone(
       key: const Key('builds_zone_readiness'),
@@ -469,22 +469,10 @@ extension _BuildsLibraryComposeSection on _BuildsLibraryPageState {
             _buildThreeGateChips(context),
             const SizedBox(height: kSpace12),
             _buildFinishGaps(context),
-            const SizedBox(height: kSpace16),
-            EquipPanel(
-              key: const Key('builds_equip_panel'),
-              controller: _equipController,
-              finishComplete: _controller.finishComplete,
-            ),
-            const SizedBox(height: kSpace12),
-            DimExportPanel(
-              key: const Key('builds_dim_export_panel'),
-              controller: _dimExportController,
-              finishComplete: _controller.finishComplete,
-            ),
             const SizedBox(height: kSpace12),
           ] else
             Text(
-              'Select a variant to evaluate finish, equip, and export.',
+              'Select a variant to evaluate finish and soft guidance.',
               style: neonBody(
                 color: FlapPalette.of(context).muted,
                 fontSize: 12,

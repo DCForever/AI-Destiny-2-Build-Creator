@@ -5,7 +5,6 @@
 /// Loads production hybrid entity channel for offline Catalog (no raw rebuild).
 /// Public+PKCE OAuth with origin-scoped token storage (DART-045).
 /// Compose spine (builds/sets/synergies) on writer DB (DART-046).
-/// Equip-ready + DIM jsonOnly + optional equip (DART-047).
 /// Inventory sync + Owned catalog depth with vault resolution (DART-056).
 library;
 
@@ -30,14 +29,6 @@ import 'theme/theme.dart' show kNeonNetworkFontsStylesheetHref;
 
 /// Public Bungie API key only (never CLIENT_SECRET).
 const String _bungieApiKeyDefine = String.fromEnvironment('BUNGIE_API_KEY');
-
-Future<void> _browserClipboardWriter(String text) async {
-  try {
-    await web.window.navigator.clipboard.writeText(text).toDart;
-  } catch (_) {
-    // Fallback: controller still retains lastJson for preview.
-  }
-}
 
 /// Idempotent Neon Network Google Fonts stylesheet link.
 void _ensureNeonNetworkFontsLinked() {
@@ -113,7 +104,6 @@ void main() {
       oauthSession: oauthSession,
       profileClient: profileClient,
       writeClient: writeClient,
-      clipboardWriter: _browserClipboardWriter,
     ),
   );
 }

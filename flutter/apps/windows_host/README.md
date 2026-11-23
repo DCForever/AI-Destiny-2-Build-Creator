@@ -109,10 +109,7 @@ flutter test test/variant_compose_format_test.dart test/variant_compose_page_tes
 flutter test test/soft_guidance_format_test.dart test/soft_guidance_page_test.dart
 # Armor optimizer workspace (DART-036):
 flutter test test/optimizer_format_test.dart test/optimizer_workspace_test.dart
-# Equip UI (DART-038):
-flutter test test/equip_format_test.dart test/equip_panel_test.dart
-# DIM export UI (DART-039):
-flutter test test/dim_export_format_test.dart test/dim_export_panel_test.dart
+# Apply-to-character lives on Builds mock (Equip panel / Copy DIM JSON panel retired).
 ```
 
 ## Specs

@@ -53,7 +53,7 @@ void main() {
   });
 
   group('M1: shared formatters live in destiny2_app', () {
-    test('package owns soft guidance + equip + dim formatters', () {
+    test('package owns soft guidance + apply outcome formatter', () {
       final soft = _read(
         'packages/app/lib/src/presentation/soft_guidance_format.dart',
       );
@@ -61,10 +61,14 @@ void main() {
       expect(soft, contains('coverageTierToneKey'));
       final equip =
           _read('packages/app/lib/src/presentation/equip_format.dart');
-      expect(equip, contains('canEnableEquipCta'));
-      final dim =
-          _read('packages/app/lib/src/presentation/dim_export_format.dart');
-      expect(dim, contains('canEnableDimExportCta'));
+      expect(equip, contains('formatApplyOutcomeLabel'));
+      expect(equip.contains('canEnableEquipCta'), isFalse);
+      expect(equip.contains('formatEquipStepReportLine'), isFalse);
+      final barrel = _read('packages/app/lib/destiny2_app.dart');
+      expect(barrel.contains('equip_session'), isFalse);
+      expect(barrel.contains('dim_export_format'), isFalse);
+      expect(barrel.contains('dim_export_session'), isFalse);
+      expect(barrel, contains('apply_to_character'));
     });
 
     test('host soft_guidance files re-export package (not independent impl)',
@@ -82,15 +86,31 @@ void main() {
     });
   });
 
-  group('M2: equip session shared core', () {
-    test('EquipSession exists and host controllers wrap it', () {
-      final session = _read('packages/app/lib/src/equip/equip_session.dart');
-      expect(session, contains('class EquipSession'));
-      expect(session, contains('confirmGapsAndEquip'));
-      final win = _read('apps/windows_host/lib/equip/equip_controller.dart');
-      expect(win, contains('EquipSession'));
-      final web = _read('apps/web_host/lib/equip/equip_controller.dart');
-      expect(web, contains('EquipSession'));
+  group('M2: apply-to-character shared core', () {
+    test('applyToCharacter lives in package app equip layer', () {
+      final apply = _read('packages/app/lib/src/equip/apply_to_character.dart');
+      expect(apply, contains('applyToCharacter'));
+      expect(apply, contains('formatApplyOutcomeLabel'));
+      expect(
+        File(p.join(root.path, 'packages/app/lib/src/equip/equip_session.dart'))
+            .existsSync(),
+        isFalse,
+      );
+      expect(
+        File(
+          p.join(root.path, 'packages/app/lib/src/dim_export/dim_export_session.dart'),
+        ).existsSync(),
+        isFalse,
+      );
+      expect(
+        File(
+          p.join(
+            root.path,
+            'packages/app/lib/src/presentation/dim_export_format.dart',
+          ),
+        ).existsSync(),
+        isFalse,
+      );
     });
   });
 

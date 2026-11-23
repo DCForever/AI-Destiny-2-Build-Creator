@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 void main() {
-  test('equip/export modules do not reference confidential secrets', () {
+  test('equip compose modules do not reference confidential secrets', () {
     final rootCandidates = [
       Directory(p.join(Directory.current.path, 'lib')),
       Directory(p.join(Directory.current.path, 'apps', 'web_host', 'lib')),
@@ -21,8 +21,9 @@ void main() {
     for (final entity in root.listSync(recursive: true)) {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
       final rel = p.relative(entity.path, from: root.path);
-      if (!rel.contains('equip') &&
-          !rel.contains('dim_export') &&
+      final inEquipProviders =
+          rel.startsWith('equip/') && rel.endsWith('_provider.dart');
+      if (!inEquipProviders &&
           !rel.contains('main.client') &&
           !rel.contains('compose_services') &&
           !rel.contains('build_compose')) {

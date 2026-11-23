@@ -292,6 +292,28 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('loadouts_page'), skipOffstage: false), findsNothing);
+      expect(find.text('Loadouts'), findsNothing);
+      expect(find.byKey(const Key('builds_equip_panel'), skipOffstage: false), findsNothing);
+      expect(
+        find.byKey(const Key('builds_dim_export_panel'), skipOffstage: false),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('equip_panel'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_panel'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_apply_button'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_copy_button'), skipOffstage: false), findsNothing);
+      expect(find.text('Copy DIM JSON'), findsNothing);
+      expect(find.byKey(const Key('loadouts_list'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('loadouts_title'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('loadouts_signed_out'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('loadouts_filters'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_character_dropdown'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_gaps_confirm'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_step_report'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_json_preview'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_status_message'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_soft_advisory'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_soft_advisory'), skipOffstage: false), findsNothing);
     });
 
     testWidgets('Settings destination shows trust chrome', (tester) async {
@@ -320,127 +342,6 @@ void main() {
       expect(refreshFinder, findsOneWidget);
       expect(find.byKey(const Key('reload_status')), findsOneWidget);
       expect(find.byKey(const Key('manifest_status_card')), findsOneWidget);
-    });
-  });
-
-  group('loadouts primary controls',
-      skip: true, () {
-    testWidgets('signed-out state exposes sign-in CTA; filters gated',
-        (tester) async {
-      await _surface(tester);
-      await tester.pumpWidget(Destiny2WindowsApp(services: services));
-      await _pump(tester);
-      await _selectNav(tester, 0);
-
-      expect(find.byKey(const Key('loadouts_signed_out')), findsOneWidget);
-      expect(find.byKey(const Key('loadouts_sign_in_cta')), findsOneWidget);
-      expect(find.byKey(const Key('loadouts_filters')), findsNothing);
-      expect(find.byKey(const Key('loadouts_filter_hide_empty')), findsNothing);
-      expect(find.byKey(const Key('loadouts_refresh')), findsNothing);
-
-      await tester.tap(find.byKey(const Key('loadouts_sign_in_cta')));
-      await _pump(tester);
-      expect(
-        tester
-            .widget<NavigationRail>(find.byKey(const Key('host_nav_rail')))
-            .selectedIndex,
-        5,
-      );
-      expect(find.byKey(const Key('oauth_sign_in')), findsOneWidget);
-    });
-
-    testWidgets(
-        'signed-in lists loadouts; filters and detail toggle work offline',
-        (tester) async {
-      await seedSignedIn(tokenStore);
-      await services.oauthSession.restore();
-      expect(services.oauthSession.isSignedIn, isTrue);
-
-      await _surface(tester);
-      await tester.pumpWidget(Destiny2WindowsApp(services: services));
-      await _pump(tester);
-      await _selectNav(tester, 0);
-      await _pumpUntilAny(
-        tester,
-        [
-          const Key('loadouts_list'),
-          const Key('loadouts_empty'),
-          const Key('loadouts_error'),
-          const Key('loadouts_loading'),
-          const Key('loadouts_signed_out'),
-        ],
-      );
-      // Extra settle for presentation-table File I/O + profile parse.
-      for (var i = 0; i < 15; i++) {
-        if (find.byKey(const Key('loadouts_list')).evaluate().isNotEmpty ||
-            find.byKey(const Key('loadouts_empty')).evaluate().isNotEmpty ||
-            find.byKey(const Key('loadouts_error')).evaluate().isNotEmpty) {
-          break;
-        }
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 30)),
-        );
-        await tester.pump();
-      }
-
-      expect(find.byKey(const Key('loadouts_signed_out')), findsNothing);
-      expect(find.byKey(const Key('loadouts_filters')), findsOneWidget);
-      expect(find.byKey(const Key('loadouts_refresh')), findsOneWidget);
-
-      final hasList =
-          find.byKey(const Key('loadouts_list')).evaluate().isNotEmpty;
-      final hasEmpty =
-          find.byKey(const Key('loadouts_empty')).evaluate().isNotEmpty;
-      final hasError =
-          find.byKey(const Key('loadouts_error')).evaluate().isNotEmpty;
-      final stuckLoading =
-          find.byKey(const Key('loadouts_loading')).evaluate().isNotEmpty;
-      // Product should parse FakeProfileClient fixture into non-empty list.
-      expect(
-        hasList || hasEmpty || hasError,
-        isTrue,
-        reason:
-            'ISSUE-LOADOUTS-SHELL-001: signed-in shell never settled '
-            '(loading=$stuckLoading empty=$hasEmpty error=$hasError list=$hasList)',
-      );
-      expect(
-        hasList,
-        isTrue,
-        reason:
-            'ISSUE-LOADOUTS-SHELL-001: signed-in shell with fixture profile '
-            'did not show loadouts_list (empty=$hasEmpty error=$hasError)',
-      );
-
-      final tiles = find.byWidgetPredicate(
-        (w) =>
-            w.key is ValueKey<String> &&
-            (w.key! as ValueKey<String>).value.startsWith('loadout_tile_'),
-      );
-      if (tiles.evaluate().isNotEmpty) {
-        final firstKey = tiles.evaluate().first.widget.key! as ValueKey<String>;
-        final id = firstKey.value.replaceFirst('loadout_tile_', '');
-        final toggle = find.byKey(Key('loadout_details_toggle_$id'));
-        if (toggle.evaluate().isNotEmpty) {
-          await tester.ensureVisible(toggle);
-          await tester.tap(toggle);
-          await _pump(tester);
-          expect(find.byKey(Key('loadout_details_$id')), findsOneWidget);
-          expect(
-            find.byKey(Key('loadout_detail_character_$id')),
-            findsOneWidget,
-          );
-          expect(
-            find.byKey(Key('loadout_detail_instances_$id')),
-            findsOneWidget,
-          );
-        }
-      }
-
-      final hideEmpty = find.byKey(const Key('loadouts_filter_hide_empty'));
-      if (hideEmpty.evaluate().isNotEmpty) {
-        await tester.tap(hideEmpty);
-        await _pump(tester);
-      }
     });
   });
 
@@ -507,8 +408,6 @@ void main() {
       expect(find.byKey(const Key('builds_save_identity')), findsOneWidget);
       expect(find.byKey(const Key('builds_slot_pins_list')), findsOneWidget);
       expect(find.byKey(const Key('builds_subclass_kit_summary')), findsOneWidget);
-      expect(find.byKey(const Key('builds_equip_panel')), findsOneWidget);
-      expect(find.byKey(const Key('builds_dim_export_panel')), findsOneWidget);
     });
 
     testWidgets('Add another type chip path still creates via UI',
