@@ -36,7 +36,6 @@ const PAD_REASON_RE = /\breason\s*:\s*['"]pad[^'"]*['"]/i;
 /** Trivial never-fail pads: expect(1, 1) / expect(x, isNotNull). */
 const TRIVIAL_PAD_RE =
   /\bexpect\s*\(\s*1\s*,\s*1\s*\)|\bexpect\s*\(\s*[A-Za-z_][\w.]*\s*,\s*isNotNull\b/;
-/** Real import/export statements (after comment strip). Allows same-line exports. */
 const REAL_IMPORT_RE =
   /(?:^|[;\n])\s*(?:import|export)\s+['"]([^'"]+)['"]/gm;
 
@@ -95,7 +94,6 @@ const PACKAGE_LIB_ROOTS = {
   destiny2_sandbox_data: "flutter/packages/sandbox_data/lib",
 };
 
-/** Resolve Dart import URI → repo path, or null. */
 export function resolveDartImportToRepoPath(importUri, fromPath = "") {
   if (!importUri) return null;
   const pkg = importUri.match(/^package:([^/]+)\/(.+)$/);
@@ -164,7 +162,6 @@ function flushHunkLoosening(removed, added, st) {
   }
 }
 
-/** Production paths deleted in this PR (non-test). */
 export function deletedProductionPaths(nameStatusLines = []) {
   const out = [];
   for (const line of nameStatusLines) {
@@ -178,7 +175,6 @@ export function deletedProductionPaths(nameStatusLines = []) {
   return out;
 }
 
-/** Top-level public names in a Dart library (as-of-base). */
 export function extractDartPublicTopLevelNames(src) {
   const clean = stripComments(src || "");
   const names = new Set();
@@ -194,7 +190,6 @@ export function extractDartPublicTopLevelNames(src) {
   return names;
 }
 
-/** Direct deleted import, or barrel + use of a deleted file's public name. */
 export function testImportsDeletedProduction(
   testPath,
   baseTestSource,

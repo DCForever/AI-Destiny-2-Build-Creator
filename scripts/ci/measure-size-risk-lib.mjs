@@ -157,12 +157,7 @@ export function measureSizeRisk(input) {
     /\bskip\s*:\s*(?:true\b|'[^']*'|"[^"]*")|@Skip\b|\b(?:it|test|describe)\.skip\s*\(/;
   const testDeleted = (input.nameStatus || "")
     .split("\n")
-    .some((line) => {
-      if (!line.trim()) return false;
-      const [status, ...rest] = line.split("\t");
-      if (!status.startsWith("D")) return false;
-      return isTestPath(rest[rest.length - 1]);
-    });
+    .some((l) => /^D/.test(l) && isTestPath(l.split("\t").pop()));
   if (
     testDeleted ||
     /findsOneWidget[\s\S]{0,120}findsWidgets/.test(testScan) ||
