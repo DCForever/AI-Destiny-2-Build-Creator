@@ -227,6 +227,15 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
       // Stamp optimizer candidates so proposed-set goals match inventory keys.
       _optimize.setBonusKeyByItemHash =
           setBonusKeyByItemHashFromCatalog(rows);
+      // Rematch Mario armor_set_proposal → setBonuses now that catalog names
+      // exist (matrix import may have run first with an empty catalog).
+      final catalogNames = <String>{
+        for (final r in rows)
+          if (r.name.trim().isNotEmpty) r.name.trim(),
+      };
+      if (catalogNames.isNotEmpty) {
+        _controller.rematchArmorSetProposals(catalogNames);
+      }
       setState(() => _setIconByLowerName = map);
     } catch (_) {
       // Set filter falls back to text-only (no letter badge).
@@ -405,21 +414,44 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     final target = _applyTarget;
     if (target == null) return;
 
+    // Highlighted Optimize result (panel open) counts as the Apply source even
+    // without pressing "Use this result". Confirm the same way that button
+    // does so Undo still restores the prior Fill In / Optimize snapshots.
+    // Never auto-fires Apply from select / Use this result — only from this
+    // click. Keeps applying the DIM build's mods (no optimizer mod assignment).
+    var applyBuild = build;
+    if (shouldConfirmHighlightedOptimizeBeforeApply(
+      panelOpen: _optimize.panelOpen,
+      combinationCount: _optimize.combinations.length,
+      applying: _optimize.applying,
+    )) {
+      final confirmed = await _optimize.applySelectedResult(
+        build: applyBuild,
+      );
+      if (!mounted) return;
+      if (confirmed == null) return;
+      _controller.replaceBuild(confirmed);
+      applyBuild = confirmed;
+      final root = widget.storageRoot;
+      if (root != null) await _loadFillInPlans(root);
+      if (!mounted) return;
+    }
+
     setState(() {
-      _applyingBuildId = build.id;
-      _applyErrorByBuild.remove(build.id);
+      _applyingBuildId = applyBuild.id;
+      _applyErrorByBuild.remove(applyBuild.id);
     });
 
     final outcome = await runBuildsMockApplyToCharacter(
-      build: build,
-      plan: _savedFillInPlans[build.id],
+      build: applyBuild,
+      plan: _savedFillInPlans[applyBuild.id],
       ports: ports,
       target: target,
-      loadout: _controller.dimLoadoutFor(build),
+      loadout: _controller.dimLoadoutFor(applyBuild),
       isMounted: () => mounted,
       onProgress: (progress) {
         if (!mounted) return;
-        setState(() => _applyProgressByBuild[build.id] = progress);
+        setState(() => _applyProgressByBuild[applyBuild.id] = progress);
       },
     );
 
@@ -427,10 +459,10 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
     setState(() {
       _applyingBuildId = null;
       if (outcome.progress != null) {
-        _applyProgressByBuild[build.id] = outcome.progress!;
+        _applyProgressByBuild[applyBuild.id] = outcome.progress!;
       }
       if (outcome.error != null) {
-        _applyErrorByBuild[build.id] = outcome.error!;
+        _applyErrorByBuild[applyBuild.id] = outcome.error!;
       }
     });
     // Refresh in case memberships/characters changed mid-session.

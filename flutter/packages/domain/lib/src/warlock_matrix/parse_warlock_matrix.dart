@@ -145,15 +145,20 @@ WarlockMatrixBuild? _buildFromMap(
   final name = item['name'];
   final creator = item['creator'];
   final dim = item['dim'];
+  final proposal = item['armor_set_proposal'];
   final title = name is String ? name.trim() : '';
   final author = creator is String ? creator.trim() : '';
   final dimLink = dim is String ? dim.trim() : '';
+  final armorSetProposal =
+      proposal is String ? proposal.trim() : '';
   return WarlockMatrixBuild(
     exoticName: exoticName,
     subclassKey: subclassKey,
     name: title.isEmpty ? 'Untitled build' : title,
     creator: author.isEmpty ? null : author,
     dimLink: dimLink.isEmpty ? null : dimLink,
+    armorSetProposal:
+        armorSetProposal.isEmpty ? null : armorSetProposal,
     isWeaponExotic: isWeaponExotic,
   );
 }

@@ -3,9 +3,9 @@ import '../evaluators/optimizer_score.dart';
 import '../models/equipment.dart';
 import '../models/optimizer.dart';
 import '../models/soft_stats.dart';
+import '../warlock_matrix/parse_armor_set_proposal.dart';
 import 'pilot_reasons.dart';
 import 'pilot_review.dart';
-import 'pilot_text.dart';
 
 /// One optimizer result shown as a proposal. Nothing is equipped.
 class PilotProposal {
@@ -115,7 +115,8 @@ PilotProposal _setProposal(PilotCaseReview review) {
       withheld: true,
     );
   }
-  if (pilotSameText(agreed, 'no strong fit')) {
+  final parsed = parseArmorSetProposal(agreed);
+  if (parsed.noStrongFit) {
     return const PilotProposal(
       caseId: '',
       kind: 'set-goal',
@@ -126,27 +127,81 @@ PilotProposal _setProposal(PilotCaseReview review) {
       withheld: true,
     )._withCase(review.caseId);
   }
+  if (!parsed.hasGoals) {
+    return PilotProposal(
+      caseId: review.caseId,
+      kind: 'set-goal',
+      summary: 'SYNTHETIC set proposal withheld. The set column could not be '
+          'parsed into 4pc or 2+2. No set was chosen.',
+      instanceIds: const [],
+      withheld: true,
+    );
+  }
+  // Pilot board uses the parsed family label as the synthetic set key
+  // (no live catalog). 2+2 gets both keys on the board.
+  final goals = <SetBonusCoverageGoal>[
+    for (final p in parsed.pieces)
+      SetBonusCoverageGoal(
+        setBonusKey: p.familyName,
+        minPieces: p.pieces,
+      ),
+  ];
+  final setKeyForBoard = parsed.pieces.first.familyName;
   final response = optimizeArmorCore(
     ArmorOptimizeRequest(
-      candidates: _board(agreed),
-      constraints: KitConstraints(
-        setBonusGoals: <SetBonusCoverageGoal>[
-          SetBonusCoverageGoal(setBonusKey: agreed, minPieces: 4),
-        ],
-      ),
+      candidates: _boardForSetGoals(goals, primaryKey: setKeyForBoard),
+      constraints: KitConstraints(setBonusGoals: goals),
       maxResults: 50,
     ),
   );
   final top = response.combinations.first;
+  final label = parsed.pieces
+      .map((p) => '${p.pieces}pc ${p.familyName}')
+      .join(' + ');
   return PilotProposal(
     caseId: review.caseId,
     kind: 'set-goal',
-    summary: 'SYNTHETIC set proposal for "$agreed". Existing optimizer score '
+    summary: 'SYNTHETIC set proposal for "$label". Existing optimizer score '
         '${top.score}. This does not resolve perk or loop gaps.',
     instanceIds: _ids(top),
     withheld: false,
     score: top.score,
   );
+}
+
+/// Synthetic inventory: baseline pieces plus set-keyed copies for each goal.
+List<CandidatePiece> _boardForSetGoals(
+  List<SetBonusCoverageGoal> goals, {
+  required String primaryKey,
+}) {
+  if (goals.length <= 1) return _board(primaryKey);
+  // 2+2: alternate families across slots so both 2pc goals can be met.
+  final pieces = <CandidatePiece>[];
+  for (var i = 0; i < armorOptimizerSlots.length; i++) {
+    final slot = armorOptimizerSlots[i];
+    pieces.add(
+      _piece(
+        slot,
+        810001 + i,
+        'synthetic-stat-${slot.wireName}',
+        30,
+        null,
+        const [],
+      ),
+    );
+    final goal = goals[i % goals.length];
+    pieces.add(
+      _piece(
+        slot,
+        820001 + i,
+        'synthetic-set-${slot.wireName}',
+        10,
+        goal.setBonusKey,
+        const [],
+      ),
+    );
+  }
+  return pieces;
 }
 
 String? _agreedSet(PilotCaseReview review) {

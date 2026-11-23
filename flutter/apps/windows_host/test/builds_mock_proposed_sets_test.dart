@@ -80,6 +80,44 @@ void main() {
     expect(proposedSetBonusGoalsFor(build: build), isEmpty);
   });
 
+  test('armorSetProposal rematches via catalog when setBonuses empty', () {
+    final build = bare().copyWith(
+      armorSetProposal: '4pc Seventh Seraph',
+    );
+    final goals = proposedSetBonusGoalsFor(
+      build: build,
+      setBonusKeyByItemHash: const {1: 'Seventh Seraph Set'},
+    );
+    expect(goals, [
+      const SetBonusCoverageGoal(
+        setBonusKey: 'Seventh Seraph Set',
+        minPieces: 4,
+      ),
+    ]);
+  });
+
+  test('non-empty setBonuses win over armorSetProposal (user/optimize default)',
+      () {
+    final build = bare(
+      setBonuses: const [
+        MockSetBonus(
+          setId: 'User Set',
+          setName: 'User Set',
+          pieces: 4,
+          tier: '4pc',
+          text: '4pc User Set',
+        ),
+      ],
+    ).copyWith(armorSetProposal: '4pc Seventh Seraph');
+    final goals = proposedSetBonusGoalsFor(
+      build: build,
+      setBonusKeyByItemHash: const {1: 'Seventh Seraph Set'},
+    );
+    expect(goals, [
+      const SetBonusCoverageGoal(setBonusKey: 'User Set', minPieces: 4),
+    ]);
+  });
+
   test('Fill In proposed rows resolve set keys via inventory', () {
     final build = bare();
     final plan = FillInSavedBuildPlan(

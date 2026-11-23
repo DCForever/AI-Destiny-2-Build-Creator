@@ -233,4 +233,39 @@ void main() {
       expect(shown.slots.any((s) => s.pieceName == 'Unsaved Gun'), isTrue);
     },
   );
+
+  test('Apply confirms highlighted Optimize result only while panel is open', () {
+    expect(
+      shouldConfirmHighlightedOptimizeBeforeApply(
+        panelOpen: true,
+        combinationCount: 3,
+        applying: false,
+      ),
+      isTrue,
+    );
+    expect(
+      shouldConfirmHighlightedOptimizeBeforeApply(
+        panelOpen: false,
+        combinationCount: 3,
+        applying: false,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldConfirmHighlightedOptimizeBeforeApply(
+        panelOpen: true,
+        combinationCount: 0,
+        applying: false,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldConfirmHighlightedOptimizeBeforeApply(
+        panelOpen: true,
+        combinationCount: 2,
+        applying: true,
+      ),
+      isFalse,
+    );
+  });
 }

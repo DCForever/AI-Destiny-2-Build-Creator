@@ -347,6 +347,24 @@ class BuildsMockController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Rematch Mario `armor_set_proposal` → setBonuses after catalog names load.
+  ///
+  /// Skips optimized builds. Does not touch Daniel's per-build store.
+  void rematchArmorSetProposals(Iterable<String> catalogSetBonusNames) {
+    final next = rematchMatrixArmorSetProposals(
+      builds: _fixture.builds,
+      catalogSetBonusNames: catalogSetBonusNames,
+    );
+    _fixture = BuildsMockFixture(
+      sets: _fixture.sets,
+      builds: List<MockBuild>.unmodifiable(next),
+      held: _fixture.held,
+      swaps: _fixture.swaps,
+    );
+    _readiness = computeAllReadiness(_fixture);
+    notifyListeners();
+  }
+
   void _pruneFilters() {
     if (_filterExoticArmor != null &&
         !exoticArmorOptions.contains(_filterExoticArmor)) {

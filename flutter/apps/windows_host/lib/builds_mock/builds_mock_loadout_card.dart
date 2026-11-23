@@ -255,6 +255,17 @@ class _BrowseCard extends StatelessWidget {
                     bonuses: bonuses,
                     iconByLowerName: setBonusIconByLowerName,
                   ),
+                ] else if ((loadout.setBonusUnresolvedNote ?? '')
+                    .trim()
+                    .isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    loadout.setBonusUnresolvedNote!.trim(),
+                    key: Key('builds_mock_set_unresolved_${loadout.id}'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: neonMono(color: palette.muted, fontSize: 10),
+                  ),
                 ],
                 if (showArtifact) ...[
                   const SizedBox(height: 8),
@@ -480,6 +491,17 @@ class _DetailBody extends StatelessWidget {
                 BuildsMockSetBonusBoxes(
                   bonuses: bonuses,
                   iconByLowerName: setBonusIconByLowerName,
+                ),
+              ] else if ((loadout.setBonusUnresolvedNote ?? '')
+                  .trim()
+                  .isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  loadout.setBonusUnresolvedNote!.trim(),
+                  key: Key('builds_mock_set_unresolved_${loadout.id}'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: neonMono(color: palette.muted, fontSize: 11),
                 ),
               ],
               if (showArtifact) ...[

@@ -165,6 +165,22 @@ void main() {
     final aeon = builds.firstWhere((b) => b.name == 'Aeon solar sample');
     expect(aeon.dimLink, contains('dim.gg/syn-aeon-solar'));
     expect(aeon.isWeaponExotic, isFalse);
+    expect(aeon.armorSetProposal, '4pc Seventh Seraph');
+  });
+
+  test('fixture carries armor_set_proposal including no strong fit', () {
+    final builds = _loadFixture();
+    final necrotic =
+        builds.firstWhere((b) => b.name == 'Necrotic strand sample');
+    expect(
+      necrotic.armorSetProposal,
+      "2pc CODA + 2pc Apostate's Blade (alt: 4pc CODA)",
+    );
+    final prism =
+        builds.firstWhere((b) => b.name == 'Solipsism prismatic sample');
+    expect(prism.armorSetProposal, 'no strong fit');
+    final missing = builds.firstWhere((b) => b.name == 'Aeon void sample');
+    expect(missing.armorSetProposal, isNull);
   });
 
   test('missing and unrecognized combo subclasses stay unresolved', () {

@@ -50,6 +50,8 @@ MockBuild snapshotMockBuild(MockBuild build) {
     exoticWeaponType: build.exoticWeaponType,
     exoticWeaponDamageType: build.exoticWeaponDamageType,
     exoticWeaponSlot: build.exoticWeaponSlot,
+    armorSetProposal: build.armorSetProposal,
+    setBonusUnresolvedNote: build.setBonusUnresolvedNote,
     isOptimized: build.isOptimized,
   );
 }
@@ -334,6 +336,20 @@ String optimizeAppliedToastMessage(int resultIndexOneBased) =>
 /// Caption kept on the results panel.
 const String kBuildsOptimizeAdvisoryCaption =
     'Suggestions are not applied until you confirm.';
+
+/// Whether Apply to character should first confirm the highlighted Optimize
+/// result (same path as "Use this result") so Undo still works.
+///
+/// True only while the results panel is open with combinations and nothing is
+/// already applying. Selecting a tab or pressing Use this result never fires
+/// Apply by itself.
+bool shouldConfirmHighlightedOptimizeBeforeApply({
+  required bool panelOpen,
+  required int combinationCount,
+  required bool applying,
+}) {
+  return panelOpen && combinationCount > 0 && !applying;
+}
 
 /// Disabled Optimize reason when DIM armor CSV cache is missing.
 const String kBuildsOptimizeNoCsvReason =
