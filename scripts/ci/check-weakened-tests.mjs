@@ -14,20 +14,18 @@ const base = resolveBase(preferred);
 const sh = (c) => execSync(c, { encoding: "utf8" }).trim();
 const diff = sh(`git diff --unified=0 ${base}...HEAD`);
 const nameStatus = sh(`git diff --name-status ${base}...HEAD`).split("\n");
-const deletedProd = deletedProductionPaths(nameStatus);
-const readBaseFile = (path) => {
-  try {
-    return sh(`git show ${base}:${path}`);
-  } catch {
-    return null;
-  }
-};
 const findings = analyzeWeakenedDiff(diff, nameStatus, {
-  deletedProductionPaths: deletedProd,
-  readBaseFile,
+  deletedProductionPaths: deletedProductionPaths(nameStatus),
+  readBaseFile: (path) => {
+    try {
+      return sh(`git show ${base}:${path}`);
+    } catch {
+      return null;
+    }
+  },
 });
 const blocking = failingWeakenedFindings(findings);
-const summary = [
+const lines = [
   "## Weakened-test heuristic",
   "",
   `Base: \`${base}\``,
@@ -38,12 +36,12 @@ const summary = [
   "",
 ];
 if (findings.some((f) => f.kind === "retired-test")) {
-  summary.push(
+  lines.push(
     "_retired-test findings are non-blocking (require review via size/risk deletes / test-weakening)._",
     "",
   );
 }
-const summaryText = summary.join("\n");
+const summaryText = lines.join("\n");
 if (process.env.GITHUB_STEP_SUMMARY) {
   writeFileSync(process.env.GITHUB_STEP_SUMMARY, summaryText, { flag: "a" });
 }

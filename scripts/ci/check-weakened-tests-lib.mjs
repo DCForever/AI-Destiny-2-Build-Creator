@@ -30,12 +30,8 @@ const SKIP_WEAK_RE =
   /\bskip\s*:\s*(?:true\b|'[^']*'|"[^"]*")|@Skip\b|\b(?:it|test|describe)\.skip\s*\(/;
 const NEGATIVE_ASSERT_RE =
   /\b(expectLater|expect|verify|assert\w*)\s*\([\s\S]{0,200}?\b(isFalse|isEmpty|throwsA|throws|refuse|ReadFailed|instanceNotOwned|doesNotFit|EnergyCostUnknown|notUnlocked|failClosed|isNull)\b/i;
-
-/** expect(root.existsSync(), isTrue …) padding pattern from gate-gaming. */
 const ROOT_EXISTS_PAD_RE =
   /\bexpect\s*\(\s*[A-Za-z_][\w.]*\.existsSync\s*\(\s*\)\s*,\s*isTrue\b/;
-
-/** reason: 'pad…' / "pad…" / pad-N */
 const PAD_REASON_RE = /\breason\s*:\s*['"]pad[^'"]*['"]/i;
 
 /**
@@ -78,7 +74,6 @@ export function resolveBase(preferred) {
   }
 }
 
-/** Known Flutter package name → lib/ root under repo. */
 const PACKAGE_LIB_ROOTS = {
   destiny2_windows_host: "flutter/apps/windows_host/lib",
   destiny2_web_host: "flutter/apps/web_host/lib",
@@ -94,36 +89,30 @@ const PACKAGE_LIB_ROOTS = {
   destiny2_sandbox_data: "flutter/packages/sandbox_data/lib",
 };
 
-/**
- * Resolve a Dart import URI to a repo-relative path, or null.
- * @param {string} importUri
- * @param {string} [fromTestPath] unused for package: imports; reserved for relative
- */
-export function resolveDartImportToRepoPath(importUri, fromTestPath = "") {
+/** Resolve Dart import URI → repo path, or null. */
+export function resolveDartImportToRepoPath(importUri, fromPath = "") {
   if (!importUri) return null;
   const pkg = importUri.match(/^package:([^/]+)\/(.+)$/);
   if (pkg) {
     const root = PACKAGE_LIB_ROOTS[pkg[1]];
-    if (!root) return null;
-    return `${root}/${pkg[2]}`.replace(/\\/g, "/");
+    return root ? `${root}/${pkg[2]}`.replace(/\\/g, "/") : null;
   }
   if (
-    (importUri.startsWith("./") || importUri.startsWith("../")) &&
-    fromTestPath
+    !(importUri.startsWith("./") || importUri.startsWith("../")) ||
+    !fromPath
   ) {
-    const parts = fromTestPath.replace(/\\/g, "/").split("/");
-    parts.pop();
-    for (const seg of importUri.split("/")) {
-      if (seg === "." || seg === "") continue;
-      if (seg === "..") parts.pop();
-      else parts.push(seg);
-    }
-    return parts.join("/");
+    return null;
   }
-  return null;
+  const parts = fromPath.replace(/\\/g, "/").split("/");
+  parts.pop();
+  for (const seg of importUri.split("/")) {
+    if (seg === "." || seg === "") continue;
+    if (seg === "..") parts.pop();
+    else parts.push(seg);
+  }
+  return parts.join("/");
 }
 
-/** Strip reason: '…' so pad clones compare equal. */
 export function normalizeAssertForPadCompare(line) {
   return stripComments(line)
     .replace(/\breason\s*:\s*['"][^'"]*['"]/g, "")
@@ -169,10 +158,7 @@ function flushHunkLoosening(removed, added, st) {
   }
 }
 
-/**
- * Collect production paths deleted in this PR (non-test).
- * @param {string[]} nameStatusLines
- */
+/** Production paths deleted in this PR (non-test). */
 export function deletedProductionPaths(nameStatusLines = []) {
   const out = [];
   for (const line of nameStatusLines) {
@@ -186,14 +172,7 @@ export function deletedProductionPaths(nameStatusLines = []) {
   return out;
 }
 
-/**
- * Whether base test source imports any deleted production file
- * (direct package/relative import, or barrel that exports a deleted path).
- * @param {string} testPath
- * @param {string} baseTestSource
- * @param {Set<string>|string[]} deletedProd
- * @param {(path: string) => string|null|undefined} [readBaseFile]
- */
+/** True if base test imports a deleted production file (direct or barrel export). */
 export function testImportsDeletedProduction(
   testPath,
   baseTestSource,
@@ -202,17 +181,11 @@ export function testImportsDeletedProduction(
 ) {
   const deleted = deletedProd instanceof Set ? deletedProd : new Set(deletedProd);
   if (!deleted.size || !baseTestSource) return false;
-
-  const importRe =
-    /(?:import|export)\s+['"]([^'"]+)['"]/g;
-  const uris = [];
-  let m;
-  while ((m = importRe.exec(baseTestSource))) {
-    uris.push(m[1]);
-  }
-
   const seen = new Set();
-  const queue = [...uris];
+  const queue = [];
+  const importRe = /(?:import|export)\s+['"]([^'"]+)['"]/g;
+  let m;
+  while ((m = importRe.exec(baseTestSource))) queue.push(m[1]);
   while (queue.length) {
     const uri = queue.shift();
     if (!uri || seen.has(uri)) continue;
@@ -220,51 +193,37 @@ export function testImportsDeletedProduction(
     const resolved = resolveDartImportToRepoPath(uri, testPath);
     if (!resolved) continue;
     if (deleted.has(resolved)) return true;
-    // Follow barrel exports at base when the import lands on a non-deleted file.
-    if (readBaseFile && /\.dart$/i.test(resolved)) {
-      let barrel;
-      try {
-        barrel = readBaseFile(resolved);
-      } catch {
-        barrel = null;
+    if (!readBaseFile || !/\.dart$/i.test(resolved)) continue;
+    let barrel;
+    try {
+      barrel = readBaseFile(resolved);
+    } catch {
+      barrel = null;
+    }
+    if (!barrel || !/\bexport\s+['"]/.test(barrel)) continue;
+    const exportRe = /export\s+['"]([^'"]+)['"]/g;
+    let em;
+    while ((em = exportRe.exec(barrel))) {
+      const expUri = em[1];
+      if (expUri.startsWith("package:")) {
+        queue.push(expUri);
+        continue;
       }
-      if (barrel && /\bexport\s+['"]/.test(barrel)) {
-        const exportRe = /export\s+['"]([^'"]+)['"]/g;
-        let em;
-        while ((em = exportRe.exec(barrel))) {
-          const expUri = em[1];
-          if (expUri.startsWith("package:")) {
-            queue.push(expUri);
-          } else {
-            // Relative export from barrel file.
-            const rel = resolveDartImportToRepoPath(
-              expUri.startsWith(".") ? expUri : `./${expUri}`,
-              resolved,
-            );
-            if (rel && deleted.has(rel)) return true;
-            if (rel) {
-              // Re-queue as path-shaped package-relative by converting back
-              // is unnecessary; check deleted set via resolve only.
-            }
-            if (rel && !seen.has(`path:${rel}`)) {
-              seen.add(`path:${rel}`);
-              if (deleted.has(rel)) return true;
-            }
-          }
-        }
-      }
+      const rel = resolveDartImportToRepoPath(
+        expUri.startsWith(".") ? expUri : `./${expUri}`,
+        resolved,
+      );
+      if (rel && deleted.has(rel)) return true;
+      if (rel) seen.add(`path:${rel}`);
     }
   }
   return false;
 }
 
 /**
- * @param {string} diff unified diff text
+ * @param {string} diff
  * @param {string[]} [nameStatusLines]
- * @param {{
- *   deletedProductionPaths?: string[],
- *   readBaseFile?: (path: string) => string|null|undefined,
- * }} [options]
+ * @param {{ deletedProductionPaths?: string[], readBaseFile?: Function }} [options]
  */
 export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
   const safety =
@@ -275,7 +234,6 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
     ),
   );
   const readBaseFile = options.readBaseFile;
-
   const files = new Map();
   const state = (p) => {
     if (!files.has(p)) {
@@ -328,9 +286,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
     hunkAdded = [];
   };
 
-  const lines = diff.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const line of diff.split("\n")) {
     const m = line.match(/^diff --git a\/(.+) b\/(.+)$/);
     if (m) {
       endHunk();
@@ -341,9 +297,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
       endHunk();
       continue;
     }
-    if (!cur || isCiGatePath(cur) || !isTestPath(cur)) {
-      continue;
-    }
+    if (!cur || isCiGatePath(cur) || !isTestPath(cur)) continue;
     const st = state(cur);
     st.hit = true;
     if (line.startsWith("-") && !line.startsWith("---")) {
@@ -366,7 +320,6 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
   for (const [path, st] of files) {
     if (!st.hit || isCiGatePath(path)) continue;
 
-    // Padding asserts: never-fail clones / pad reasons / root.existsSync isTrue
     const padNorms = new Map();
     for (const al of st.addedAssertLines) {
       const clean = stripComments(al);
@@ -381,10 +334,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
       }
       const norm = normalizeAssertForPadCompare(al);
       if (!norm || !ASSERT_RE.test(norm)) continue;
-      // Skip multiline openers ("expect(" alone) — not pad clones.
-      if (/^(expectLater|expect|verify|assert\w*)\s*\(\s*$/i.test(norm)) {
-        continue;
-      }
+      if (/^(expectLater|expect|verify|assert\w*)\s*\(\s*$/i.test(norm)) continue;
       if (norm.length < 24) continue;
       padNorms.set(norm, (padNorms.get(norm) || 0) + 1);
     }
@@ -400,7 +350,6 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
 
     const dropped = st.rm > 0 && st.add - st.rm < 0;
     const fileDeleted = st.deletedFile || st.loose.includes("test-file-deleted");
-
     let retired = false;
     if ((dropped || fileDeleted) && deletedProd.size && readBaseFile) {
       let baseSrc = null;
@@ -431,9 +380,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
         detail: `rm ${st.rm} add ${st.add}`,
       });
     }
-
     for (const tip of st.loose) {
-      // When retired, suppress test-file-deleted loosening noise.
       if (retired && tip === "test-file-deleted") continue;
       findings.push({ path, kind: "loosened-matcher", detail: tip });
     }
@@ -455,7 +402,7 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
   return findings;
 }
 
-/** Findings that fail the CI exit (retired-test is review-noted but non-blocking). */
+/** retired-test is review-noted but non-blocking. */
 export function failingWeakenedFindings(findings) {
   return findings.filter((f) => f.kind !== "retired-test");
 }
