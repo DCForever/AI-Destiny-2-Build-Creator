@@ -26,6 +26,6 @@ void main() {
     expect(header.contains('Loadouts'), isFalse);
     final app = File(p.join(root.path, 'apps/web_host/lib/app.dart')).readAsStringSync();
     expect(app.contains('LoadoutsPage'), isFalse);
-    expect(app.contains(\"path: '/loadouts'\"), isFalse);
+    expect(app.contains("path: '/loadouts'"), isFalse);
   });
 }
