@@ -29,8 +29,10 @@ surfaces:
     area: shell
     parent: shell
     notes: >
-      Loadouts · Build · Synergy · Sets · Catalog · Builds · Settings.
-      Flutter Windows primary rail today is Catalog · Sets · Builds · Settings;
+      Next: Loadouts · Build · Synergy · Sets · Catalog · Builds · Settings.
+      Flutter Windows primary rail is Catalog · Sets · Builds · Settings.
+      Flutter Loadouts / Equip panel / Copy DIM JSON panels retired
+      (Apply-to-character + build/optimizer screens supersede).
       Warlocks removed (superseded by Builds).
     rules:
       - DBR-PUR-003
@@ -40,12 +42,14 @@ surfaces:
     kind: field
     area: shell
     parent: shell.nav
+    notes: "Flutter: retired (Apply-to-character on Builds supersedes). Next may still expose this surface."
     status: active
     platforms:
       nextjs:
         path: /loadouts
       flutter-windows:
-        status: stub
+        status: deferred
+        notes: "Retired on Flutter shells; Apply-to-character / Builds supersede. Next may still ship this surface."
         route: /loadouts
   - id: shell.nav.build
     title: Nav → Build
@@ -1151,6 +1155,7 @@ surfaces:
     kind: field
     area: build
     parent: build.finish
+    notes: "Flutter: retired (Apply-to-character on Builds supersedes). Next may still expose this surface."
     rules:
       - DAC-P1-007
       - DBR-EQP-001
@@ -1161,17 +1166,26 @@ surfaces:
       - DBR-EQP-008
       - DAC-VAR-001
     status: active
+    platforms:
+      flutter-windows:
+        status: deferred
+        notes: "Retired Equip/DIM panels on Flutter; per-build Apply-to-character supersedes."
   - id: build.finish.dim
     title: DIM export / share
     kind: field
     area: build
     parent: build.finish
+    notes: "Flutter: retired (Apply-to-character on Builds supersedes). Next may still expose this surface."
     rules:
       - DAC-P1-008
       - DBR-EQP-002
       - DBR-EQP-003
       - DBR-EQP-004
     status: active
+    platforms:
+      flutter-windows:
+        status: deferred
+        notes: "Retired Equip/DIM panels on Flutter; per-build Apply-to-character supersedes."
   - id: build.finish.equip-gate
     title: Equip/export blocked until pins
     kind: gate
@@ -1185,7 +1199,8 @@ surfaces:
     status: active
     platforms:
       flutter-windows:
-        status: stub
+        status: deferred
+        notes: "Retired Equip/DIM panels on Flutter; per-build Apply-to-character supersedes."
         route: /build
   - id: build.conflicts
     title: Cross-set slot conflict / save blocks
@@ -2312,7 +2327,8 @@ surfaces:
         path: /loadouts
         captureId: loadouts-signed-out
       flutter-windows:
-        status: stub
+        status: deferred
+        notes: "Retired on Flutter shells; Apply-to-character / Builds supersede. Next may still ship this surface."
         route: /loadouts
         captureId: loadouts-signed-out
   - id: loadouts.list
@@ -2332,7 +2348,8 @@ surfaces:
       nextjs:
         path: /loadouts
       flutter-windows:
-        status: stub
+        status: deferred
+        notes: "Retired on Flutter shells; Apply-to-character / Builds supersede. Next may still ship this surface."
         route: /loadouts
   - id: loadouts.filter.exotic
     title: Exotic filter bar
@@ -2384,7 +2401,8 @@ surfaces:
         captureId: loadouts-slot-expanded
         path: /loadouts
       flutter-windows:
-        status: stub
+        status: deferred
+        notes: "Retired on Flutter shells; Apply-to-character / Builds supersede. Next may still ship this surface."
         route: /loadouts
         captureId: loadouts-slot-expanded
     auth: signed-in
@@ -2808,6 +2826,7 @@ surfaces:
       nextjs:
         captureId: loadouts-signed-in
       flutter-windows:
-        status: stub
+        status: deferred
+        notes: "Retired on Flutter shells; Apply-to-character / Builds supersede. Next may still ship this surface."
         route: /loadouts
         captureId: loadouts-signed-in
