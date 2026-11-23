@@ -178,39 +178,23 @@ export function deletedProductionPaths(nameStatusLines = []) {
   return out;
 }
 
-/** Top-level public names declared in a Dart library (as-of-base source). */
+/** Top-level public names in a Dart library (as-of-base). */
 export function extractDartPublicTopLevelNames(src) {
   const clean = stripComments(src || "");
   const names = new Set();
-  const typeDecl =
-    /^(?:(?:abstract|sealed|base|final|interface)\s+)*(?:class|enum|mixin|typedef|extension)\s+([A-Za-z_][\w]*)/gm;
-  let m;
-  while ((m = typeDecl.exec(clean))) names.add(m[1]);
-  const fn =
-    /^(?:(?:String|bool|int|double|num|void|dynamic|Object|Future|List|Map|Set|Iterable|Stream)\b[\w<>,\s?]*)\s+([a-zA-Z_][\w]*)\s*\(/gm;
-  while ((m = fn.exec(clean))) names.add(m[1]);
-  const cnst = /^const\s+(?:[A-Za-z_][\w.<>?\s]*\s+)?([a-zA-Z_][\w]*)\s*=/gm;
-  while ((m = cnst.exec(clean))) names.add(m[1]);
+  const pats = [
+    /^(?:(?:abstract|sealed|base|final|interface)\s+)*(?:class|enum|mixin|typedef|extension)\s+([A-Za-z_][\w]*)/gm,
+    /^(?:(?:String|bool|int|double|num|void|dynamic|Object|Future|List|Map|Set|Iterable|Stream)\b[\w<>,\s?]*)\s+([a-zA-Z_][\w]*)\s*\(/gm,
+    /^const\s+(?:[A-Za-z_][\w.<>?\s]*\s+)?([a-zA-Z_][\w]*)\s*=/gm,
+  ];
+  for (const re of pats) {
+    let m;
+    while ((m = re.exec(clean))) names.add(m[1]);
+  }
   return names;
 }
 
-function testUsesAnyName(testSource, names) {
-  if (!names || !names.size) return false;
-  const clean = stripComments(testSource || "");
-  for (const name of names) {
-    if (name.length < 2) continue;
-    if (new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(clean)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * True if base test imports a deleted production file.
- * Direct import → allow. Barrel-only → allow only if the test uses a
- * top-level public name declared in a deleted file.
- */
+/** Direct deleted import, or barrel + use of a deleted file's public name. */
 export function testImportsDeletedProduction(
   testPath,
   baseTestSource,
@@ -245,9 +229,8 @@ export function testImportsDeletedProduction(
     REAL_IMPORT_RE.lastIndex = 0;
     let em;
     while ((em = REAL_IMPORT_RE.exec(barrelClean))) {
-      const expUri = em[1];
-      // Only follow export statements from barrels (import lines are deps).
       if (!/\bexport\s+['"]/.test(em[0])) continue;
+      const expUri = em[1];
       if (expUri.startsWith("package:")) {
         queue.push(expUri);
         continue;
@@ -262,15 +245,18 @@ export function testImportsDeletedProduction(
   }
   if (!barrelDeleted.size || !readBaseFile) return false;
   for (const delPath of barrelDeleted) {
-    let delSrc = null;
+    let delSrc;
     try {
       delSrc = readBaseFile(delPath);
     } catch {
       delSrc = null;
     }
     if (!delSrc) continue;
-    const names = extractDartPublicTopLevelNames(delSrc);
-    if (testUsesAnyName(cleanSrc, names)) return true;
+    for (const name of extractDartPublicTopLevelNames(delSrc)) {
+      if (name.length < 2) continue;
+      const esc = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(`\\b${esc}\\b`).test(cleanSrc)) return true;
+    }
   }
   return false;
 }
