@@ -13,7 +13,6 @@ void main() {
       expect(
         labels,
         [
-          'Loadouts',
           'Build',
           'Synergy',
           'Sets',
@@ -21,11 +20,11 @@ void main() {
           'Settings',
         ],
       );
+      expect(labels.contains('Loadouts'), isFalse);
       final paths = ShellHeader.routes.map((r) => r.path).toList();
       expect(
         paths,
         [
-          '/loadouts',
           '/builds',
           '/synergies',
           '/sets',
@@ -33,6 +32,7 @@ void main() {
           '/',
         ],
       );
+      expect(paths.contains('/loadouts'), isFalse);
     });
 
     testComponents('renders nav labels', (tester) async {
@@ -50,8 +50,8 @@ void main() {
       expect(find.text('Build'), findsOneComponent);
       expect(find.text('Sets'), findsOneComponent);
       expect(find.text('Synergy'), findsOneComponent);
-      expect(find.text('Loadouts'), findsOneComponent);
       expect(find.text('Settings'), findsOneComponent);
+      expect(find.text('Loadouts'), findsNothing);
     });
   });
 

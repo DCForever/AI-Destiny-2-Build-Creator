@@ -46,7 +46,7 @@ pages:
             kind: surface
             title: Main navigation
             notes: |
-              Loadouts · Build · Synergy · Sets · Catalog · Builds · Settings. Flutter Windows primary rail today is Catalog · Sets · Builds · Settings; Warlocks removed (superseded by Builds).
+              Next: Loadouts · Build · Synergy · Sets · Catalog · Builds · Settings. Flutter Windows primary rail is Catalog · Sets · Builds · Settings. Flutter Loadouts / Equip panel / Copy DIM JSON panels retired (Apply-to-character + build/optimizer screens supersede). Warlocks removed (superseded by Builds).
             rules:
               - DBR-PUR-003
             children:
@@ -81,6 +81,7 @@ pages:
                 kind: field
                 title: Nav → In-Game Loadouts
                 path: /loadouts
+                notes: "Flutter: retired (Apply-to-character on Builds supersedes). Next may still expose this surface."
                 rules: []
               - id: shell.nav.sets
                 kind: field
@@ -703,6 +704,7 @@ pages:
           - id: build.finish.dim
             kind: field
             title: DIM export / share
+            notes: "Flutter: retired (Apply-to-character on Builds supersedes). Next may still expose this surface."
             rules:
               - DAC-P1-008
               - DBR-EQP-002
@@ -711,6 +713,7 @@ pages:
           - id: build.finish.equip
             kind: field
             title: Equip in-game
+            notes: "Flutter: retired (Apply-to-character on Builds supersedes). Next may still expose this surface."
             rules:
               - DAC-P1-007
               - DBR-EQP-001

@@ -20,12 +20,9 @@ import 'components/shell_header.dart';
 import 'compose/compose_services.dart';
 import 'db/web_database_bootstrap.dart';
 import 'db/web_db_status.dart';
-import 'dim_export/dim_export_controller.dart';
 import 'equip/equipment_bucket_lookup_provider.dart';
 import 'equip/roll_tag_lookup_provider.dart';
 import 'equip/weapon_socket_context_provider.dart';
-import 'loadouts/loadouts_controller.dart';
-import 'loadouts/loadouts_page.dart';
 import 'pages/auth_callback_page.dart';
 import 'pages/catalog_page.dart';
 import 'pages/settings_page.dart';
@@ -49,8 +46,6 @@ class App extends StatefulComponent {
     this.compose,
     this.profileClient,
     this.writeClient,
-    this.clipboardWriter,
-    this.loadoutsController,
     this.inventorySync,
     super.key,
   });
@@ -67,13 +62,9 @@ class App extends StatefulComponent {
   /// Compose spine services (DART-046/047). Null when writer DB unavailable.
   final ComposeServices? compose;
 
-  /// Optional equip clients (DART-047). Used when auto-building ComposeServices.
+  /// Bungie clients for inventory sync (DART-056).
   final BungieProfileClient? profileClient;
   final BungieWriteClient? writeClient;
-  final DimClipboardWriter? clipboardWriter;
-
-  /// Optional prebuilt loadouts controller (tests inject fixtures).
-  final LoadoutsController? loadoutsController;
 
   /// Optional prebuilt inventory sync (tests inject).
   final InventorySyncController? inventorySync;
@@ -86,7 +77,6 @@ class _AppState extends State<App> {
   late WebDbSessionStatus _dbStatus;
   StreamSubscription<WebDbSessionStatus>? _sub;
   ComposeServices? _compose;
-  LoadoutsController? _loadouts;
   InventorySyncController? _inventorySync;
   OwnedCatalogBridge? _ownedBridge;
 
@@ -94,9 +84,7 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     _compose = component.compose;
-    _loadouts = component.loadoutsController;
     _inventorySync = component.inventorySync;
-    _ensureLoadoutsController();
     _dbStatus = component.initialDbStatus ??
         component.bootstrap?.status ??
         WebDbSessionStatus.loadingWriter;
@@ -212,22 +200,7 @@ class _AppState extends State<App> {
     if (component.compose != null) return;
     final db = boot.database;
     if (db != null && _compose == null) {
-      // DART-050/056: equip syncIfStale uses entity catalog slots for vault resolve.
-      // DART-051/052 / GAP-INV-02/03: catalog-seeded perk names + socket channel.
-      final lookupBuilder = _lookupBuilder();
-      final enrich = _inventoryEnrichment();
-      _compose = ComposeServices(
-        db: db,
-        session: component.oauthSession,
-        profileClient: component.profileClient,
-        writeClient: component.writeClient,
-        clipboardWriter: component.clipboardWriter,
-        skipSyncIfStale: false,
-        equipmentBucketLookupBuilder: lookupBuilder,
-        perkNameMapBuilder: enrich?.perkNameMapBuilder,
-        weaponRollMetaLookupBuilder: enrich?.weaponRollMetaLookupBuilder,
-        weaponSocketContextBuilder: enrich?.weaponSocketContextBuilder,
-      );
+      _compose = ComposeServices(db: db);
     }
   }
 
@@ -281,28 +254,12 @@ class _AppState extends State<App> {
 
   ComposeServices? get _effectiveCompose => component.compose ?? _compose;
 
-  LoadoutsController? get _effectiveLoadouts =>
-      component.loadoutsController ?? _loadouts;
-
   InventorySyncController? get _effectiveInventorySync =>
       component.inventorySync ?? _inventorySync;
-
-  void _ensureLoadoutsController() {
-    if (_loadouts != null) return;
-    final session = component.oauthSession;
-    final profile = component.profileClient;
-    if (session != null && profile != null) {
-      _loadouts = LoadoutsController(
-        session: session,
-        profileClient: profile,
-      );
-    }
-  }
 
   @override
   Component build(BuildContext context) {
     final compose = _effectiveCompose;
-    final loadouts = _effectiveLoadouts;
     final inventorySync = _effectiveInventorySync;
     return div(classes: 'app-shell neon-shell', [
       Router(
@@ -355,8 +312,6 @@ class _AppState extends State<App> {
                 builder: (context, state) => BuildComposePage(
                   buildId: state.params['buildId'] ?? '',
                   controller: compose?.builds,
-                  equipController: compose?.equip,
-                  dimExportController: compose?.dimExport,
                 ),
               ),
               Route(
@@ -372,13 +327,6 @@ class _AppState extends State<App> {
                 title: 'Synergies',
                 builder: (context, state) => SynergiesPage(
                   controller: compose?.synergies,
-                ),
-              ),
-              Route(
-                path: '/loadouts',
-                title: 'In-Game Loadouts',
-                builder: (context, state) => LoadoutsPage(
-                  controller: loadouts,
                 ),
               ),
               Route(

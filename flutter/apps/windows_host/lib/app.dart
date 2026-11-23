@@ -14,8 +14,8 @@ import 'theme/flap_theme.dart';
 /// Root Flutter app for the Windows host.
 ///
 /// **UX rebuild shell:** Catalog + **Sets** (Armor MVP implement) + Builds
-/// (Warlock matrix list) + Settings. Loadouts / Build / Synergy return via
-/// the area UX redesign loop.
+/// (Warlock matrix list) + Settings. In-game Loadouts shell retired; Build /
+/// Synergy return via the area UX redesign loop.
 /// Appearance: **Neutral stage** light (default) + **Neutral charcoal** dark.
 class Destiny2WindowsApp extends StatefulWidget {
   const Destiny2WindowsApp({

@@ -1,12 +1,12 @@
 # Parity: flutter-windows
 
-Generated: 2026-11-22
+Generated: 2026-11-23
 
 | Metric | Value |
 |--------|-------|
 | Platform status | planned |
-| Stubs | 49 |
-| Deferred | 9 |
+| Stubs | 43 |
+| Deferred | 15 |
 | Missing platform block | 0 |
 | Captures on disk | 0 |
 
@@ -19,7 +19,6 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | Surface | Status | Flutter route | Capture id | Shot | Rules |
 |---------|--------|---------------|------------|------|-------|
 | `shell` | stub | / | — | no | 9 |
-| `shell.nav.loadouts` | stub | /loadouts | — | no | 0 |
 | `shell.nav.build` | stub | /build | — | no | 0 |
 | `shell.nav.synergy` | stub | /synergy | — | no | 0 |
 | `shell.signed-out-gate` | stub | / | — | no | 2 |
@@ -42,7 +41,6 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `build.edit.stale-pin` | stub | /build | — | no | 2 |
 | `build.finish` | stub | /build | — | no | 9 |
 | `build.finish.armor-optimize` | stub | /build | — | no | 6 |
-| `build.finish.equip-gate` | stub | /build | — | no | 4 |
 | `build.conflicts` | stub | /build | — | no | 6 |
 | `catalog.signed-out.armor` | stub | /catalog | catalog-signed-out-armor | no | 3 |
 | `catalog.universal` | stub | /catalog | catalog-universal | no | 4 |
@@ -55,9 +53,6 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `synergy.create` | stub | /synergy | synergy-create | no | 8 |
 | `synergy.detail` | stub | /synergy | synergy-detail | no | 8 |
 | `synergy.edit` | stub | /synergy | — | no | 3 |
-| `loadouts.signed-out` | stub | /loadouts | loadouts-signed-out | no | 2 |
-| `loadouts.list` | stub | /loadouts | — | no | 5 |
-| `loadouts.slot-expanded` | stub | /loadouts | loadouts-slot-expanded | no | 0 |
 | `settings.signed-out` | stub | /settings | settings-signed-out | no | 1 |
 | `settings.signed-in` | stub | /settings | settings-signed-in | no | 2 |
 | `build.finish.one-tap-create` | stub | /build | — | no | 0 |
@@ -66,7 +61,6 @@ DBR/DAC/BR IDs are shared. Do not create Flutter-only domain rules.
 | `build.create.draft.general` | stub | /build | build-create-draft-general | no | 0 |
 | `build.create.draft.locked.tabs` | stub | /build | build-create-draft-locked-tabs | no | 0 |
 | `build.edit.finish` | stub | /build | build-edit-finish | no | 0 |
-| `loadouts.signed.in` | stub | /loadouts | loadouts-signed-in | no | 0 |
 
 ## Checklist
 

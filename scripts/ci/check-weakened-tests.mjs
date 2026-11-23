@@ -4,6 +4,8 @@ import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import {
   analyzeWeakenedDiff,
+  deletedProductionPaths,
+  failingWeakenedFindings,
   resolveBase,
 } from "./check-weakened-tests-lib.mjs";
 
@@ -12,8 +14,18 @@ const base = resolveBase(preferred);
 const sh = (c) => execSync(c, { encoding: "utf8" }).trim();
 const diff = sh(`git diff --unified=0 ${base}...HEAD`);
 const nameStatus = sh(`git diff --name-status ${base}...HEAD`).split("\n");
-const findings = analyzeWeakenedDiff(diff, nameStatus);
-const summary = [
+const findings = analyzeWeakenedDiff(diff, nameStatus, {
+  deletedProductionPaths: deletedProductionPaths(nameStatus),
+  readBaseFile: (path) => {
+    try {
+      return sh(`git show ${base}:${path}`);
+    } catch {
+      return null;
+    }
+  },
+});
+const blocking = failingWeakenedFindings(findings);
+const lines = [
   "## Weakened-test heuristic",
   "",
   `Base: \`${base}\``,
@@ -22,12 +34,19 @@ const summary = [
     ? findings.map((f) => `- **${f.kind}** \`${f.path}\`: ${f.detail}`).join("\n")
     : "No weakened-test signals.",
   "",
-].join("\n");
-if (process.env.GITHUB_STEP_SUMMARY) {
-  writeFileSync(process.env.GITHUB_STEP_SUMMARY, summary, { flag: "a" });
+];
+if (findings.some((f) => f.kind === "retired-test")) {
+  lines.push(
+    "_retired-test findings are non-blocking (require review via size/risk deletes / test-weakening)._",
+    "",
+  );
 }
-console.log(summary);
-if (findings.length) {
+const summaryText = lines.join("\n");
+if (process.env.GITHUB_STEP_SUMMARY) {
+  writeFileSync(process.env.GITHUB_STEP_SUMMARY, summaryText, { flag: "a" });
+}
+console.log(summaryText);
+if (blocking.length) {
   console.error("::error::Weakened-test heuristic failed");
   process.exit(1);
 }

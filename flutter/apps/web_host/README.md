@@ -55,23 +55,17 @@ In-process library + compose against the **writer** `AppDatabase`:
 
 Hard DBR gates stay hard. Soft never auto-applies and does not block legal attach.
 
-## Equip + DIM (DART-047)
+## Equip + DIM panels (retired)
 
-On Build compose when a variant is selected:
-
-1. **Equip-ready** from domain `computeEquipReady` + local inventory pins
-2. **Copy DIM JSON** → pure `buildJsonOnlyDimExport` → clipboard (blocked when not equip-ready)
-3. **Optional equip** (signed-in + public API key): character pick → gaps confirm → `planEquipSteps` / `executeEquipPlan`
-
-Same domain packages as Flutter. Soft never auto-applies. No `CLIENT_SECRET`. No dim.gg.
+The Jaspr **Equip panel** and **Copy DIM JSON** panel were retired. Domain helpers
+(`computeEquipReady`, `buildJsonOnlyDimExport`, `planEquipSteps` / `executeEquipPlan`)
+remain for Apply-to-character and shared parsers. Soft never auto-applies. No
+`CLIENT_SECRET`. No dim.gg.
 
 ```powershell
 cd apps\web_host
 dart test
-dart test test/equip_controller_test.dart test/dim_export_controller_test.dart
 ```
-
-See `specs/dart-047-jaspr-equip-export/quickstart.md`.
 
 ## OAuth (DART-045)
 

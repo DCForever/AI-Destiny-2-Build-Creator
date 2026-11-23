@@ -248,6 +248,7 @@ flows:
     title: Finish → equip / DIM
     type: subflow
     priority: P1
+    # Flutter: Equip panel + Copy DIM JSON retired; Apply-to-character supersedes.
     rules:
       - DAC-P1-003
       - DAC-P1-005
@@ -644,6 +645,7 @@ flows:
     title: In-game loadouts
     type: library
     priority: P2
+    # Flutter Loadouts screen retired; Next may still ship this flow.
     rules:
       - BR-EXO-001
       - BR-EXO-002
