@@ -62,6 +62,13 @@ void main() {
       final equip =
           _read('packages/app/lib/src/presentation/equip_format.dart');
       expect(equip, contains('formatApplyOutcomeLabel'));
+      expect(equip.contains('canEnableEquipCta'), isFalse);
+      expect(equip.contains('formatEquipStepReportLine'), isFalse);
+      final barrel = _read('packages/app/lib/destiny2_app.dart');
+      expect(barrel.contains('equip_session'), isFalse);
+      expect(barrel.contains('dim_export_format'), isFalse);
+      expect(barrel.contains('dim_export_session'), isFalse);
+      expect(barrel, contains('apply_to_character'));
     });
 
     test('host soft_guidance files re-export package (not independent impl)',
@@ -83,6 +90,27 @@ void main() {
     test('applyToCharacter lives in package app equip layer', () {
       final apply = _read('packages/app/lib/src/equip/apply_to_character.dart');
       expect(apply, contains('applyToCharacter'));
+      expect(apply, contains('formatApplyOutcomeLabel'));
+      expect(
+        File(p.join(root.path, 'packages/app/lib/src/equip/equip_session.dart'))
+            .existsSync(),
+        isFalse,
+      );
+      expect(
+        File(
+          p.join(root.path, 'packages/app/lib/src/dim_export/dim_export_session.dart'),
+        ).existsSync(),
+        isFalse,
+      );
+      expect(
+        File(
+          p.join(
+            root.path,
+            'packages/app/lib/src/presentation/dim_export_format.dart',
+          ),
+        ).existsSync(),
+        isFalse,
+      );
     });
   });
 

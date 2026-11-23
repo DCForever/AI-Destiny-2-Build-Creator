@@ -292,6 +292,26 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('loadouts_page'), skipOffstage: false), findsNothing);
+      expect(find.text('Loadouts'), findsNothing);
+      expect(find.byKey(const Key('builds_equip_panel'), skipOffstage: false), findsNothing);
+      expect(
+        find.byKey(const Key('builds_dim_export_panel'), skipOffstage: false),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('equip_panel'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_panel'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_apply_button'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_copy_button'), skipOffstage: false), findsNothing);
+      expect(find.text('Copy DIM JSON'), findsNothing);
+      expect(find.byKey(const Key('loadouts_list'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('loadouts_title'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('loadouts_signed_out'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('loadouts_filters'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_character_dropdown'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_gaps_confirm'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('equip_step_report'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_json_preview'), skipOffstage: false), findsNothing);
+      expect(find.byKey(const Key('dim_export_status_message'), skipOffstage: false), findsNothing);
     });
 
     testWidgets('Settings destination shows trust chrome', (tester) async {
