@@ -305,15 +305,23 @@ ok("retired-test when deleted test imported deleted production", () => {
   }
 });
 
-ok("retired-test via barrel export of deleted production", () => {
+ok("retired-test via barrel when test uses deleted symbol", () => {
   const deletedProd = [
     "flutter/packages/app/lib/src/equip/equip_session.dart",
   ];
   const files = {
-    "flutter/packages/app/test/equip_session_test.dart":
-      "import 'package:destiny2_app/destiny2_app.dart';\n",
+    "flutter/packages/app/test/equip_session_test.dart": [
+      "import 'package:destiny2_app/destiny2_app.dart';",
+      "void main() { final s = EquipSession(); }",
+      "",
+    ].join("\n"),
+    // Same-line exports (as on origin/main destiny2_app.dart).
     "flutter/packages/app/lib/destiny2_app.dart":
-      "export 'src/equip/equip_session.dart';\nexport 'src/equip/apply_to_character.dart';\n",
+      "export 'src/equip/equip_session.dart';export 'src/equip/apply_to_character.dart';\n",
+    "flutter/packages/app/lib/src/equip/equip_session.dart":
+      "class EquipSession {}\nclass PendingEquipAction {}\n",
+    "flutter/packages/app/lib/src/equip/apply_to_character.dart":
+      "Future<void> applyToCharacter() async {}\n",
   };
   const f = analyzeWeakenedDiff(
     "",
@@ -325,6 +333,82 @@ ok("retired-test via barrel export of deleted production", () => {
   );
   if (!f.some((x) => x.kind === "retired-test")) {
     throw new Error(`expected barrel retired-test, got ${JSON.stringify(f)}`);
+  }
+});
+
+ok("barrel import using only surviving symbols still fails", () => {
+  const deletedProd = [
+    "flutter/packages/app/lib/src/equip/equip_session.dart",
+  ];
+  const files = {
+    "flutter/packages/app/test/apply_to_character_test.dart": [
+      "import 'package:destiny2_app/destiny2_app.dart';",
+      "void main() { applyToCharacter(); }",
+      "",
+    ].join("\n"),
+    "flutter/packages/app/lib/destiny2_app.dart": [
+      "export 'src/equip/equip_session.dart';",
+      "export 'src/equip/apply_to_character.dart';",
+      "",
+    ].join("\n"),
+    "flutter/packages/app/lib/src/equip/equip_session.dart":
+      "class EquipSession {}\n",
+    "flutter/packages/app/lib/src/equip/apply_to_character.dart":
+      "Future<void> applyToCharacter() async {}\n",
+  };
+  const f = analyzeWeakenedDiff(
+    "",
+    ["D\tflutter/packages/app/test/apply_to_character_test.dart"],
+    {
+      deletedProductionPaths: deletedProd,
+      readBaseFile: (path) => files[path] ?? null,
+    },
+  );
+  if (f.some((x) => x.kind === "retired-test")) {
+    throw new Error(`must not retire Apply-only barrel use: ${JSON.stringify(f)}`);
+  }
+  if (!f.some((x) => x.detail === "test-file-deleted")) {
+    throw new Error(`expected test-file-deleted fail: ${JSON.stringify(f)}`);
+  }
+  if (!failingWeakenedFindings(f).length) {
+    throw new Error("Apply-only barrel delete must be blocking");
+  }
+});
+
+ok("commented or string import of deleted file does not retire", () => {
+  const deletedProd = [
+    "flutter/apps/web_host/lib/equip/equip_format.dart",
+  ];
+  const cases = [
+    [
+      "// import 'package:destiny2_web_host/equip/equip_format.dart';",
+      "import 'package:test/test.dart';",
+      "void main() {}",
+    ].join("\n"),
+    [
+      "import 'package:test/test.dart';",
+      'final fake = "import \'package:destiny2_web_host/equip/equip_format.dart\';";',
+      "void main() {}",
+    ].join("\n"),
+  ];
+  for (const baseSrc of cases) {
+    const f = analyzeWeakenedDiff(
+      "",
+      ["D\tflutter/apps/web_host/test/equip_format_test.dart"],
+      {
+        deletedProductionPaths: deletedProd,
+        readBaseFile: (path) =>
+          path === "flutter/apps/web_host/test/equip_format_test.dart"
+            ? baseSrc
+            : null,
+      },
+    );
+    if (f.some((x) => x.kind === "retired-test")) {
+      throw new Error(`comment/string must not retire: ${JSON.stringify(f)}`);
+    }
+    if (!failingWeakenedFindings(f).length) {
+      throw new Error("comment/string delete must be blocking");
+    }
   }
 });
 
@@ -353,6 +437,24 @@ ok("deleted test without deleted-prod import still fails", () => {
   }
   if (!failingWeakenedFindings(f).length) {
     throw new Error("unrelated delete must be blocking");
+  }
+});
+
+ok("padding-assert: trivial expect(1,1) and isNotNull", () => {
+  const diff = [
+    "diff --git a/test/a_test.dart b/test/a_test.dart",
+    "--- a/test/a_test.dart",
+    "+++ b/test/a_test.dart",
+    "@@ -1 +1,3 @@",
+    "-expect(x, 1);",
+    "+expect(1, 1);",
+    "+expect(root, isNotNull);",
+    "+expect(root.existsSync(), true);",
+  ].join("\n");
+  const f = analyzeWeakenedDiff(diff);
+  const pads = f.filter((x) => x.kind === "padding-assert");
+  if (pads.length < 3) {
+    throw new Error(`expected trivial padding-assert, got ${JSON.stringify(f)}`);
   }
 });
 

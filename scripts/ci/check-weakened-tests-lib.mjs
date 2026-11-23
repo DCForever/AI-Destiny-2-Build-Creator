@@ -31,8 +31,14 @@ const SKIP_WEAK_RE =
 const NEGATIVE_ASSERT_RE =
   /\b(expectLater|expect|verify|assert\w*)\s*\([\s\S]{0,200}?\b(isFalse|isEmpty|throwsA|throws|refuse|ReadFailed|instanceNotOwned|doesNotFit|EnergyCostUnknown|notUnlocked|failClosed|isNull)\b/i;
 const ROOT_EXISTS_PAD_RE =
-  /\bexpect\s*\(\s*[A-Za-z_][\w.]*\.existsSync\s*\(\s*\)\s*,\s*isTrue\b/;
+  /\bexpect\s*\(\s*[A-Za-z_][\w.]*\.existsSync\s*\(\s*\)\s*,\s*(?:isTrue|true|equals\s*\(\s*true\s*\))\b/;
 const PAD_REASON_RE = /\breason\s*:\s*['"]pad[^'"]*['"]/i;
+/** Trivial never-fail pads: expect(1, 1) / expect(x, isNotNull). */
+const TRIVIAL_PAD_RE =
+  /\bexpect\s*\(\s*1\s*,\s*1\s*\)|\bexpect\s*\(\s*[A-Za-z_][\w.]*\s*,\s*isNotNull\b/;
+/** Real import/export statements (after comment strip). Allows same-line exports. */
+const REAL_IMPORT_RE =
+  /(?:^|[;\n])\s*(?:import|export)\s+['"]([^'"]+)['"]/gm;
 
 /**
  * Gate / CI paths — pattern sources here must set ci-runner, not fail tests.
@@ -172,7 +178,39 @@ export function deletedProductionPaths(nameStatusLines = []) {
   return out;
 }
 
-/** True if base test imports a deleted production file (direct or barrel export). */
+/** Top-level public names declared in a Dart library (as-of-base source). */
+export function extractDartPublicTopLevelNames(src) {
+  const clean = stripComments(src || "");
+  const names = new Set();
+  const typeDecl =
+    /^(?:(?:abstract|sealed|base|final|interface)\s+)*(?:class|enum|mixin|typedef|extension)\s+([A-Za-z_][\w]*)/gm;
+  let m;
+  while ((m = typeDecl.exec(clean))) names.add(m[1]);
+  const fn =
+    /^(?:(?:String|bool|int|double|num|void|dynamic|Object|Future|List|Map|Set|Iterable|Stream)\b[\w<>,\s?]*)\s+([a-zA-Z_][\w]*)\s*\(/gm;
+  while ((m = fn.exec(clean))) names.add(m[1]);
+  const cnst = /^const\s+(?:[A-Za-z_][\w.<>?\s]*\s+)?([a-zA-Z_][\w]*)\s*=/gm;
+  while ((m = cnst.exec(clean))) names.add(m[1]);
+  return names;
+}
+
+function testUsesAnyName(testSource, names) {
+  if (!names || !names.size) return false;
+  const clean = stripComments(testSource || "");
+  for (const name of names) {
+    if (name.length < 2) continue;
+    if (new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(clean)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * True if base test imports a deleted production file.
+ * Direct import → allow. Barrel-only → allow only if the test uses a
+ * top-level public name declared in a deleted file.
+ */
 export function testImportsDeletedProduction(
   testPath,
   baseTestSource,
@@ -181,11 +219,13 @@ export function testImportsDeletedProduction(
 ) {
   const deleted = deletedProd instanceof Set ? deletedProd : new Set(deletedProd);
   if (!deleted.size || !baseTestSource) return false;
+  const cleanSrc = stripComments(baseTestSource);
   const seen = new Set();
   const queue = [];
-  const importRe = /(?:import|export)\s+['"]([^'"]+)['"]/g;
+  const barrelDeleted = new Set();
+  REAL_IMPORT_RE.lastIndex = 0;
   let m;
-  while ((m = importRe.exec(baseTestSource))) queue.push(m[1]);
+  while ((m = REAL_IMPORT_RE.exec(cleanSrc))) queue.push(m[1]);
   while (queue.length) {
     const uri = queue.shift();
     if (!uri || seen.has(uri)) continue;
@@ -200,11 +240,14 @@ export function testImportsDeletedProduction(
     } catch {
       barrel = null;
     }
-    if (!barrel || !/\bexport\s+['"]/.test(barrel)) continue;
-    const exportRe = /export\s+['"]([^'"]+)['"]/g;
+    if (!barrel) continue;
+    const barrelClean = stripComments(barrel);
+    REAL_IMPORT_RE.lastIndex = 0;
     let em;
-    while ((em = exportRe.exec(barrel))) {
+    while ((em = REAL_IMPORT_RE.exec(barrelClean))) {
       const expUri = em[1];
+      // Only follow export statements from barrels (import lines are deps).
+      if (!/\bexport\s+['"]/.test(em[0])) continue;
       if (expUri.startsWith("package:")) {
         queue.push(expUri);
         continue;
@@ -213,9 +256,21 @@ export function testImportsDeletedProduction(
         expUri.startsWith(".") ? expUri : `./${expUri}`,
         resolved,
       );
-      if (rel && deleted.has(rel)) return true;
+      if (rel && deleted.has(rel)) barrelDeleted.add(rel);
       if (rel) seen.add(`path:${rel}`);
     }
+  }
+  if (!barrelDeleted.size || !readBaseFile) return false;
+  for (const delPath of barrelDeleted) {
+    let delSrc = null;
+    try {
+      delSrc = readBaseFile(delPath);
+    } catch {
+      delSrc = null;
+    }
+    if (!delSrc) continue;
+    const names = extractDartPublicTopLevelNames(delSrc);
+    if (testUsesAnyName(cleanSrc, names)) return true;
   }
   return false;
 }
@@ -324,7 +379,11 @@ export function analyzeWeakenedDiff(diff, nameStatusLines = [], options = {}) {
     for (const al of st.addedAssertLines) {
       const clean = stripComments(al);
       if (!ASSERT_RE.test(clean)) continue;
-      if (PAD_REASON_RE.test(clean) || ROOT_EXISTS_PAD_RE.test(clean)) {
+      if (
+        PAD_REASON_RE.test(clean) ||
+        ROOT_EXISTS_PAD_RE.test(clean) ||
+        TRIVIAL_PAD_RE.test(clean)
+      ) {
         findings.push({
           path,
           kind: "padding-assert",
