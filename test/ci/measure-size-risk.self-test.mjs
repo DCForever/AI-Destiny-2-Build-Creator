@@ -183,6 +183,17 @@ ok("test-weakening detects findsOneWidget→findsWidgets on +/- lines", () => {
   if (!r.flags.includes("test-weakening")) throw new Error(JSON.stringify(r));
 });
 
+ok("test-weakening flags deleted test files", () => {
+  const r = measureSizeRisk({
+    numstat: "0\t10\tlib/x.dart\n0\t20\ttest/old_test.dart",
+    nameStatus: "M\tlib/x.dart\nD\ttest/old_test.dart",
+    prodPatch: "void f() {}",
+    testPatch: "",
+    allPaths: ["lib/x.dart", "test/old_test.dart"],
+  });
+  if (!r.flags.includes("test-weakening")) throw new Error(JSON.stringify(r));
+});
+
 ok("ci-gate hunks stripped from weakening scan", () => {
   const patch = [
     "diff --git a/scripts/ci/measure-size-risk-lib.mjs b/scripts/ci/measure-size-risk-lib.mjs",

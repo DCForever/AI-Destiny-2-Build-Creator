@@ -155,7 +155,16 @@ export function measureSizeRisk(input) {
   const testScan = addedOrRemovedBodies(stripCiGateHunks(input.testPatch || ""));
   const SKIP_WEAK_RE =
     /\bskip\s*:\s*(?:true\b|'[^']*'|"[^"]*")|@Skip\b|\b(?:it|test|describe)\.skip\s*\(/;
+  const testDeleted = (input.nameStatus || "")
+    .split("\n")
+    .some((line) => {
+      if (!line.trim()) return false;
+      const [status, ...rest] = line.split("\t");
+      if (!status.startsWith("D")) return false;
+      return isTestPath(rest[rest.length - 1]);
+    });
   if (
+    testDeleted ||
     /findsOneWidget[\s\S]{0,120}findsWidgets/.test(testScan) ||
     /(?:==|equals\s*\(|toEqual\s*\()[\s\S]{0,80}(?:>=|greaterThanOrEqualTo|toBeGreaterThanOrEqual)/.test(
       testScan,
