@@ -225,17 +225,9 @@ class _BuildsMockPageState extends State<BuildsMockPage> {
         map.putIfAbsent(name, () => icon);
       }
       // Stamp optimizer candidates so proposed-set goals match inventory keys.
+      // proposedSetBonusesFor rematches Mario proposals from this map.
       _optimize.setBonusKeyByItemHash =
           setBonusKeyByItemHashFromCatalog(rows);
-      // Rematch Mario armor_set_proposal → setBonuses now that catalog names
-      // exist (matrix import may have run first with an empty catalog).
-      final catalogNames = <String>{
-        for (final r in rows)
-          if (r.name.trim().isNotEmpty) r.name.trim(),
-      };
-      if (catalogNames.isNotEmpty) {
-        _controller.rematchArmorSetProposals(catalogNames);
-      }
       setState(() => _setIconByLowerName = map);
     } catch (_) {
       // Set filter falls back to text-only (no letter badge).

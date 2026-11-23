@@ -137,27 +137,23 @@ PilotProposal _setProposal(PilotCaseReview review) {
       withheld: true,
     );
   }
-  // Pilot board uses the parsed family label as the synthetic set key
-  // (no live catalog). 2+2 gets both keys on the board.
+  // Pilot board uses parsed family labels as synthetic set keys (no catalog).
   final goals = <SetBonusCoverageGoal>[
     for (final p in parsed.pieces)
-      SetBonusCoverageGoal(
-        setBonusKey: p.familyName,
-        minPieces: p.pieces,
-      ),
+      SetBonusCoverageGoal(setBonusKey: p.familyName, minPieces: p.pieces),
   ];
-  final setKeyForBoard = parsed.pieces.first.familyName;
   final response = optimizeArmorCore(
     ArmorOptimizeRequest(
-      candidates: _boardForSetGoals(goals, primaryKey: setKeyForBoard),
+      candidates: goals.length == 1
+          ? _board(goals.first.setBonusKey)
+          : _boardTwoTwo(goals[0].setBonusKey, goals[1].setBonusKey),
       constraints: KitConstraints(setBonusGoals: goals),
       maxResults: 50,
     ),
   );
   final top = response.combinations.first;
-  final label = parsed.pieces
-      .map((p) => '${p.pieces}pc ${p.familyName}')
-      .join(' + ');
+  final label =
+      parsed.pieces.map((p) => '${p.pieces}pc ${p.familyName}').join(' + ');
   return PilotProposal(
     caseId: review.caseId,
     kind: 'set-goal',
@@ -169,37 +165,15 @@ PilotProposal _setProposal(PilotCaseReview review) {
   );
 }
 
-/// Synthetic inventory: baseline pieces plus set-keyed copies for each goal.
-List<CandidatePiece> _boardForSetGoals(
-  List<SetBonusCoverageGoal> goals, {
-  required String primaryKey,
-}) {
-  if (goals.length <= 1) return _board(primaryKey);
-  // 2+2: alternate families across slots so both 2pc goals can be met.
+/// Synthetic board for 2+2: alternate set keys across slots.
+List<CandidatePiece> _boardTwoTwo(String keyA, String keyB) {
   final pieces = <CandidatePiece>[];
   for (var i = 0; i < armorOptimizerSlots.length; i++) {
     final slot = armorOptimizerSlots[i];
-    pieces.add(
-      _piece(
-        slot,
-        810001 + i,
-        'synthetic-stat-${slot.wireName}',
-        30,
-        null,
-        const [],
-      ),
-    );
-    final goal = goals[i % goals.length];
-    pieces.add(
-      _piece(
-        slot,
-        820001 + i,
-        'synthetic-set-${slot.wireName}',
-        10,
-        goal.setBonusKey,
-        const [],
-      ),
-    );
+    pieces.add(_piece(slot, 810001 + i, 'synthetic-stat-${slot.wireName}', 30,
+        null, const []));
+    pieces.add(_piece(slot, 820001 + i, 'synthetic-set-${slot.wireName}', 10,
+        i.isEven ? keyA : keyB, const []));
   }
   return pieces;
 }

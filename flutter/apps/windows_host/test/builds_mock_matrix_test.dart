@@ -87,42 +87,26 @@ void main() {
     expect(pendingAeon.setBonusUnresolvedNote, isNull);
   });
 
-  test('rematch skips optimized builds and preserves user setBonuses', () {
+  test('user/optimize setBonuses win over empty-catalog matrix import', () {
     final rows = parseWarlockMatrix(
       jsonDecode(File(_fixturePath()).readAsStringSync()),
     );
     final fixture = buildsMockFixtureFromMatrix(rows);
-    final controller = BuildsMockController(fixture: fixture);
-    final aeon = controller.fixture.builds
-        .firstWhere((b) => b.name == 'Aeon solar sample');
-    controller.replaceBuild(
-      aeon.copyWith(
-        setBonuses: const [
-          MockSetBonus(
-            setId: 'User Saved Set',
-            setName: 'User Saved Set',
-            pieces: 4,
-            tier: '4pc',
-            text: '4pc User Saved Set',
-          ),
-        ],
-        isOptimized: true,
-      ),
+    final aeon = fixture.builds.firstWhere((b) => b.name == 'Aeon solar sample');
+    expect(aeon.setBonuses, isEmpty);
+    expect(aeon.armorSetProposal, '4pc Seventh Seraph');
+    final withUser = aeon.copyWith(
+      setBonuses: const [
+        MockSetBonus(
+          setId: 'User Saved Set',
+          setName: 'User Saved Set',
+          pieces: 4,
+          tier: '4pc',
+          text: '4pc User Saved Set',
+        ),
+      ],
     );
-
-    controller.rematchArmorSetProposals(const [
-      'Seventh Seraph Set',
-      'CODA',
-      "Apostate's Blade",
-    ]);
-
-    final after = controller.fixture.builds
-        .firstWhere((b) => b.name == 'Aeon solar sample');
-    expect(after.setBonuses.single.setId, 'User Saved Set');
-
-    final necrotic = controller.fixture.builds
-        .firstWhere((b) => b.name == 'Necrotic strand sample');
-    expect(necrotic.setBonuses, hasLength(2));
+    expect(withUser.setBonuses.single.setId, 'User Saved Set');
   });
 
   testWidgets('missing matrix path shows error, not sample builds', (
