@@ -197,6 +197,7 @@ Future<bool> _runPlugSteps({
           id: step.id,
           label: step.label,
           state: ApplyItemState.done,
+          reason: kApplyAlreadySetMessage,
         ),
       );
       emit(index: rowIndex, running: true);
