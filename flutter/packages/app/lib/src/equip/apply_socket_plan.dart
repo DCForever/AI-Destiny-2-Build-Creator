@@ -1367,6 +1367,8 @@ List<ApplyPlugStep> _planArmorMods({
   // double-assign a socket or exceed capacity across the plan.
   final usedSocketsByPiece = <String, Set<int>>{};
   final energyUsedByPiece = <String, int>{};
+  // Shaders may appear once per armor in DIM lists — plan each hash once.
+  final plannedShaderHashes = <int>{};
   var n = 0;
 
   for (final plug in targets) {
@@ -1392,20 +1394,26 @@ List<ApplyPlugStep> _planArmorMods({
     final freeKind =
         def == null ? null : _freeKindFromCategory(def.plugCategoryIdentifier);
     if (freeKind != null) {
-      steps.addAll(
-        _planFreeCosmeticOrTuning(
-          idPrefix: 'armor-mod:$n',
-          freeKind: freeKind,
-          plugHash: r.hash!,
-          plugName: displayName,
-          plugCategory: def!.plugCategoryIdentifier,
-          shaderTargetSlot: armorSlotFromWire(plug.targetSlot),
-          equippedArmor: equippedArmor,
-          instances: instances,
-          manifest: manifest,
-          usedSocketsByPiece: usedSocketsByPiece,
-        ),
+      if (freeKind == _FreePlugKind.shader &&
+          plannedShaderHashes.contains(r.hash!)) {
+        continue;
+      }
+      final planned = _planFreeCosmeticOrTuning(
+        idPrefix: 'armor-mod:$n',
+        freeKind: freeKind,
+        plugHash: r.hash!,
+        plugName: displayName,
+        plugCategory: def!.plugCategoryIdentifier,
+        shaderTargetSlot: armorSlotFromWire(plug.targetSlot),
+        equippedArmor: equippedArmor,
+        instances: instances,
+        manifest: manifest,
+        usedSocketsByPiece: usedSocketsByPiece,
       );
+      if (freeKind == _FreePlugKind.shader) {
+        plannedShaderHashes.add(r.hash!);
+      }
+      steps.addAll(planned);
       continue;
     }
     if (def == null ||
@@ -1499,6 +1507,24 @@ List<ApplyPlugStep> _planArmorMods({
     if (placed != null) steps.addAll(placed);
   }
   return steps;
+}
+
+/// Socket index that already holds [plugHash] under a matching free category.
+int? _findEquippedFreeSocket({
+  required ApplyManifestItemDef itemDef,
+  required ApplyInstanceSocketState instance,
+  required int plugHash,
+  required bool Function(String cat) categoryMatch,
+}) {
+  for (final e in instance.equippedPlugBySocket.entries) {
+    if (e.value != plugHash) continue;
+    final hint = itemDef.socketPlugCategoryHint[e.key];
+    if (hint != null && categoryMatch(hint)) return e.key;
+    final allowed = instance.allowedPlugHashesBySocket[e.key] ??
+        itemDef.allowedPlugHashesBySocket[e.key];
+    if (allowed != null && allowed.contains(plugHash)) return e.key;
+  }
+  return null;
 }
 
 /// Socket by category hint or allowed whitelist — never a hard-coded index.
@@ -1626,22 +1652,33 @@ List<ApplyPlugStep> _planFreeCosmeticOrTuning({
         : '${armorSlotDisplayName(slot)} (${armor.label})';
     i += 1;
     final id = freeKind == _FreePlugKind.shader ? '$idPrefix:s:$i' : idPrefix;
-    String? skip;
     if (socketIndex == null) {
       if (freeKind == _FreePlugKind.tuning) continue;
-      skip = doesNotFitPlugMessage(plugName);
-    } else {
-      final alreadyEquipped =
-          live.equippedPlugBySocket[socketIndex] == plugHash;
-      // Fail closed: empty/unknown owned set is Not unlocked (Skeptic should-fix
-      // from PR 71). Already-equipped no-ops do not need an ownership proof.
-      if (!alreadyEquipped &&
-          (live.ownedPlugHashes.isEmpty ||
-              !live.ownedPlugHashes.contains(plugHash))) {
-        skip = notUnlockedPlugMessage(plugName);
+      // Shader/ornament: prefer Already set when the plug is already on this
+      // piece; never emit Does not fit for a duplicate plan of the same plug.
+      final alreadyAt = _findEquippedFreeSocket(
+        itemDef: def,
+        instance: live,
+        plugHash: plugHash,
+        categoryMatch: match,
+      );
+      if (alreadyAt != null) {
+        out.add(
+          _freePlugStep(
+            id: id,
+            freeKind: freeKind,
+            plugName: plugName,
+            plugHash: plugHash,
+            itemInstanceId: armor.instanceId,
+            socketIndex: alreadyAt,
+            currentPlugHash: plugHash,
+            target: target,
+          ),
+        );
+        if (freeKind != _FreePlugKind.shader) return out;
+        continue;
       }
-    }
-    if (skip != null) {
+      if (freeKind == _FreePlugKind.shader) continue;
       out.add(
         _freePlugStep(
           id: id,
@@ -1649,15 +1686,43 @@ List<ApplyPlugStep> _planFreeCosmeticOrTuning({
           plugName: plugName,
           plugHash: plugHash,
           itemInstanceId: armor.instanceId,
-          socketIndex: socketIndex ?? 0,
           target: target,
-          skipReason: skip,
+          skipReason: doesNotFitPlugMessage(plugName),
         ),
       );
-      if (freeKind != _FreePlugKind.shader) return out;
-      continue;
+      return out;
     }
-    used.add(socketIndex!);
+    final alreadyEquipped =
+        live.equippedPlugBySocket[socketIndex] == plugHash;
+    // Ownership: host fills ownedPlugHashes from 310 reusable + 104/105, and
+    // live allowedPlugHashesBySocket is already plug-set ∩ unlocked. Do not
+    // treat the raw manifest def allow list as owned (that set is unfiltered).
+    // Fail closed when both sources are empty or the plug is in neither.
+    if (!alreadyEquipped) {
+      final allowed =
+          live.allowedPlugHashesBySocket[socketIndex] ?? const <int>{};
+      final owned = live.ownedPlugHashes;
+      final known = owned.isNotEmpty || allowed.isNotEmpty;
+      final unlocked =
+          owned.contains(plugHash) || allowed.contains(plugHash);
+      if (!known || !unlocked) {
+        out.add(
+          _freePlugStep(
+            id: id,
+            freeKind: freeKind,
+            plugName: plugName,
+            plugHash: plugHash,
+            itemInstanceId: armor.instanceId,
+            socketIndex: socketIndex,
+            target: target,
+            skipReason: notUnlockedPlugMessage(plugName),
+          ),
+        );
+        if (freeKind != _FreePlugKind.shader) return out;
+        continue;
+      }
+    }
+    used.add(socketIndex);
     out.add(
       _freePlugStep(
         id: id,
@@ -1798,36 +1863,14 @@ List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({
         energyUsedByPiece[armor.instanceId] ?? live.energyUsed;
     // Local energy math only when both capacity and usage are known.
     // Otherwise plan the insert and let InsertSocketPlugFree judge.
-    final canCheckEnergy = capacity != null && baselineUsed != null;
 
-    int currentCost = 0;
-    if (current != null && current != 0) {
-      final known = manifest.plugDef(current)?.energyCost;
-      if (known == null) {
-        if (canCheckEnergy) {
-          // Cannot subtract an unknown cost from a known budget.
-          return [
-            ApplyPlugStep(
-              id: idPrefix,
-              label: formatApplyPlugOutcomeLabel(
-                ApplyPlugKind.armorMod,
-                plugName,
-              ),
-              kind: ApplyPlugKind.armorMod,
-              itemInstanceId: armor.instanceId,
-              socketIndex: socketIndex,
-              plugItemHash: plugHash,
-              skipReason: armorEnergyCostUnknownMessage(
-                manifest.plugDef(current)?.name ?? '$current',
-              ),
-            ),
-          ];
-        }
-        // Capacity unknown — do not invent 0; Bungie is the judge.
-      } else {
-        currentCost = known;
-      }
-    }
+    // Outgoing plug cost: empty/default sockets ("Empty Mod Socket") and any
+    // plug whose def lacks energyCost count as 0 — never fail the insert on
+    // the plug being replaced.
+    final currentCost = () {
+      if (current == null || current == 0) return 0;
+      return manifest.plugDef(current)?.energyCost ?? 0;
+    }();
 
     final clearSteps = <ApplyPlugStep>[];
     final restoreTargets = <ApplySocketRestore>[];

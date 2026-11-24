@@ -615,14 +615,6 @@ ApplySocketPlan? socketPlanForApplySync({
         final fromCapture = _ownedPlugsFromCapture(live);
         final isSubclass = isSubclassBucketHash(row.bucketHash);
         final isArmor = isArmorBucketHash(row.bucketHash);
-        // Subclass + armor ownership: 310 reusable + 104/105 (Apply character).
-        final owned = <int>{
-          if (fromCapture != null) ...fromCapture,
-          if (isSubclass || isArmor) ...unlockedPlugSetPlugHashes,
-        };
-        final ownershipKnown = (isSubclass || isArmor)
-            ? owned.isNotEmpty
-            : (fromCapture != null && fromCapture.isNotEmpty);
         final itemDef = resolved.itemDef(row.itemHash);
         // M1: empty plugs ONLY from manifest singleInitialItemHash.
         final emptyPlugs = itemDef?.emptyPlugHashBySocket ?? const {};
@@ -632,6 +624,16 @@ ApplySocketPlan? socketPlanForApplySync({
           itemDef: itemDef,
           unlockedPlugSetPlugHashes: unlockedPlugSetPlugHashes,
         );
+        // Ownership: 310 reusable + 104/105 + per-socket allow lists (plug-set
+        // ∩ unlocked). Tuning/ornaments often appear only via allow lists.
+        final owned = <int>{
+          if (fromCapture != null) ...fromCapture,
+          if (isSubclass || isArmor) ...unlockedPlugSetPlugHashes,
+          for (final set in allowed.values) ...set,
+        };
+        final ownershipKnown = (isSubclass || isArmor)
+            ? owned.isNotEmpty
+            : (fromCapture != null && fromCapture.isNotEmpty);
         final capturePresent =
             live?.socketCapture != null && live!.socketCapture!.isNotEmpty;
         return ApplyInstanceSocketState(
