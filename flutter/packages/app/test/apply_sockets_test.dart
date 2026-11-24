@@ -3631,12 +3631,13 @@ void main() {
         ],
       );
       // 8 - 2 + 3 = 9 ≤ 10 → pass
-      final step = plan.armorMods.single;
-      expect(step.shouldCall, isTrue);
-      expect(step.skipReason, isNull);
-      expect(step.plugItemHash, wanted);
-      expect(step.currentPlugHash, current);
-      expect(step.itemInstanceId, 'helm-1');
+      final fitStep = plan.armorMods.single;
+      expect(fitStep.shouldCall, isTrue);
+      expect(fitStep.skipReason, isNull);
+      expect(fitStep.plugItemHash, wanted);
+      expect(fitStep.currentPlugHash, current);
+      expect(fitStep.itemInstanceId, 'helm-1');
+      expect(fitStep.socketIndex, 0);
     });
 
     test('capacity + usage gate: insert fails when projected exceeds', () {
@@ -3684,11 +3685,13 @@ void main() {
         ],
       );
       // 9 - 1 + 5 = 13 > 10 → fail
+      final overStep = plan.armorMods.single;
       expect(
-        plan.armorMods.single.skipReason,
+        overStep.skipReason,
         notEnoughArmorEnergyMessage('Wanted Mod'),
       );
-      expect(plan.armorMods.single.shouldCall, isFalse);
+      expect(overStep.shouldCall, isFalse);
+      expect(overStep.itemInstanceId, 'helm-cap');
     });
 
     test('replacing an existing plug frees its cost for the new plug', () {
@@ -3736,11 +3739,12 @@ void main() {
         ],
       );
       // Without freeing current: 10 + 4 = 14 would fail. With free: 10 - 4 + 4 = 10.
-      final step = plan.armorMods.single;
-      expect(step.shouldCall, isTrue, reason: 'replace must free current cost');
-      expect(step.currentPlugHash, current);
-      expect(step.plugItemHash, wanted);
-      expect(step.skipReason, isNull);
+      final freeStep = plan.armorMods.single;
+      expect(freeStep.shouldCall, isTrue, reason: 'replace must free current cost');
+      expect(freeStep.currentPlugHash, current);
+      expect(freeStep.plugItemHash, wanted);
+      expect(freeStep.skipReason, isNull);
+      expect(freeStep.itemInstanceId, 'helm-free');
     });
 
     test('null capacity soft-proceeds — Bungie InsertSocketPlugFree judges', () {
@@ -3801,16 +3805,17 @@ void main() {
           ),
         ],
       );
-      final step = plan.armorMods.single;
-      expect(step.shouldCall, isTrue);
-      expect(step.skipReason, isNull);
-      expect(step.itemInstanceId, 'helm-soft');
+      final softStep = plan.armorMods.single;
+      expect(softStep.shouldCall, isTrue);
+      expect(softStep.skipReason, isNull);
+      expect(softStep.itemInstanceId, 'helm-soft');
+      expect(softStep.plugItemHash, wanted);
       expect(
-        step.skipReason,
+        softStep.skipReason,
         isNot(startsWith(kApplyPlugEnergyCostUnknownPrefix)),
       );
       expect(
-        step.skipReason,
+        softStep.skipReason,
         isNot(startsWith(kApplyPlugNotEnoughEnergyPrefix)),
       );
     });
