@@ -269,11 +269,18 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
         for (final row in gated.inventory)
           if (isArmorBucketHash(row.bucketHash)) row.itemHash,
       };
+      // Hydrate energyCost for loadout mods + currently equipped plugs so the
+      // planner can subtract the plug being replaced (ModRecord dedupe may omit
+      // alternate hashes that are still sitting on armor).
+      final extraPlugHashes = <int>{
+        for (final m in loadout.mods) m.hash,
+        ...equippedPlugHashesFromLiveItems(gated.liveItems),
+      };
       resolvedManifest = await _buildSocketManifestLookup(
         ports,
         subclassItemHashes: subclassHashes,
         armorItemHashes: armorHashes,
-        extraPlugHashes: {for (final m in loadout.mods) m.hash},
+        extraPlugHashes: extraPlugHashes,
       );
     }
     if (!isMounted()) {
@@ -520,19 +527,38 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
   );
 }
 
-/// True when live socket + energy data is present for armor mod planning.
+/// True when live socket capture is present for armor mod planning.
 ///
-/// Requires component 310 reusable plugs on capture AND known energyUsed
-/// (Skeptic: 305-only is not enough). F4 stays false when either is missing.
+/// Energy capacity/usage is optional: when missing, the planner soft-proceeds
+/// and lets Bungie `InsertSocketPlugFree` judge. Plug-set sockets may have an
+/// empty 310 list after PR70 — capture presence is enough.
 bool isArmorModDataKnown(RawInventoryItem? live) {
   if (live == null) return false;
   final capture = live.socketCapture;
-  if (capture == null || capture.isEmpty) return false;
-  final hasReusable =
-      capture.any((s) => s.reusablePlugHashes.any((h) => h != 0));
-  if (!hasReusable) return false;
-  if (live.energyCapacity == null || live.energyUsed == null) return false;
-  return true;
+  return capture != null && capture.isNotEmpty;
+}
+
+/// Armor energy capacity from instance 300, else tier fallback (Armor 3.0).
+///
+/// Null when neither the energy block nor gearTier is available.
+int? resolveApplyArmorEnergyCapacity(RawInventoryItem? live) {
+  if (live == null) return null;
+  if (live.energyCapacity != null) return live.energyCapacity;
+  if (live.gearTier != null) return armorEnergyCapacity(live.gearTier);
+  return null;
+}
+
+/// Equipped plug hashes from live socket capture (for energy-cost hydration).
+Set<int> equippedPlugHashesFromLiveItems(Iterable<RawInventoryItem> liveItems) {
+  final out = <int>{};
+  for (final row in liveItems) {
+    final capture = row.socketCapture;
+    if (capture == null) continue;
+    for (final sock in capture) {
+      if (sock.equippedPlugHash != 0) out.add(sock.equippedPlugHash);
+    }
+  }
+  return out;
 }
 
 /// Builds an [ApplySocketPlan] from items that actually equipped this run.
@@ -616,8 +642,8 @@ ApplySocketPlan? socketPlanForApplySync({
           location: row.location,
           equippedPlugBySocket: keyed ?? const {},
           ownedPlugHashes: owned,
-          energyCapacity: live?.energyCapacity ?? 0,
-          energyUsed: live?.energyUsed ?? 0,
+          energyCapacity: resolveApplyArmorEnergyCapacity(live),
+          energyUsed: live?.energyUsed,
           emptyPlugHashBySocket: emptyPlugs,
           allowedPlugHashesBySocket: allowed,
           armorModDataKnown: isArmorModDataKnown(live),
@@ -871,12 +897,14 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
 
     // F2: subclass/armor socket indexes from DestinyInventoryItemDefinition.
     // Plug-set sockets: reusable/randomized plug-set hashes → allowed whitelist.
-    // Extra loadout plugs (tuning/shaders/ornaments) hydrate from raw when
-    // missing from the mods store.
+    // Extra plugs (loadout tuning/shaders/ornaments + currently equipped +
+    // empty sockets): hydrate plug.energyCost.energyCost from raw when the
+    // ModRecord store omitted them or dropped alternate hashes.
     final subclassDefs = <int, ApplyManifestItemDef>{};
     final armorDefs = <int, ApplyManifestItemDef>{};
     final needDefs = {...subclassItemHashes, ...armorItemHashes};
-    if (needDefs.isNotEmpty || extraPlugHashes.isNotEmpty) {
+    final hydrateHashes = <int>{...extraPlugHashes};
+    if (needDefs.isNotEmpty || hydrateHashes.isNotEmpty) {
       try {
         final table = await refresh.service.loadRawTable(
           version,
@@ -891,27 +919,38 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
         } catch (_) {
           // Without plug sets, allowed lists stay empty → 310-only fallback.
         }
-        for (final hash in extraPlugHashes) {
-          if (hash == 0 || plugsByHash.containsKey(hash)) continue;
+
+        void hydratePlugFromRaw(int hash) {
+          if (hash == 0) return;
+          final existing = plugsByHash[hash];
+          if (existing != null && existing.energyCost != null) return;
           final raw = table['$hash'];
-          if (raw is! Map) continue;
-          final cat = _plugCategoryFromRawMap(raw);
+          if (raw is! Map) return;
+          final cat = _plugCategoryFromRawMap(raw) ??
+              existing?.plugCategoryIdentifier;
           final nameRaw = (raw['displayProperties'] as Map?)?['name'];
           final name = nameRaw is String && nameRaw.trim().isNotEmpty
               ? nameRaw.trim()
-              : (catalogNames[hash] ?? '');
-          if (cat == null || cat.isEmpty || name.isEmpty) continue;
-          final cost =
+              : (existing?.name ?? catalogNames[hash] ?? '');
+          if (cat == null || cat.isEmpty || name.isEmpty) return;
+          final costRaw =
               ((raw['plug'] as Map?)?['energyCost'] as Map?)?['energyCost'];
           addPlug(
             ApplyManifestPlugDef(
               hash: hash,
               name: name,
               plugCategoryIdentifier: cat,
-              energyCost: cost is num ? cost.toInt() : null,
+              energyCost:
+                  costRaw is num ? costRaw.toInt() : existing?.energyCost,
+              fragmentCapacity: existing?.fragmentCapacity,
             ),
           );
         }
+
+        for (final hash in hydrateHashes) {
+          hydratePlugFromRaw(hash);
+        }
+
         String? plugCat(int plugHash) {
           final known = plugsByHash[plugHash]?.plugCategoryIdentifier;
           if (known != null) return known;
@@ -937,6 +976,9 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
         for (final hash in armorItemHashes) {
           final raw = table['$hash'];
           final empties = _emptyPlugHashesFromItemDefRaw(raw);
+          for (final emptyHash in empties.values) {
+            hydratePlugFromRaw(emptyHash);
+          }
           final name = catalogNames[hash] ?? 'Item';
           // Socket indexes from DestinyInventoryItemDefinition categories —
           // never hard-code 0–4 (fail closed when categories missing).

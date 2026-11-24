@@ -344,8 +344,8 @@ class ApplyInstanceSocketState {
     this.location = 'character',
     this.equippedPlugBySocket = const {},
     this.ownedPlugHashes = const {},
-    this.energyCapacity = 0,
-    this.energyUsed = 0,
+    this.energyCapacity,
+    this.energyUsed,
     this.emptyPlugHashBySocket = const {},
     this.allowedPlugHashesBySocket = const {},
     this.armorModDataKnown = false,
@@ -363,8 +363,14 @@ class ApplyInstanceSocketState {
   /// Equipped plug keyed by socket index (never assume flat plugHashes order).
   final Map<int, int> equippedPlugBySocket;
   final Set<int> ownedPlugHashes;
-  final int energyCapacity;
-  final int energyUsed;
+
+  /// Instance component 300 `energy.energyCapacity`, or host tier fallback.
+  /// Null = capacity unknown — planner skips the local energy gate and lets
+  /// Bungie `InsertSocketPlugFree` be the judge.
+  final int? energyCapacity;
+
+  /// Instance component 300 `energy.energyUsed`. Null = usage unknown.
+  final int? energyUsed;
   final Map<int, int> emptyPlugHashBySocket;
   final Map<int, Set<int>> allowedPlugHashesBySocket;
 
@@ -1778,50 +1784,19 @@ List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({
       ...live.emptyPlugHashBySocket,
     };
 
+    final capacity = live.energyCapacity;
+    final baselineUsed =
+        energyUsedByPiece[armor.instanceId] ?? live.energyUsed;
+    // Local energy math only when both capacity and usage are known.
+    // Otherwise plan the insert and let InsertSocketPlugFree judge.
+    final canCheckEnergy = capacity != null && baselineUsed != null;
+
     int currentCost = 0;
     if (current != null && current != 0) {
       final known = manifest.plugDef(current)?.energyCost;
       if (known == null) {
-        return [
-          ApplyPlugStep(
-            id: idPrefix,
-            label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
-            kind: ApplyPlugKind.armorMod,
-            itemInstanceId: armor.instanceId,
-            socketIndex: socketIndex,
-            plugItemHash: plugHash,
-            skipReason: armorEnergyCostUnknownMessage(
-              manifest.plugDef(current)?.name ?? '$current',
-            ),
-          ),
-        ];
-      }
-      currentCost = known;
-    }
-    var energyUsed =
-        energyUsedByPiece[armor.instanceId] ?? live.energyUsed;
-    final capacity = live.energyCapacity;
-    final projected = energyUsed - currentCost + cost;
-
-    final clearSteps = <ApplyPlugStep>[];
-    final restoreTargets = <ApplySocketRestore>[];
-    final clearIds = <String>[];
-    if (capacity > 0 && projected > capacity) {
-      // Tentative clears — only keep them if the insert fits afterward.
-      var tentativeEnergy = energyUsed;
-      final tentative = <ApplyPlugStep>[];
-      final tentativeRestores = <ApplySocketRestore>[];
-      final tentativeClearIds = <String>[];
-      for (final idx in modIndexes) {
-        if (idx == socketIndex) continue;
-        if (usedSockets.contains(idx)) continue;
-        final equipped = live.equippedPlugBySocket[idx];
-        if (equipped == null || equipped == 0) continue;
-        final empty = emptyBySocket[idx];
-        if (empty == null || empty == 0) continue;
-        final eqCost = manifest.plugDef(equipped)?.energyCost;
-        // Unknown cost on an equipped mod ⇒ cannot safely clear for energy.
-        if (eqCost == null) {
+        if (canCheckEnergy) {
+          // Cannot subtract an unknown cost from a known budget.
           return [
             ApplyPlugStep(
               id: idPrefix,
@@ -1834,64 +1809,114 @@ List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({
               socketIndex: socketIndex,
               plugItemHash: plugHash,
               skipReason: armorEnergyCostUnknownMessage(
-                manifest.plugDef(equipped)?.name ?? '$equipped',
+                manifest.plugDef(current)?.name ?? '$current',
               ),
             ),
           ];
         }
-        if (eqCost <= 0) continue;
-        final tentativeClearId = '$idPrefix:clear:$idx';
-        tentative.add(
-          ApplyPlugStep(
-            id: tentativeClearId,
-            label: formatApplyPlugOutcomeLabel(
-              ApplyPlugKind.armorModClear,
-              manifest.plugDef(equipped)?.name ?? 'mod',
+        // Capacity unknown — do not invent 0; Bungie is the judge.
+      } else {
+        currentCost = known;
+      }
+    }
+
+    final clearSteps = <ApplyPlugStep>[];
+    final restoreTargets = <ApplySocketRestore>[];
+    final clearIds = <String>[];
+    if (capacity != null && baselineUsed != null) {
+      final knownCapacity = capacity;
+      var energyUsed = baselineUsed;
+      final projected = energyUsed - currentCost + cost;
+      if (projected > knownCapacity) {
+        // Tentative clears — only keep them if the insert fits afterward.
+        var tentativeEnergy = energyUsed;
+        final tentative = <ApplyPlugStep>[];
+        final tentativeRestores = <ApplySocketRestore>[];
+        final tentativeClearIds = <String>[];
+        for (final idx in modIndexes) {
+          if (idx == socketIndex) continue;
+          if (usedSockets.contains(idx)) continue;
+          final equipped = live.equippedPlugBySocket[idx];
+          if (equipped == null || equipped == 0) continue;
+          final empty = emptyBySocket[idx];
+          if (empty == null || empty == 0) continue;
+          final eqCost = manifest.plugDef(equipped)?.energyCost;
+          // Unknown cost on an equipped mod ⇒ cannot safely clear for energy.
+          if (eqCost == null) {
+            return [
+              ApplyPlugStep(
+                id: idPrefix,
+                label: formatApplyPlugOutcomeLabel(
+                  ApplyPlugKind.armorMod,
+                  plugName,
+                ),
+                kind: ApplyPlugKind.armorMod,
+                itemInstanceId: armor.instanceId,
+                socketIndex: socketIndex,
+                plugItemHash: plugHash,
+                skipReason: armorEnergyCostUnknownMessage(
+                  manifest.plugDef(equipped)?.name ?? '$equipped',
+                ),
+              ),
+            ];
+          }
+          if (eqCost <= 0) continue;
+          final tentativeClearId = '$idPrefix:clear:$idx';
+          tentative.add(
+            ApplyPlugStep(
+              id: tentativeClearId,
+              label: formatApplyPlugOutcomeLabel(
+                ApplyPlugKind.armorModClear,
+                manifest.plugDef(equipped)?.name ?? 'mod',
+              ),
+              kind: ApplyPlugKind.armorModClear,
+              itemInstanceId: armor.instanceId,
+              socketIndex: idx,
+              plugItemHash: empty,
+              currentPlugHash: equipped,
             ),
-            kind: ApplyPlugKind.armorModClear,
-            itemInstanceId: armor.instanceId,
-            socketIndex: idx,
-            plugItemHash: empty,
-            currentPlugHash: equipped,
-          ),
-        );
-        tentativeRestores.add(
-          ApplySocketRestore(
-            clearStepId: tentativeClearId,
-            itemInstanceId: armor.instanceId,
-            socketIndex: idx,
-            plugItemHash: equipped,
-          ),
-        );
-        tentativeClearIds.add(tentativeClearId);
-        tentativeEnergy -= eqCost;
-        if (tentativeEnergy - currentCost + cost <= capacity) break;
+          );
+          tentativeRestores.add(
+            ApplySocketRestore(
+              clearStepId: tentativeClearId,
+              itemInstanceId: armor.instanceId,
+              socketIndex: idx,
+              plugItemHash: equipped,
+            ),
+          );
+          tentativeClearIds.add(tentativeClearId);
+          tentativeEnergy -= eqCost;
+          if (tentativeEnergy - currentCost + cost <= knownCapacity) break;
+        }
+        if (tentativeEnergy - currentCost + cost > knownCapacity) {
+          // Insert cannot fit — never clear without a planned insert.
+          return [
+            ApplyPlugStep(
+              id: idPrefix,
+              label: formatApplyPlugOutcomeLabel(
+                ApplyPlugKind.armorMod,
+                plugName,
+              ),
+              kind: ApplyPlugKind.armorMod,
+              itemInstanceId: armor.instanceId,
+              socketIndex: socketIndex,
+              plugItemHash: plugHash,
+              skipReason: notEnoughArmorEnergyMessage(plugName),
+            ),
+          ];
+        }
+        clearSteps.addAll(tentative);
+        restoreTargets.addAll(tentativeRestores);
+        clearIds.addAll(tentativeClearIds);
+        for (final clear in tentative) {
+          usedSockets.add(clear.socketIndex);
+        }
+        energyUsed = tentativeEnergy;
       }
-      if (tentativeEnergy - currentCost + cost > capacity) {
-        // Insert cannot fit — never clear without a planned insert.
-        return [
-          ApplyPlugStep(
-            id: idPrefix,
-            label: formatApplyPlugOutcomeLabel(ApplyPlugKind.armorMod, plugName),
-            kind: ApplyPlugKind.armorMod,
-            itemInstanceId: armor.instanceId,
-            socketIndex: socketIndex,
-            plugItemHash: plugHash,
-            skipReason: notEnoughArmorEnergyMessage(plugName),
-          ),
-        ];
-      }
-      clearSteps.addAll(tentative);
-      restoreTargets.addAll(tentativeRestores);
-      clearIds.addAll(tentativeClearIds);
-      for (final clear in tentative) {
-        usedSockets.add(clear.socketIndex);
-      }
-      energyUsed = tentativeEnergy;
+      energyUsedByPiece[armor.instanceId] = energyUsed - currentCost + cost;
     }
 
     usedSockets.add(socketIndex);
-    energyUsedByPiece[armor.instanceId] = energyUsed - currentCost + cost;
 
     return [
       ...clearSteps,

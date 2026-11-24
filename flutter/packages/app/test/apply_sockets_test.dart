@@ -3538,4 +3538,281 @@ void main() {
       expect(plan.armorMods.single.shouldCall, isFalse);
     });
   });
+
+  group('armor energy: capacity, cost, replace frees, soft-proceed', () {
+    ApplySocketManifestLookup _helmManifest({
+      required int armorHash,
+      required int wanted,
+      required int current,
+      required int wantedCost,
+      required int currentCost,
+    }) {
+      return ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Helmet',
+                socketCategories: const [
+                  ApplyManifestSocketCategory(
+                    socketCategoryHash: 590099826,
+                    socketIndexes: [0],
+                  ),
+                ],
+                allowedPlugHashesBySocket: {
+                  0: {wanted, current},
+                },
+              )
+            : null,
+        plugDef: (h) {
+          if (h == wanted) {
+            return ApplyManifestPlugDef(
+              hash: wanted,
+              name: 'Wanted Mod',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              energyCost: wantedCost,
+            );
+          }
+          if (h == current) {
+            return ApplyManifestPlugDef(
+              hash: current,
+              name: 'Current Mod',
+              plugCategoryIdentifier: 'enhancements.v2_head',
+              energyCost: currentCost,
+            );
+          }
+          return null;
+        },
+        resolveUniquePlugHashByName: (_) => null,
+      );
+    }
+
+    test('capacity + usage gate: insert passes when projected fits', () {
+      const armorHash = 200;
+      const wanted = 301;
+      const current = 302;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [ApplyNamedPlug(name: 'Wanted Mod', hash: wanted)],
+        ),
+        manifest: _helmManifest(
+          armorHash: armorHash,
+          wanted: wanted,
+          current: current,
+          wantedCost: 3,
+          currentCost: 2,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 10,
+            energyUsed: 8,
+            ownedPlugHashes: {wanted, current},
+            armorModDataKnown: true,
+            equippedPlugBySocket: {0: current},
+            allowedPlugHashesBySocket: {
+              0: {wanted, current},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      // 8 - 2 + 3 = 9 ≤ 10 → pass
+      final step = plan.armorMods.single;
+      expect(step.shouldCall, isTrue);
+      expect(step.skipReason, isNull);
+      expect(step.plugItemHash, wanted);
+      expect(step.currentPlugHash, current);
+      expect(step.itemInstanceId, 'helm-1');
+    });
+
+    test('capacity + usage gate: insert fails when projected exceeds', () {
+      const armorHash = 200;
+      const wanted = 311;
+      const current = 312;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [ApplyNamedPlug(name: 'Wanted Mod', hash: wanted)],
+        ),
+        manifest: _helmManifest(
+          armorHash: armorHash,
+          wanted: wanted,
+          current: current,
+          wantedCost: 5,
+          currentCost: 1,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-cap',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 10,
+            energyUsed: 9,
+            ownedPlugHashes: {wanted, current},
+            armorModDataKnown: true,
+            equippedPlugBySocket: {0: current},
+            allowedPlugHashesBySocket: {
+              0: {wanted, current},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-cap',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      // 9 - 1 + 5 = 13 > 10 → fail
+      expect(
+        plan.armorMods.single.skipReason,
+        notEnoughArmorEnergyMessage('Wanted Mod'),
+      );
+      expect(plan.armorMods.single.shouldCall, isFalse);
+    });
+
+    test('replacing an existing plug frees its cost for the new plug', () {
+      const armorHash = 200;
+      const wanted = 321;
+      const current = 322;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [ApplyNamedPlug(name: 'Wanted Mod', hash: wanted)],
+        ),
+        manifest: _helmManifest(
+          armorHash: armorHash,
+          wanted: wanted,
+          current: current,
+          wantedCost: 4,
+          currentCost: 4,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-free',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            energyCapacity: 10,
+            energyUsed: 10,
+            ownedPlugHashes: {wanted, current},
+            armorModDataKnown: true,
+            equippedPlugBySocket: {0: current},
+            allowedPlugHashesBySocket: {
+              0: {wanted, current},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-free',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      // Without freeing current: 10 + 4 = 14 would fail. With free: 10 - 4 + 4 = 10.
+      final step = plan.armorMods.single;
+      expect(step.shouldCall, isTrue, reason: 'replace must free current cost');
+      expect(step.currentPlugHash, current);
+      expect(step.plugItemHash, wanted);
+      expect(step.skipReason, isNull);
+    });
+
+    test('null capacity soft-proceeds — Bungie InsertSocketPlugFree judges', () {
+      const armorHash = 200;
+      const wanted = 331;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [ApplyNamedPlug(name: 'Wanted Mod', hash: wanted)],
+        ),
+        manifest: ApplySocketManifestLookup(
+          itemDef: (_) => const ApplyManifestItemDef(
+            hash: armorHash,
+            name: 'Helmet',
+            socketCategories: [
+              ApplyManifestSocketCategory(
+                socketCategoryHash: 590099826,
+                socketIndexes: [0],
+              ),
+            ],
+            allowedPlugHashesBySocket: {
+              0: {wanted},
+            },
+          ),
+          plugDef: (h) => h == wanted
+              ? const ApplyManifestPlugDef(
+                  hash: wanted,
+                  name: 'Wanted Mod',
+                  plugCategoryIdentifier: 'enhancements.v2_head',
+                  energyCost: 5,
+                )
+              : null,
+          resolveUniquePlugHashByName: (_) => null,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-soft',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            // capacity + used null → no local energy gate
+            ownedPlugHashes: {wanted},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: {
+              0: {wanted},
+            },
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-soft',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      final step = plan.armorMods.single;
+      expect(step.shouldCall, isTrue);
+      expect(step.skipReason, isNull);
+      expect(step.itemInstanceId, 'helm-soft');
+      expect(
+        step.skipReason,
+        isNot(startsWith(kApplyPlugEnergyCostUnknownPrefix)),
+      );
+      expect(
+        step.skipReason,
+        isNot(startsWith(kApplyPlugNotEnoughEnergyPrefix)),
+      );
+    });
+  });
 }

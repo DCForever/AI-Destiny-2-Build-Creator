@@ -32,7 +32,10 @@ void main() {
     displayName: 'Guardian',
   );
 
-  test('F4: armorModDataKnown stays false when 310 or energyUsed missing', () {
+  // CHANGED: socket capture alone is enough; missing energy soft-proceeds in
+  // the planner (Bungie InsertSocketPlugFree judges). Empty-310 plug-set
+  // sockets are valid after PR70.
+  test('F4: armorModDataKnown requires socket capture only', () {
     expect(isArmorModDataKnown(null), isFalse);
     expect(
       isArmorModDataKnown(
@@ -45,7 +48,7 @@ void main() {
       ),
       isFalse,
     );
-    // 305-only (no reusable plugs) → false, no write path.
+    // 305-only (no reusable plugs, no energy) → true; energy soft-fails later.
     expect(
       isArmorModDataKnown(
         const RawInventoryItem(
@@ -56,31 +59,9 @@ void main() {
           socketCapture: [
             RawSocketCapture(socketIndex: 0, equippedPlugHash: 10),
           ],
-          energyCapacity: 10,
-          energyUsed: 3,
         ),
       ),
-      isFalse,
-    );
-    expect(
-      isArmorModDataKnown(
-        const RawInventoryItem(
-          instanceId: 'a1',
-          itemHash: 1,
-          bucketHash: 3448274439,
-          location: 'equipped',
-          socketCapture: [
-            RawSocketCapture(
-              socketIndex: 0,
-              equippedPlugHash: 10,
-              reusablePlugHashes: [10, 11],
-            ),
-          ],
-          energyCapacity: 10,
-          // energyUsed null → still unknown
-        ),
-      ),
-      isFalse,
+      isTrue,
     );
     expect(
       isArmorModDataKnown(
@@ -102,6 +83,75 @@ void main() {
       ),
       isTrue,
     );
+  });
+
+  test('resolveApplyArmorEnergyCapacity prefers instance then tier', () {
+    expect(resolveApplyArmorEnergyCapacity(null), isNull);
+    expect(
+      resolveApplyArmorEnergyCapacity(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+          energyCapacity: 7,
+          gearTier: 5,
+        ),
+      ),
+      7,
+    );
+    expect(
+      resolveApplyArmorEnergyCapacity(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+          gearTier: 5,
+        ),
+      ),
+      11,
+    );
+    expect(
+      resolveApplyArmorEnergyCapacity(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+          gearTier: 3,
+        ),
+      ),
+      10,
+    );
+    expect(
+      resolveApplyArmorEnergyCapacity(
+        const RawInventoryItem(
+          instanceId: 'a1',
+          itemHash: 1,
+          bucketHash: 3448274439,
+          location: 'equipped',
+        ),
+      ),
+      isNull,
+    );
+  });
+
+  test('equippedPlugHashesFromLiveItems collects nonzero equipped plugs', () {
+    final hashes = equippedPlugHashesFromLiveItems([
+      const RawInventoryItem(
+        instanceId: 'a1',
+        itemHash: 1,
+        bucketHash: 3448274439,
+        location: 'equipped',
+        socketCapture: [
+          RawSocketCapture(socketIndex: 0, equippedPlugHash: 111),
+          RawSocketCapture(socketIndex: 1, equippedPlugHash: 0),
+          RawSocketCapture(socketIndex: 2, equippedPlugHash: 222),
+        ],
+      ),
+    ]);
+    expect(hashes, {111, 222});
   });
 
   // CHANGED: plug-set sockets often have empty 310; unlock is 305-only now.
