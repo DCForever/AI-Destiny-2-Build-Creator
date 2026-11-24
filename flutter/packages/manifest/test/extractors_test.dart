@@ -120,5 +120,14 @@ void main() {
       expect(major.energyCost, 3);
       expect(major.slotCategory, ModSlotCategory.general);
     });
+
+    test('extracts Armor 3.0 core.gear_systems tuning mods', () async {
+      final records = await ModsExtractor().extract(loadFixtureRawTable);
+      final mods = records.cast<ModRecord>();
+      final tuning = mods.firstWhere((m) => m.name == '+Class / -Melee');
+      expect(tuning.slotCategory, ModSlotCategory.tuning);
+      expect(tuning.statModifiers['Class'], 5);
+      expect(tuning.statModifiers['Melee'], -5);
+    });
   });
 }

@@ -24,6 +24,7 @@ const String kApplyPlugEnergyCostUnknownPrefix = 'Armor energy cost unknown: ';
 const String kApplyPlugUnresolvablePrefix = 'Could not resolve: ';
 const String kApplyPlugDoesNotFitPrefix = 'Does not fit: ';
 const String kApplyNoFragmentSocketPrefix = 'No fragment socket: ';
+const String kApplyNoTuningSocketMessage = 'No tuning socket (needs Tier 5)';
 const String kApplySubclassSocketsUnavailableMessage =
     'Subclass sockets unavailable';
 const String kApplySocketDataUnavailableMessage =
@@ -85,12 +86,21 @@ String applyPlugKindLabel(ApplyPlugKind kind) {
   }
 }
 
-String formatApplyPlugOutcomeLabel(ApplyPlugKind kind, String plugName) {
+String formatApplyPlugOutcomeLabel(
+  ApplyPlugKind kind,
+  String plugName, {
+  String? target,
+  String? labelPrefix,
+}) {
   final name = plugName.trim();
-  final prefix = applyPlugKindLabel(kind);
-  if (name.isEmpty) return prefix;
-  return '$prefix: $name';
+  final prefix = (labelPrefix ?? applyPlugKindLabel(kind)).trim();
+  final base = name.isEmpty ? prefix : '$prefix: $name';
+  final t = target?.trim() ?? '';
+  if (t.isEmpty) return base;
+  return '$base → $t';
 }
+
+String noTuningSocketMessage() => kApplyNoTuningSocketMessage;
 
 String notUnlockedPlugMessage(String name) =>
     '$kApplyPlugNotUnlockedPrefix${name.trim()}';
@@ -408,10 +418,14 @@ class ApplyNamedPlug {
   const ApplyNamedPlug({
     required this.name,
     this.hash,
+    this.targetSlot,
   });
 
   final String name;
   final int? hash;
+
+  /// Optional armor wire slot for shaders (`helmet` / …). Null → every piece.
+  final String? targetSlot;
 }
 
 /// Build-detail inputs for socket planning.
@@ -612,6 +626,32 @@ List<int> _indexesForCategories(
   return out;
 }
 
+bool isTuningPlugCategory(String cat) => cat.contains('tuning');
+bool isShaderPlugCategory(String cat) {
+  final c = cat.toLowerCase();
+  return c == 'shader' || c.contains('shaders');
+}
+
+bool isOrnamentPlugCategory(String cat) {
+  final c = cat.toLowerCase();
+  return c.contains('ornament') || c.contains('armor_skin');
+}
+
+enum _FreePlugKind { tuning, shader, ornament }
+
+_FreePlugKind? _freeKindFromCategory(String cat) {
+  if (isShaderPlugCategory(cat)) return _FreePlugKind.shader;
+  if (isOrnamentPlugCategory(cat)) return _FreePlugKind.ornament;
+  if (isTuningPlugCategory(cat)) return _FreePlugKind.tuning;
+  return null;
+}
+
+String _freePlugLabelPrefix(_FreePlugKind k) => switch (k) {
+      _FreePlugKind.tuning => 'Tuning',
+      _FreePlugKind.shader => 'Shader',
+      _FreePlugKind.ornament => 'Ornament',
+    };
+
 ApplyPlugKind? _kindFromPlugCategory(String cat) {
   if (cat.contains('.supers') || cat.endsWith('.supers')) {
     return ApplyPlugKind.superAbility;
@@ -652,13 +692,37 @@ ApplyArmorSlot? armorSlotFromPlugCategory(String cat) {
   if (RegExp(r'enhancements\.(v2_)?class').hasMatch(cat)) {
     return ApplyArmorSlot.classItem;
   }
-  if (cat.contains('tuning') ||
-      RegExp(r'enhancements\.(v2_)?general').hasMatch(cat) ||
+  if (RegExp(r'enhancements\.(v2_)?general').hasMatch(cat) ||
       cat.contains('enhancements.universal')) {
     return ApplyArmorSlot.general;
   }
   return null;
 }
+
+/// Ornament → armor slot from plug category or display name.
+ApplyArmorSlot? ornamentSlotFromCategoryOrName(String cat, String name) {
+  final hay = '${cat.toLowerCase()} ${name.toLowerCase()}';
+  // Prefer slot tokens over bare "arm" in "armor_skins_*".
+  if (RegExp(r'head|helmet|hood|mask|\bhelm\b').hasMatch(hay)) {
+    return ApplyArmorSlot.helmet;
+  }
+  if (RegExp(r'chest|robe|plate|vest').hasMatch(hay)) return ApplyArmorSlot.chest;
+  if (RegExp(r'leg|boot|greave').hasMatch(hay)) return ApplyArmorSlot.legs;
+  if (RegExp(r'class|bond|mark|cloak').hasMatch(hay)) {
+    return ApplyArmorSlot.classItem;
+  }
+  if (RegExp(r'arms|glove|gauntlet').hasMatch(hay)) return ApplyArmorSlot.arms;
+  return null;
+}
+
+String armorSlotDisplayName(ApplyArmorSlot s) => switch (s) {
+      ApplyArmorSlot.helmet => 'Helmet',
+      ApplyArmorSlot.arms => 'Arms',
+      ApplyArmorSlot.chest => 'Chest',
+      ApplyArmorSlot.legs => 'Legs',
+      ApplyArmorSlot.classItem => 'Class item',
+      ApplyArmorSlot.general => 'General',
+    };
 
 ApplyArmorSlot? armorSlotFromWire(String? slot) {
   switch ((slot ?? '').trim().toLowerCase()) {
@@ -1168,11 +1232,28 @@ List<ApplyPlugStep> _planArmorMods({
     }
     final def = manifest.plugDef(r.hash!);
     final displayName = name.isNotEmpty ? name : (def?.name ?? '${r.hash}');
+    final freeKind =
+        def == null ? null : _freeKindFromCategory(def.plugCategoryIdentifier);
+    if (freeKind != null) {
+      steps.addAll(
+        _planFreeCosmeticOrTuning(
+          idPrefix: 'armor-mod:$n',
+          freeKind: freeKind,
+          plugHash: r.hash!,
+          plugName: displayName,
+          plugCategory: def!.plugCategoryIdentifier,
+          shaderTargetSlot: armorSlotFromWire(plug.targetSlot),
+          equippedArmor: equippedArmor,
+          instances: instances,
+          manifest: manifest,
+          usedSocketsByPiece: usedSocketsByPiece,
+        ),
+      );
+      continue;
+    }
     if (def == null ||
         _kindFromPlugCategory(def.plugCategoryIdentifier) !=
             ApplyPlugKind.armorMod) {
-      // Visible skip — never silent for a wanted hash that is not a mod /
-      // not in the manifest.
       steps.add(
         ApplyPlugStep(
           id: 'armor-mod:skip:$n',
@@ -1186,6 +1267,7 @@ List<ApplyPlugStep> _planArmorMods({
       );
       continue;
     }
+
     final modSlot = armorSlotFromPlugCategory(def.plugCategoryIdentifier);
     if (modSlot == null) {
       steps.add(
@@ -1221,7 +1303,7 @@ List<ApplyPlugStep> _planArmorMods({
       continue;
     }
 
-    // General/tuning: exactly one piece (first that accepts the plug).
+    // General: exactly one piece (first that accepts the plug).
     if (modSlot == ApplyArmorSlot.general) {
       if (generalAssigned.contains(r.hash!)) continue;
       final placed = _planOneArmorModOnMatchingPiece(
@@ -1260,6 +1342,183 @@ List<ApplyPlugStep> _planArmorMods({
     if (placed != null) steps.addAll(placed);
   }
   return steps;
+}
+
+/// Socket by category hint or allowed whitelist — never a hard-coded index.
+int? _pickSocketByCategoryOrAllowList({
+  required ApplyManifestItemDef itemDef,
+  required ApplyInstanceSocketState instance,
+  required int plugHash,
+  required bool Function(String cat) categoryMatch,
+  required Set<int> usedSockets,
+}) {
+  for (final map in [
+    instance.allowedPlugHashesBySocket,
+    itemDef.allowedPlugHashesBySocket,
+  ]) {
+    for (final e in map.entries) {
+      if (!usedSockets.contains(e.key) && e.value.contains(plugHash)) {
+        return e.key;
+      }
+    }
+  }
+  for (final e in itemDef.socketPlugCategoryHint.entries) {
+    if (usedSockets.contains(e.key) || !categoryMatch(e.value)) continue;
+    final allowed = instance.allowedPlugHashesBySocket[e.key] ??
+        itemDef.allowedPlugHashesBySocket[e.key];
+    if (allowed != null && allowed.isNotEmpty && !allowed.contains(plugHash)) {
+      continue;
+    }
+    return e.key;
+  }
+  return null;
+}
+
+ApplyPlugStep _freePlugStep({
+  required String id,
+  required _FreePlugKind freeKind,
+  required String plugName,
+  required int plugHash,
+  String itemInstanceId = '',
+  int socketIndex = 0,
+  int? currentPlugHash,
+  String? target,
+  String? skipReason,
+}) =>
+    ApplyPlugStep(
+      id: id,
+      label: formatApplyPlugOutcomeLabel(
+        ApplyPlugKind.armorMod,
+        plugName,
+        target: target,
+        labelPrefix: _freePlugLabelPrefix(freeKind),
+      ),
+      kind: ApplyPlugKind.armorMod,
+      itemInstanceId: itemInstanceId,
+      socketIndex: socketIndex,
+      plugItemHash: plugHash,
+      currentPlugHash: currentPlugHash,
+      skipReason: skipReason,
+    );
+
+/// Tuning / shader / ornament inserts (InsertSocketPlugFree; no energy clears).
+List<ApplyPlugStep> _planFreeCosmeticOrTuning({
+  required String idPrefix,
+  required _FreePlugKind freeKind,
+  required int plugHash,
+  required String plugName,
+  required String plugCategory,
+  required ApplyArmorSlot? shaderTargetSlot,
+  required List<ApplyArmorPin> equippedArmor,
+  required List<ApplyInstanceSocketState> instances,
+  required ApplySocketManifestLookup manifest,
+  required Map<String, Set<int>> usedSocketsByPiece,
+}) {
+  final match = switch (freeKind) {
+    _FreePlugKind.tuning => isTuningPlugCategory,
+    _FreePlugKind.shader => isShaderPlugCategory,
+    _FreePlugKind.ornament => isOrnamentPlugCategory,
+  };
+  final ornamentSlot = freeKind == _FreePlugKind.ornament
+      ? ornamentSlotFromCategoryOrName(plugCategory, plugName)
+      : null;
+  if (freeKind == _FreePlugKind.ornament && ornamentSlot == null) {
+    return [
+      _freePlugStep(
+        id: idPrefix,
+        freeKind: freeKind,
+        plugName: plugName,
+        plugHash: plugHash,
+        skipReason: doesNotFitPlugMessage(plugName),
+      ),
+    ];
+  }
+  final out = <ApplyPlugStep>[];
+  var i = 0;
+  for (final armor in equippedArmor) {
+    final live = _instanceById(instances, armor.instanceId);
+    if (live == null) continue;
+    final pieceSlot = resolveArmorSlot(
+      wireSlot: armor.slot,
+      bucketHash: live.bucketHash,
+    );
+    if (freeKind == _FreePlugKind.ornament && pieceSlot != ornamentSlot) {
+      continue;
+    }
+    if (freeKind == _FreePlugKind.shader &&
+        shaderTargetSlot != null &&
+        pieceSlot != shaderTargetSlot) {
+      continue;
+    }
+    final def = manifest.itemDef(armor.itemHash);
+    if (def == null) continue;
+    final used =
+        usedSocketsByPiece.putIfAbsent(armor.instanceId, () => <int>{});
+    final socketIndex = _pickSocketByCategoryOrAllowList(
+      itemDef: def,
+      instance: live,
+      plugHash: plugHash,
+      categoryMatch: match,
+      usedSockets: used,
+    );
+    final slot = pieceSlot ?? ornamentSlot;
+    final target = slot == null
+        ? armor.label
+        : '${armorSlotDisplayName(slot)} (${armor.label})';
+    i += 1;
+    final id = freeKind == _FreePlugKind.shader ? '$idPrefix:s:$i' : idPrefix;
+    String? skip;
+    if (socketIndex == null) {
+      if (freeKind == _FreePlugKind.tuning) continue;
+      skip = doesNotFitPlugMessage(plugName);
+    } else if (live.ownedPlugHashes.isNotEmpty &&
+        !live.ownedPlugHashes.contains(plugHash)) {
+      skip = notUnlockedPlugMessage(plugName);
+    }
+    if (skip != null) {
+      out.add(
+        _freePlugStep(
+          id: id,
+          freeKind: freeKind,
+          plugName: plugName,
+          plugHash: plugHash,
+          itemInstanceId: armor.instanceId,
+          socketIndex: socketIndex ?? 0,
+          target: target,
+          skipReason: skip,
+        ),
+      );
+      if (freeKind != _FreePlugKind.shader) return out;
+      continue;
+    }
+    used.add(socketIndex!);
+    out.add(
+      _freePlugStep(
+        id: id,
+        freeKind: freeKind,
+        plugName: plugName,
+        plugHash: plugHash,
+        itemInstanceId: armor.instanceId,
+        socketIndex: socketIndex,
+        currentPlugHash: live.equippedPlugBySocket[socketIndex],
+        target: target,
+      ),
+    );
+    if (freeKind != _FreePlugKind.shader) return out;
+  }
+  if (out.isNotEmpty) return out;
+  return [
+    _freePlugStep(
+      id: idPrefix,
+      freeKind: freeKind,
+      plugName: plugName,
+      plugHash: plugHash,
+      target: ornamentSlot == null ? null : armorSlotDisplayName(ornamentSlot),
+      skipReason: freeKind == _FreePlugKind.tuning
+          ? noTuningSocketMessage()
+          : doesNotFitPlugMessage(plugName),
+    ),
+  ];
 }
 
 List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({

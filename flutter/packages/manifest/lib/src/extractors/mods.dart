@@ -57,7 +57,9 @@ class ModsExtractor implements EntityExtractor {
 
 bool _isModItem(RawInventoryItem item) {
   final cat = item.plug?['plugCategoryIdentifier'] as String? ?? '';
-  return item.itemType == _itemTypeMod && cat.startsWith(_modCatPrefix);
+  if (item.itemType != _itemTypeMod) return false;
+  // enhancements.* plus Armor 3.0 core.gear_systems...tuning.mods
+  return cat.startsWith(_modCatPrefix) || cat.contains('tuning');
 }
 
 ModSlotCategory? _toModSlotCategory(String cat) {

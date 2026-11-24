@@ -258,6 +258,7 @@ Future<BuildsMockApplyOutcome> runBuildsMockApplyToCharacter({
         ports,
         subclassItemHashes: subclassHashes,
         armorItemHashes: armorHashes,
+        extraPlugHashes: {for (final m in loadout.mods) m.hash},
       );
     }
     if (!isMounted()) {
@@ -756,6 +757,7 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
   BuildsMockApplyPorts ports, {
   Set<int> subclassItemHashes = const {},
   Set<int> armorItemHashes = const {},
+  Set<int> extraPlugHashes = const {},
 }) async {
   final services = ports.services;
   if (services == null) return null;
@@ -830,18 +832,40 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
       if (name.isNotEmpty) catalogNames[item.hash] = name;
     }
 
-    // F2: resolve subclass socket indexes from DestinyInventoryItemDefinition
-    // socket categories (never a hard-coded Strand layout).
-    // Armor: singleInitialItemHash → emptyPlugHashBySocket for clears (M1).
+    // F2: subclass/armor socket indexes from DestinyInventoryItemDefinition.
+    // Extra loadout plugs (tuning/shaders/ornaments) hydrate from raw when
+    // missing from the mods store.
     final subclassDefs = <int, ApplyManifestItemDef>{};
     final armorDefs = <int, ApplyManifestItemDef>{};
     final needDefs = {...subclassItemHashes, ...armorItemHashes};
-    if (needDefs.isNotEmpty) {
+    if (needDefs.isNotEmpty || extraPlugHashes.isNotEmpty) {
       try {
         final table = await refresh.service.loadRawTable(
           version,
           'DestinyInventoryItemDefinition',
         );
+        for (final hash in extraPlugHashes) {
+          if (hash == 0 || plugsByHash.containsKey(hash)) continue;
+          final raw = table['$hash'];
+          if (raw is! Map) continue;
+          final cat = _plugCategoryFromRawMap(raw);
+          final nameRaw = (raw['displayProperties'] as Map?)?['name'];
+          final name = nameRaw is String && nameRaw.trim().isNotEmpty
+              ? nameRaw.trim()
+              : (catalogNames[hash] ?? '');
+          if (cat == null || cat.isEmpty || name.isEmpty) continue;
+          final cost =
+              ((raw['plug'] as Map?)?['energyCost'] as Map?)?['energyCost'];
+          addPlug(
+            ApplyManifestPlugDef(
+              hash: hash,
+              name: name,
+              plugCategoryIdentifier: cat,
+              energyCost: cost is num ? cost.toInt() : null,
+            ),
+          );
+        }
+
         String? plugCat(int plugHash) {
           final known = plugsByHash[plugHash]?.plugCategoryIdentifier;
           if (known != null) return known;
