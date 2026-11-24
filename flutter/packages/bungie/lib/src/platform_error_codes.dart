@@ -55,8 +55,15 @@ const String kInActivityEquipMessage =
     'You are in an activity; equip from orbit or a social space';
 
 /// Clear message when the target character bucket is full and make-room cannot
-/// free a slot (no eligible uneqipped non-plan item, or vault full).
+/// free a slot (no eligible unequipped non-plan item, or vault full).
+///
+/// Prefer [kCharacterSlotFullNoUnlockedItemMessage] when the bucket is full and
+/// every candidate is locked / equipped / non-transferable (nothing was moved).
 const String kNoRoomOnCharacterMessage = 'No room on character';
+
+/// Character equipment bucket is full and no unlocked, unequipped item can move.
+const String kCharacterSlotFullNoUnlockedItemMessage =
+    'Character slot full; no unlocked item to move';
 
 /// Vault cannot accept another transfer (including make-room eviction).
 ///

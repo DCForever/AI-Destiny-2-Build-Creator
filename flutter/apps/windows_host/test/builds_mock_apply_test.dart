@@ -860,6 +860,170 @@ void main() {
     expect(noop.socketIndex, 7);
   });
 
+  test(
+    'vault General bucket resolves to equipment bucket and plans make-room',
+    () async {
+      final transfers = <TransferItemArgs>[];
+      final writeClient = createMockWriteClient(
+        transferItem: (ctx, args) async => transfers.add(args),
+        equipItems: (ctx, args) async {
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
+        },
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      const legsBucket = 20886954;
+      const vaultGeneral = 138197802;
+      final plan = FillInSavedBuildPlan(
+        buildId: build.id,
+        missing: const [],
+        applied: const [
+          FillInAppliedSlot(
+            slotWire: 'legs',
+            label: 'Lustrous Boots',
+            originalLabel: 'Old',
+            instanceId: 'vault-boots',
+            itemHash: 7701,
+          ),
+        ],
+      );
+
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          equipmentBucketLookup: const {7701: legsBucket},
+          profileClient: FakeProfileClient(
+            characters: const [warlockA],
+            items: [
+              const RawInventoryItem(
+                instanceId: 'vault-boots',
+                itemHash: 7701,
+                bucketHash: vaultGeneral,
+                location: 'vault',
+              ),
+              const RawInventoryItem(
+                instanceId: 'eq-legs',
+                itemHash: 10,
+                bucketHash: legsBucket,
+                location: 'equipped',
+                characterId: '2305843009264904821',
+                power: 200,
+              ),
+              for (var i = 0; i < 9; i++)
+                RawInventoryItem(
+                  instanceId: 'fill-legs-$i',
+                  itemHash: 50 + i,
+                  bucketHash: legsBucket,
+                  location: 'character',
+                  characterId: '2305843009264904821',
+                  power: i,
+                ),
+            ],
+          ),
+          writeClient: writeClient,
+        ),
+        target: const BuildsMockApplyTarget(
+          membership: membership,
+          character: warlockA,
+        ),
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(outcome.error, isNull);
+      expect(
+        transfers.where((t) => t.transferToVault).map((t) => t.instanceId),
+        contains('fill-legs-0'),
+      );
+      expect(
+        transfers.any(
+          (t) => t.instanceId == 'vault-boots' && !t.transferToVault,
+        ),
+        isTrue,
+      );
+      expect(outcome.progress!.appliedCount, 1);
+    },
+  );
+
+  test(
+    'exotic placeholder label formats once with catalog name',
+    () async {
+      final writeClient = createMockWriteClient(
+        equipItems: (ctx, args) async {
+          return [
+            for (final id in args.itemIds)
+              EquipItemResultEntry(
+                instanceId: id,
+                equipStatus: kPlatformErrorSuccess,
+              ),
+          ];
+        },
+      );
+      final session = await _signedInSession();
+      final build = loadBuildsMockFixture().builds.first;
+      const kineticBucket = 1498876634;
+      final plan = FillInSavedBuildPlan(
+        buildId: build.id,
+        missing: const [],
+        applied: const [
+          FillInAppliedSlot(
+            slotWire: 'exotic_weapon',
+            label: 'Exotic weapon',
+            originalLabel: '',
+            instanceId: 'stay-frosty',
+            itemHash: 8801,
+          ),
+        ],
+      );
+
+      final outcome = await runBuildsMockApplyToCharacter(
+        build: build,
+        plan: plan,
+        ports: BuildsMockApplyPorts(
+          oauthSession: session,
+          exoticItemHashes: const {8801},
+          profileClient: FakeProfileClient(
+            characters: const [warlockA],
+            items: const [
+              RawInventoryItem(
+                instanceId: 'stay-frosty',
+                itemHash: 8801,
+                bucketHash: kineticBucket,
+                location: 'character',
+                characterId: '2305843009264904821',
+                tierType: 6,
+              ),
+            ],
+          ),
+          writeClient: writeClient,
+        ),
+        target: const BuildsMockApplyTarget(
+          membership: membership,
+          character: warlockA,
+        ),
+        isMounted: () => true,
+        onProgress: (_) {},
+      );
+
+      expect(outcome.error, isNull);
+      final pin = outcome.progress!.items
+          .where((r) => !isAuxiliaryApplyRow(r))
+          .single;
+      // Without catalog, placeholder stays a single exotic kind — never stacked.
+      expect(pin.label, 'Exotic weapon');
+      expect(pin.label, isNot(contains('(Exotic weapon) (Exotic weapon)')));
+      expect(pin.state, ApplyItemState.done);
+    },
+  );
+
   group('dequip equipped-elsewhere via FakeProfileClient', () {
     const otherChar = CharacterSummary(
       characterId: 'char-other-warlock',

@@ -1017,7 +1017,96 @@ void main() {
       );
 
       expect(transferCalls, 0);
-      expect(result.items.single.reason, kNoRoomOnCharacterMessage);
+      // CHANGED: honest message when nothing unlocked can move (was
+      // kNoRoomOnCharacterMessage / "tried to free a slot" wording).
+      expect(
+        result.items.single.reason,
+        kCharacterSlotFullNoUnlockedItemMessage,
+      );
+    },
+  );
+
+  test(
+    'vault item with real equipment bucket triggers make-room eviction plan',
+    () async {
+      final transfers = <TransferItemArgs>[];
+      final client = createMockWriteClient(
+        transferItem: (c, a) async => transfers.add(a),
+        equipItems: (c, a) async => [
+              for (final id in a.itemIds)
+                EquipItemResultEntry(
+                  instanceId: id,
+                  equipStatus: kPlatformErrorSuccess,
+                ),
+            ],
+      );
+
+      // Pin in vault already resolved to Legs bucket (Apply live-read path).
+      // Character Legs is full with one unlocked filler → plan eviction.
+      final inventory = <ApplyInventoryItem>[
+        const ApplyInventoryItem(
+          instanceId: 'vault-legs',
+          itemHash: 7701,
+          location: 'vault',
+          bucketHash: 20886954, // Legs — not Vault General
+          name: 'Lustrous Boots',
+          isExotic: true,
+        ),
+        const ApplyInventoryItem(
+          instanceId: 'eq-legs',
+          itemHash: 10,
+          location: 'equipped',
+          bucketHash: 20886954,
+          characterId: target,
+          power: 200,
+        ),
+        for (var i = 0; i < 9; i++)
+          ApplyInventoryItem(
+            instanceId: 'fill-legs-$i',
+            itemHash: 50 + i,
+            location: 'character',
+            bucketHash: 20886954,
+            characterId: target,
+            power: i,
+            name: 'Filler Legs $i',
+            isLocked: false,
+          ),
+      ];
+
+      final result = await applyToCharacter(
+        writeClient: client,
+        ctx: ctx,
+        characterId: target,
+        items: const [
+          ApplyToCharacterItem(
+            id: 'legs',
+            label: 'Lustrous Boots',
+            itemHash: 7701,
+            instanceId: 'vault-legs',
+            slot: 'legs',
+            isExotic: true,
+          ),
+        ],
+        inventory: inventory,
+      );
+
+      expect(
+        transfers.where((t) => t.transferToVault).map((t) => t.instanceId),
+        contains('fill-legs-0'),
+      );
+      expect(
+        transfers.any(
+          (t) => t.instanceId == 'vault-legs' && !t.transferToVault,
+        ),
+        isTrue,
+      );
+      expect(result.appliedCount, 1);
+      expect(
+        result.items.any(
+          (r) => r.label == kMakeRoomMovedToVaultMessage('Filler Legs 0'),
+        ),
+        isTrue,
+      );
     },
   );
 
@@ -1582,6 +1671,22 @@ void main() {
           slot: 'primary',
           isExotic: true,
         ),
+        ApplyToCharacterItem(
+          id: 'stay',
+          label: 'Exotic weapon',
+          itemHash: 9004,
+          instanceId: 'stay',
+          slot: 'exotic_weapon',
+          isExotic: true,
+        ),
+        ApplyToCharacterItem(
+          id: 'stay-named',
+          label: 'Stay Frosty',
+          itemHash: 9005,
+          instanceId: 'stay-named',
+          slot: 'exotic_weapon',
+          isExotic: true,
+        ),
       ],
       inventory: const [
         ApplyInventoryItem(
@@ -1608,6 +1713,22 @@ void main() {
           characterId: target,
           isExotic: true,
         ),
+        ApplyInventoryItem(
+          instanceId: 'stay',
+          itemHash: 9004,
+          location: 'character',
+          bucketHash: 1498876634,
+          characterId: target,
+          isExotic: true,
+        ),
+        ApplyInventoryItem(
+          instanceId: 'stay-named',
+          itemHash: 9005,
+          location: 'character',
+          bucketHash: 1498876634,
+          characterId: target,
+          isExotic: true,
+        ),
       ],
     );
 
@@ -1617,6 +1738,9 @@ void main() {
     expect(result.items[0].label, 'Exotic weapon');
     expect(result.items[1].label, 'Briarbinds (Exotic armor)');
     expect(result.items[2].label, 'Barrow-Dyad (Exotic weapon)');
+    // Placeholder must not stack; real name formats once.
+    expect(result.items[3].label, 'Exotic weapon');
+    expect(result.items[4].label, 'Stay Frosty (Exotic weapon)');
   });
 
   test(

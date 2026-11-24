@@ -65,7 +65,14 @@ String readableApplySlotLabel(String? slot) {
 }
 
 String? _cleanApplyItemName(String rawLabel) {
-  final trimmed = rawLabel.trim();
+  var trimmed = rawLabel.trim();
+  if (trimmed.isEmpty) return null;
+  // Strip a prior exotic annotation so re-formatting stays idempotent.
+  trimmed = trimmed
+      .replaceFirst(RegExp(r'\s*\(Exotic weapon\)\s*$', caseSensitive: false), '')
+      .replaceFirst(RegExp(r'\s*\(Exotic armor\)\s*$', caseSensitive: false), '')
+      .replaceFirst(RegExp(r'\s*\(Exotic\)\s*$', caseSensitive: false), '')
+      .trim();
   if (trimmed.isEmpty) return null;
   final lower = trimmed.toLowerCase();
   if (lower == 'none' || lower == 'null') return null;
@@ -85,6 +92,8 @@ String? _cleanApplyItemName(String rawLabel) {
     case 'classitem':
     case 'exotic_weapon':
     case 'exotic_armor':
+    case 'exotic weapon':
+    case 'exotic armor':
       return null;
   }
   return trimmed;

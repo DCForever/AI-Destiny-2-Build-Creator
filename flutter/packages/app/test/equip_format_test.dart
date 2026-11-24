@@ -63,6 +63,40 @@ void main() {
         ),
         'Cuirass of the Falling Star (Exotic armor)',
       );
+      // Placeholders must not become "Exotic weapon (Exotic weapon)".
+      expect(
+        formatApplyOutcomeLabel(
+          rawLabel: 'Exotic weapon',
+          slot: 'exotic_weapon',
+          isExotic: true,
+        ),
+        'Exotic weapon',
+      );
+      expect(
+        formatApplyOutcomeLabel(
+          rawLabel: 'Exotic armor',
+          slot: 'exotic_armor',
+          isExotic: true,
+        ),
+        'Exotic armor',
+      );
+      // Idempotent: already-annotated names must not stack suffixes.
+      expect(
+        formatApplyOutcomeLabel(
+          rawLabel: 'Stay Frosty (Exotic weapon)',
+          slot: 'exotic_weapon',
+          isExotic: true,
+        ),
+        'Stay Frosty (Exotic weapon)',
+      );
+      expect(
+        formatApplyOutcomeLabel(
+          rawLabel: 'Stay Frosty',
+          slot: 'exotic_weapon',
+          isExotic: true,
+        ),
+        'Stay Frosty (Exotic weapon)',
+      );
     });
   });
 
