@@ -1864,13 +1864,44 @@ List<ApplyPlugStep>? _planOneArmorModOnMatchingPiece({
     // Local energy math only when both capacity and usage are known.
     // Otherwise plan the insert and let InsertSocketPlugFree judge.
 
-    // Outgoing plug cost: empty/default sockets ("Empty Mod Socket") and any
-    // plug whose def lacks energyCost count as 0 — never fail the insert on
-    // the plug being replaced.
-    final currentCost = () {
-      if (current == null || current == 0) return 0;
-      return manifest.plugDef(current)?.energyCost ?? 0;
-    }();
+    // Outgoing cost is 0 only for a vacant socket or the socket's known empty
+    // plug (emptyPlugHashBySocket / singleInitialItemHash). Any other current
+    // plug with a missing energyCost while capacity is known → refuse.
+    final emptyForSocket = emptyBySocket[socketIndex];
+    final currentIsKnownEmpty = current != null &&
+        current != 0 &&
+        emptyForSocket != null &&
+        emptyForSocket != 0 &&
+        current == emptyForSocket;
+    if (current != null &&
+        current != 0 &&
+        !currentIsKnownEmpty &&
+        capacity != null &&
+        baselineUsed != null &&
+        manifest.plugDef(current)?.energyCost == null) {
+      return [
+        ApplyPlugStep(
+          id: idPrefix,
+          label: formatApplyPlugOutcomeLabel(
+            ApplyPlugKind.armorMod,
+            plugName,
+          ),
+          kind: ApplyPlugKind.armorMod,
+          itemInstanceId: armor.instanceId,
+          socketIndex: socketIndex,
+          plugItemHash: plugHash,
+          currentPlugHash: current,
+          skipReason: armorEnergyCostUnknownMessage(
+            manifest.plugDef(current)?.name ?? '$current',
+          ),
+        ),
+      ];
+    }
+    final currentCost = (current == null ||
+            current == 0 ||
+            currentIsKnownEmpty)
+        ? 0
+        : (manifest.plugDef(current)?.energyCost ?? 0);
 
     final clearSteps = <ApplyPlugStep>[];
     final restoreTargets = <ApplySocketRestore>[];

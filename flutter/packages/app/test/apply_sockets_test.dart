@@ -4514,5 +4514,200 @@ void main() {
         );
       },
     );
+
+    test(
+      'S1: shader empty owned + empty live allow → Not unlocked (continue path)',
+      () {
+        // Two pieces: shader ownership refuse uses continue (not return), so
+        // both pieces get Not unlocked rows.
+        const helmHash = 3300;
+        const armsHash = 3301;
+        const shaderHash = 3302;
+        const armsBucket = 3551918588;
+        ApplyManifestItemDef pieceDef(int hash, String name) =>
+            ApplyManifestItemDef(
+              hash: hash,
+              name: name,
+              socketPlugCategoryHint: const {4: 'shader'},
+              allowedPlugHashesBySocket: {
+                4: {shaderHash},
+              },
+            );
+        final plan = planApplySockets(
+          characterId: target,
+          build: const ApplyBuildSocketInputs(
+            armorMods: [
+              ApplyNamedPlug(name: 'Cruelty Song', hash: shaderHash),
+            ],
+          ),
+          manifest: ApplySocketManifestLookup(
+            itemDef: (h) {
+              if (h == helmHash) return pieceDef(helmHash, 'Helmet');
+              if (h == armsHash) return pieceDef(armsHash, 'Arms');
+              return null;
+            },
+            plugDef: (h) => h == shaderHash
+                ? const ApplyManifestPlugDef(
+                    hash: shaderHash,
+                    name: 'Cruelty Song',
+                    plugCategoryIdentifier: 'shader',
+                  )
+                : null,
+            resolveUniquePlugHashByName: (_) => null,
+          ),
+          instances: const [
+            ApplyInstanceSocketState(
+              instanceId: 'helm-s1',
+              itemHash: helmHash,
+              bucketHash: helmetBucket,
+              characterId: target,
+              location: 'equipped',
+              ownedPlugHashes: {},
+              armorModDataKnown: true,
+              allowedPlugHashesBySocket: {},
+              socketDataKnown: true,
+            ),
+            ApplyInstanceSocketState(
+              instanceId: 'arms-s1',
+              itemHash: armsHash,
+              bucketHash: armsBucket,
+              characterId: target,
+              location: 'equipped',
+              ownedPlugHashes: {},
+              armorModDataKnown: true,
+              allowedPlugHashesBySocket: {},
+              socketDataKnown: true,
+            ),
+          ],
+          equippedArmor: const [
+            ApplyArmorPin(
+              id: 'helmet',
+              label: 'Helmet',
+              itemHash: helmHash,
+              instanceId: 'helm-s1',
+              slot: 'helmet',
+            ),
+            ApplyArmorPin(
+              id: 'arms',
+              label: 'Arms',
+              itemHash: armsHash,
+              instanceId: 'arms-s1',
+              slot: 'arms',
+            ),
+          ],
+        );
+        final shaderSkipSteps = plan.armorMods
+            .where((s) => s.plugItemHash == shaderHash)
+            .toList();
+        expect(
+          shaderSkipSteps,
+          hasLength(2),
+          reason: 'shader continue path visits every piece',
+        );
+        expect(
+          shaderSkipSteps.every(
+            (s) => s.skipReason == notUnlockedPlugMessage('Cruelty Song'),
+          ),
+          isTrue,
+        );
+        expect(shaderSkipSteps.every((s) => s.shouldCall == false), isTrue);
+        expect(
+          shaderSkipSteps.map((s) => s.itemInstanceId).toSet(),
+          {'helm-s1', 'arms-s1'},
+        );
+      },
+    );
+
+    test(
+      'S2: non-empty outgoing with null energyCost + known capacity → refuse',
+      () {
+        const armorHash = 3400;
+        const currentUnknown = 3401;
+        const wanted = 3402;
+        final plan = planApplySockets(
+          characterId: target,
+          build: const ApplyBuildSocketInputs(
+            armorMods: [
+              ApplyNamedPlug(name: 'Wanted Mod', hash: wanted),
+            ],
+          ),
+          manifest: ApplySocketManifestLookup(
+            itemDef: (h) => h == armorHash
+                ? const ApplyManifestItemDef(
+                    hash: armorHash,
+                    name: 'Helmet',
+                    socketCategories: [
+                      ApplyManifestSocketCategory(
+                        socketCategoryHash: 590099826,
+                        socketIndexes: [0],
+                      ),
+                    ],
+                    allowedPlugHashesBySocket: {
+                      0: {wanted, currentUnknown},
+                    },
+                    emptyPlugHashBySocket: {0: 999},
+                  )
+                : null,
+            plugDef: (h) {
+              if (h == wanted) {
+                return const ApplyManifestPlugDef(
+                  hash: wanted,
+                  name: 'Wanted Mod',
+                  plugCategoryIdentifier: 'enhancements.v2_head',
+                  energyCost: 2,
+                );
+              }
+              if (h == currentUnknown) {
+                return const ApplyManifestPlugDef(
+                  hash: currentUnknown,
+                  name: 'Mystery Equipped',
+                  plugCategoryIdentifier: 'enhancements.v2_head',
+                  // energyCost null — not the known empty plug.
+                );
+              }
+              return null;
+            },
+            resolveUniquePlugHashByName: (_) => null,
+          ),
+          instances: const [
+            ApplyInstanceSocketState(
+              instanceId: 'helm-s2',
+              itemHash: armorHash,
+              bucketHash: helmetBucket,
+              characterId: target,
+              location: 'equipped',
+              energyCapacity: 10,
+              energyUsed: 3,
+              ownedPlugHashes: {wanted, currentUnknown},
+              armorModDataKnown: true,
+              equippedPlugBySocket: {0: currentUnknown},
+              emptyPlugHashBySocket: {0: 999},
+              allowedPlugHashesBySocket: {
+                0: {wanted, currentUnknown},
+              },
+              socketDataKnown: true,
+            ),
+          ],
+          equippedArmor: const [
+            ApplyArmorPin(
+              id: 'helmet',
+              label: 'Helmet',
+              itemHash: armorHash,
+              instanceId: 'helm-s2',
+              slot: 'helmet',
+            ),
+          ],
+        );
+        final s2Step = plan.armorMods.single;
+        expect(s2Step.shouldCall, isFalse);
+        expect(
+          s2Step.skipReason,
+          armorEnergyCostUnknownMessage('Mystery Equipped'),
+        );
+        expect(s2Step.currentPlugHash, currentUnknown);
+        expect(s2Step.plugItemHash, wanted);
+        expect(s2Step.itemInstanceId, 'helm-s2');
+      },
+    );
   });
 }
