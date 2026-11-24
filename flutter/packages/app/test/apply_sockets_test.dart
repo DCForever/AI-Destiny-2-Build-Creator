@@ -3146,5 +3146,396 @@ void main() {
       expect(inserts.map((s) => s.socketIndex).toSet(), {7, 8, 9});
       expect(skipped, isEmpty);
     });
+
+    test('tuning mod resolves and routes via allow-list to tuning socket', () {
+      const armorHash = 500;
+      const tuningHash = 1510949672;
+      const chestBucket = 14239492;
+      final allowed = buildApplyAllowedPlugHashesBySocket(
+        manifestPlugSetBySocket: const {
+          11: {tuningHash},
+        },
+        liveReusableBySocket: const {},
+        equippedBySocket: const {},
+        unlockedPlugHashes: const {tuningHash},
+      );
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Tier 5 Robes',
+                socketPlugCategoryHint: const {
+                  11: 'core.gear_systems.armor_tiering.plugs.tuning.mods',
+                },
+                allowedPlugHashesBySocket: allowed,
+              )
+            : null,
+        plugDef: (h) => h == tuningHash
+            ? const ApplyManifestPlugDef(
+                hash: tuningHash,
+                name: '+Class / -Melee',
+                plugCategoryIdentifier:
+                    'core.gear_systems.armor_tiering.plugs.tuning.mods',
+              )
+            : null,
+        resolveUniquePlugHashByName: (n) =>
+            n == '+Class / -Melee' ? tuningHash : null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: '+Class / -Melee', hash: tuningHash),
+          ],
+        ),
+        manifest: manifest,
+        instances: [
+          ApplyInstanceSocketState(
+            instanceId: 'chest-1',
+            itemHash: armorHash,
+            bucketHash: chestBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: const {tuningHash},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: allowed,
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'chest',
+            label: 'Robes',
+            itemHash: armorHash,
+            instanceId: 'chest-1',
+            slot: 'chest',
+          ),
+        ],
+      );
+
+      final step = plan.armorMods.single;
+      expect(step.socketIndex, 11);
+      expect(step.plugItemHash, tuningHash);
+      expect(
+        step.label,
+        'Tuning: +Class / -Melee → Chest (Robes)',
+      );
+      expect(step.shouldCall, isTrue);
+    });
+
+    test('tuning mod skips with Tier 5 reason when no tuning socket', () {
+      const armorHash = 501;
+      const tuningHash = 1510949673;
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? const ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Legendary Helmet',
+                socketPlugCategoryHint: {
+                  0: 'enhancements.v2_head',
+                },
+              )
+            : null,
+        plugDef: (h) => h == tuningHash
+            ? const ApplyManifestPlugDef(
+                hash: tuningHash,
+                name: '+Grenade / -Melee',
+                plugCategoryIdentifier:
+                    'core.gear_systems.armor_tiering.plugs.tuning.mods',
+              )
+            : null,
+        resolveUniquePlugHashByName: (_) => null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: '+Grenade / -Melee', hash: tuningHash),
+          ],
+        ),
+        manifest: manifest,
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: {tuningHash},
+            armorModDataKnown: true,
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+
+      expect(plan.armorMods.single.skipReason, noTuningSocketMessage());
+      expect(plan.armorMods.single.plugItemHash, tuningHash);
+      expect(plan.armorMods.single.label, 'Tuning: +Grenade / -Melee');
+    });
+
+    test('ornament routes to matching armor slot by name', () {
+      const chestHash = 600;
+      const legsHash = 601;
+      const ornamentHash = 700;
+      const chestBucket = 14239492;
+      const legsBucket = 20886954;
+      final chestAllowed = buildApplyAllowedPlugHashesBySocket(
+        manifestPlugSetBySocket: const {
+          10: {ornamentHash},
+        },
+        liveReusableBySocket: const {},
+        equippedBySocket: const {},
+        unlockedPlugHashes: const {ornamentHash},
+      );
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) {
+          if (h == chestHash) {
+            return ApplyManifestItemDef(
+              hash: chestHash,
+              name: 'Robes',
+              socketPlugCategoryHint: const {
+                10: 'armor_skins_warlock_chest',
+              },
+              allowedPlugHashesBySocket: chestAllowed,
+            );
+          }
+          if (h == legsHash) {
+            return const ApplyManifestItemDef(
+              hash: legsHash,
+              name: 'Boots',
+              socketPlugCategoryHint: {
+                10: 'armor_skins_warlock_legs',
+              },
+            );
+          }
+          return null;
+        },
+        plugDef: (h) => h == ornamentHash
+            ? const ApplyManifestPlugDef(
+                hash: ornamentHash,
+                name: 'Formal Shadow Robes',
+                plugCategoryIdentifier: 'armor_skins_warlock_chest',
+              )
+            : null,
+        resolveUniquePlugHashByName: (n) =>
+            n == 'Formal Shadow Robes' ? ornamentHash : null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Formal Shadow Robes', hash: ornamentHash),
+          ],
+        ),
+        manifest: manifest,
+        instances: [
+          ApplyInstanceSocketState(
+            instanceId: 'chest-1',
+            itemHash: chestHash,
+            bucketHash: chestBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: const {ornamentHash},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: chestAllowed,
+            socketDataKnown: true,
+          ),
+          const ApplyInstanceSocketState(
+            instanceId: 'legs-1',
+            itemHash: legsHash,
+            bucketHash: legsBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: {ornamentHash},
+            armorModDataKnown: true,
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'chest',
+            label: 'Robes',
+            itemHash: chestHash,
+            instanceId: 'chest-1',
+            slot: 'chest',
+          ),
+          ApplyArmorPin(
+            id: 'legs',
+            label: 'Boots',
+            itemHash: legsHash,
+            instanceId: 'legs-1',
+            slot: 'legs',
+          ),
+        ],
+      );
+
+      final step = plan.armorMods.single;
+      expect(step.itemInstanceId, 'chest-1');
+      expect(step.socketIndex, 10);
+      expect(step.plugItemHash, ornamentHash);
+      expect(
+        step.label,
+        'Ornament: Formal Shadow Robes → Chest (Robes)',
+      );
+    });
+
+    test('shader applies to a piece and names the target', () {
+      const armorHash = 800;
+      const shaderHash = 900;
+      final allowed = buildApplyAllowedPlugHashesBySocket(
+        manifestPlugSetBySocket: const {
+          4: {shaderHash},
+        },
+        liveReusableBySocket: const {},
+        equippedBySocket: const {},
+        unlockedPlugHashes: const {shaderHash},
+      );
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Helmet',
+                socketPlugCategoryHint: const {
+                  4: 'shader',
+                },
+                allowedPlugHashesBySocket: allowed,
+              )
+            : null,
+        plugDef: (h) => h == shaderHash
+            ? const ApplyManifestPlugDef(
+                hash: shaderHash,
+                name: 'Cruelty Song',
+                plugCategoryIdentifier: 'shader',
+              )
+            : null,
+        resolveUniquePlugHashByName: (n) =>
+            n == 'Cruelty Song' ? shaderHash : null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Cruelty Song', hash: shaderHash),
+          ],
+        ),
+        manifest: manifest,
+        instances: [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-1',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: const {shaderHash},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: allowed,
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-1',
+            slot: 'helmet',
+          ),
+        ],
+      );
+
+      final step = plan.armorMods.single;
+      expect(step.socketIndex, 4);
+      expect(step.plugItemHash, shaderHash);
+      expect(step.label, 'Shader: Cruelty Song → Helmet (Helmet)');
+    });
+
+    test('locked cosmetic reports Not unlocked reason', () {
+      const armorHash = 801;
+      const shaderHash = 901;
+      final allowed = buildApplyAllowedPlugHashesBySocket(
+        manifestPlugSetBySocket: const {
+          4: {shaderHash},
+        },
+        liveReusableBySocket: const {},
+        equippedBySocket: const {},
+        unlockedPlugHashes: const {shaderHash},
+      );
+      final manifest = ApplySocketManifestLookup(
+        itemDef: (h) => h == armorHash
+            ? ApplyManifestItemDef(
+                hash: armorHash,
+                name: 'Helmet',
+                socketPlugCategoryHint: const {
+                  4: 'shader',
+                },
+                allowedPlugHashesBySocket: allowed,
+              )
+            : null,
+        plugDef: (h) => h == shaderHash
+            ? const ApplyManifestPlugDef(
+                hash: shaderHash,
+                name: 'Cruelty Song',
+                plugCategoryIdentifier: 'shader',
+              )
+            : null,
+        resolveUniquePlugHashByName: (_) => null,
+      );
+
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Cruelty Song', hash: shaderHash),
+          ],
+        ),
+        manifest: manifest,
+        instances: [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-locked',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: const {999},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: allowed,
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Warlock Helm',
+            itemHash: armorHash,
+            instanceId: 'helm-locked',
+            slot: 'helmet',
+          ),
+        ],
+      );
+
+      expect(
+        plan.armorMods.single.skipReason,
+        notUnlockedPlugMessage('Cruelty Song'),
+      );
+      expect(
+        plan.armorMods.single.label,
+        'Shader: Cruelty Song → Helmet (Warlock Helm)',
+      );
+      expect(plan.armorMods.single.itemInstanceId, 'helm-locked');
+      expect(plan.armorMods.single.shouldCall, isFalse);
+    });
   });
 }
