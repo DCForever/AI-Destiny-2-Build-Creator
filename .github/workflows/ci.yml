@@ -29,6 +29,12 @@ jobs:
         env:
           BASE_REF: origin/${{ github.base_ref || 'main' }}
 
+      - name: Self-test Bungie write-surface scanner
+        run: node test/ci/check-bungie-writes.self-test.mjs
+
+      - name: Ban paid InsertSocketPlug / dismantle / DeleteItem
+        run: node scripts/ci/check-bungie-writes.mjs
+
   weakened-tests:
     name: weakened-test heuristic
     runs-on: ubuntu-latest
