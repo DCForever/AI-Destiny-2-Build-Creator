@@ -4129,12 +4129,12 @@ void main() {
             ),
           ],
         );
-        final step = plan.armorMods.single;
-        expect(step.shouldCall, isTrue);
-        expect(step.skipReason, isNull);
-        expect(step.plugItemHash, wanted);
-        expect(step.currentPlugHash, emptySocket);
-        expect(step.itemInstanceId, 'legs-empty');
+        final emptyEnergyStep = plan.armorMods.single;
+        expect(emptyEnergyStep.shouldCall, isTrue);
+        expect(emptyEnergyStep.skipReason, isNull);
+        expect(emptyEnergyStep.plugItemHash, wanted);
+        expect(emptyEnergyStep.currentPlugHash, emptySocket);
+        expect(emptyEnergyStep.itemInstanceId, 'legs-empty');
         expect(
           plan.armorMods.any(
             (s) =>
@@ -4357,11 +4357,11 @@ void main() {
           ),
         ],
       );
-      final step = plan.armorMods.single;
-      expect(step.shouldCall, isTrue);
-      expect(step.skipReason, isNull);
-      expect(step.plugItemHash, tuningHash);
-      expect(step.socketIndex, 11);
+      final tuningOwnedStep = plan.armorMods.single;
+      expect(tuningOwnedStep.shouldCall, isTrue);
+      expect(tuningOwnedStep.skipReason, isNull);
+      expect(tuningOwnedStep.plugItemHash, tuningHash);
+      expect(tuningOwnedStep.socketIndex, 11);
     });
 
     test('ornament owned via plug-set allow list (104/105) plans insert', () {
@@ -4429,12 +4429,12 @@ void main() {
           ),
         ],
       );
-      final step = plan.armorMods.single;
-      expect(step.shouldCall, isTrue);
-      expect(step.skipReason, isNull);
-      expect(step.plugItemHash, ornamentHash);
-      expect(step.label, contains('Ornament: Electro-Brass'));
-      expect(step.itemInstanceId, 'arms-orn');
+      final ornamentOwnedStep = plan.armorMods.single;
+      expect(ornamentOwnedStep.shouldCall, isTrue);
+      expect(ornamentOwnedStep.skipReason, isNull);
+      expect(ornamentOwnedStep.plugItemHash, ornamentHash);
+      expect(ornamentOwnedStep.label, contains('Ornament: Electro-Brass'));
+      expect(ornamentOwnedStep.itemInstanceId, 'arms-orn');
     });
 
     test(
