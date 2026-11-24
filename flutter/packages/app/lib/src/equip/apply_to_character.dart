@@ -744,7 +744,7 @@ _ApplyItemPlan _planItem({
           prepTransferSteps: const [],
           dequipSteps: const [],
           transferSteps: const [],
-          refusalReason: kNoRoomOnCharacterMessage,
+          refusalReason: kCharacterSlotFullNoUnlockedItemMessage,
         );
       }
     }
@@ -979,7 +979,8 @@ Future<String?> _runTransfersWithMakeRoom({
           },
         );
         if (evictee == null) {
-          return kMakeRoomStillFullMessage(itemLabel);
+          // Nothing eligible to move — do not claim a slot was freed.
+          return kCharacterSlotFullNoUnlockedItemMessage;
         }
         try {
           await runWriteWithThrottleBackoff(

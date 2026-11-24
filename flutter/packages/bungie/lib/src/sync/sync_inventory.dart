@@ -139,7 +139,7 @@ Future<SyncInventoryResult> _performSync({
     for (final item in parsed.items)
       if (needsEquipmentBucketResolution(item.bucketHash)) item.itemHash,
   ];
-  final lookup = await _resolveEquipmentBucketLookup(
+  final lookup = await resolveEquipmentBucketLookup(
     transferHashes: transferHashes,
     equipmentBucketLookup: equipmentBucketLookup,
     equipmentBucketLookupBuilder: equipmentBucketLookupBuilder,
@@ -214,7 +214,10 @@ Future<SyncInventoryResult> _performSync({
 }
 
 /// Merge explicit map with async builder (explicit entries win on conflict).
-Future<Map<int, int>> _resolveEquipmentBucketLookup({
+///
+/// Shared by inventory sync and Apply live reads so vault/postmaster rows use
+/// the same itemHash → equipment bucketHash lookup.
+Future<Map<int, int>> resolveEquipmentBucketLookup({
   required List<int> transferHashes,
   Map<int, int>? equipmentBucketLookup,
   EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder,

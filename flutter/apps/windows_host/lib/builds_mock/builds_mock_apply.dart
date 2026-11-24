@@ -29,6 +29,8 @@ class BuildsMockApplyPorts {
     this.profileClient,
     this.exoticItemHashes,
     this.socketManifest,
+    this.equipmentBucketLookup,
+    this.equipmentBucketLookupBuilder,
   });
 
   final AppServices? services;
@@ -43,6 +45,12 @@ class BuildsMockApplyPorts {
   /// Optional manifest/plug lookup for subclass + mod InsertSocketPlugFree.
   final ApplySocketManifestLookup? socketManifest;
 
+  /// Explicit itemHash → equipment bucketHash (tests / overrides).
+  final Map<int, int>? equipmentBucketLookup;
+
+  /// Same builder inventory sync uses (raw defs / catalog slots).
+  final EquipmentBucketLookupBuilder? equipmentBucketLookupBuilder;
+
   BungieWriteClient? get resolvedWriteClient =>
       writeClient ?? services?.writeClient;
 
@@ -51,6 +59,13 @@ class BuildsMockApplyPorts {
 
   BungieProfileClient? get resolvedProfile =>
       profileClient ?? services?.profileClient;
+
+  Map<int, int>? get resolvedEquipmentBucketLookup =>
+      equipmentBucketLookup ?? services?.inventorySync.equipmentBucketLookup;
+
+  EquipmentBucketLookupBuilder? get resolvedEquipmentBucketLookupBuilder =>
+      equipmentBucketLookupBuilder ??
+      services?.inventorySync.equipmentBucketLookupBuilder;
 }
 
 /// One resolved Apply target: membership + character (label and equip share it).
@@ -396,7 +411,12 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
     return null;
   }
 
-  final inventory = parsed.items;
+  // Same vault/postmaster → equipment bucket resolution as inventory sync so
+  // Apply make-room counts the real character slot, not Vault General.
+  final inventory = await _resolveApplyLiveInventoryBuckets(
+    parsed.items,
+    ports,
+  );
   final liveItems = List<RawInventoryItem>.from(inventory);
   final liveIds = <String>{
     for (final item in inventory)
@@ -445,10 +465,11 @@ Future<_GatedApplyItems?> _gateApplyItemsAgainstLiveInventory({
     if (liveIds.contains(items[i].instanceId)) {
       final live = liveByInstance[items[i].instanceId];
       final isExotic = items[i].isExotic || (live?.isExotic ?? false);
-      final label = formatApplyOutcomeLabel(
-        rawLabel: items[i].label,
-        slot: items[i].slot,
-        isExotic: isExotic,
+      // Raw name only — applyToCharacter formats once. Prefer catalog/live name
+      // over Fill In placeholders like "Exotic weapon".
+      final label = _rawApplyItemLabel(
+        plannedLabel: items[i].label,
+        catalogOrLiveName: nameByHash[items[i].itemHash] ?? live?.name,
       );
       present.add(
         ApplyToCharacterItem(
@@ -1174,6 +1195,7 @@ List<ApplyToCharacterItem> itemsForBuildsMockApply(
   for (final s in build.slots) {
     if (s.isExoticSlot) exoticSlots.add(s.slot);
   }
+  // Pass raw Fill In labels; applyToCharacter formats the outcome once.
   return [
     for (final slot in applied)
       if (slot.instanceId != null &&
@@ -1181,12 +1203,7 @@ List<ApplyToCharacterItem> itemsForBuildsMockApply(
           slot.itemHash != null)
         ApplyToCharacterItem(
           id: '${build.id}-${slot.slotWire}',
-          label: formatApplyOutcomeLabel(
-            rawLabel: slot.label,
-            slot: slot.slotWire,
-            isExotic: exoticSlots.contains(slot.slotWire) ||
-                _slotWireLooksExotic(slot.slotWire),
-          ),
+          label: slot.label,
           itemHash: slot.itemHash!,
           instanceId: slot.instanceId!,
           slot: slot.slotWire,
@@ -1194,6 +1211,57 @@ List<ApplyToCharacterItem> itemsForBuildsMockApply(
               _slotWireLooksExotic(slot.slotWire),
         ),
   ];
+}
+
+/// Prefer a real item name over Fill In / slot placeholders.
+String _rawApplyItemLabel({
+  required String plannedLabel,
+  String? catalogOrLiveName,
+}) {
+  final fromCatalog = (catalogOrLiveName ?? '').trim();
+  if (fromCatalog.isNotEmpty) return fromCatalog;
+  return plannedLabel.trim();
+}
+
+/// Resolve vault/postmaster bucket hashes via the same lookup sync uses.
+Future<List<RawInventoryItem>> _resolveApplyLiveInventoryBuckets(
+  List<RawInventoryItem> items,
+  BuildsMockApplyPorts ports,
+) async {
+  final transferHashes = <int>[
+    for (final item in items)
+      if (needsEquipmentBucketResolution(item.bucketHash)) item.itemHash,
+  ];
+  if (transferHashes.isEmpty) return items;
+
+  var lookup = await resolveEquipmentBucketLookup(
+    transferHashes: transferHashes,
+    equipmentBucketLookup: ports.resolvedEquipmentBucketLookup,
+    equipmentBucketLookupBuilder: ports.resolvedEquipmentBucketLookupBuilder,
+  );
+  if (lookup.isEmpty) {
+    lookup = _catalogEquipmentBucketLookup(ports, transferHashes);
+  }
+  if (lookup.isEmpty) return items;
+
+  final resolved = resolveTransferContainerBuckets(items, lookup);
+  return resolved.items;
+}
+
+Map<int, int> _catalogEquipmentBucketLookup(
+  BuildsMockApplyPorts ports,
+  List<int> transferHashes,
+) {
+  final catalog = ports.services?.offlineCatalog;
+  if (catalog == null || catalog.baseItems.isEmpty) return const {};
+  final slots = <int, String>{
+    for (final item in catalog.baseItems)
+      if (item.slot != null && item.slot!.isNotEmpty) item.hash: item.slot!,
+  };
+  return buildEquipmentBucketLookupFromSlots(
+    slots,
+    onlyHashes: transferHashes,
+  );
 }
 
 bool _slotWireLooksExotic(String slotWire) {
