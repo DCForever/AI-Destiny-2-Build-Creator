@@ -2882,11 +2882,11 @@ void main() {
         ],
         equippedArmor: const [],
       );
-      final step = plan.subclassPlugs.single;
-      expect(step.skipReason, isNull);
-      expect(step.shouldCall, isTrue);
-      expect(step.plugItemHash, wantedAspect);
-      expect(step.socketIndex, 5);
+      final aspectStep = plan.subclassPlugs.single;
+      expect(aspectStep.skipReason, isNull);
+      expect(aspectStep.shouldCall, isTrue);
+      expect(aspectStep.plugItemHash, wantedAspect);
+      expect(aspectStep.socketIndex, 5);
     });
 
     test('plug-set-only armor mod socket accepts unlocked mod', () {
@@ -3049,10 +3049,10 @@ void main() {
         ],
         equippedArmor: const [],
       );
-      final step = plan.subclassPlugs.single;
-      expect(step.skipReason, isNull);
-      expect(step.plugItemHash, voidRift);
-      expect(step.shouldCall, isTrue);
+      final riftStep = plan.subclassPlugs.single;
+      expect(riftStep.skipReason, isNull);
+      expect(riftStep.plugItemHash, voidRift);
+      expect(riftStep.shouldCall, isTrue);
     });
 
     test('fragments planned from target aspect capacity beyond live unlock',
