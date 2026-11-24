@@ -1523,7 +1523,9 @@ int? _pickSocketByCategoryOrAllowList({
     if (usedSockets.contains(e.key) || !categoryMatch(e.value)) continue;
     final allowed = instance.allowedPlugHashesBySocket[e.key] ??
         itemDef.allowedPlugHashesBySocket[e.key];
-    if (allowed != null && allowed.isNotEmpty && !allowed.contains(plugHash)) {
+    // Fail closed: null/empty allow list must not accept a category-hint socket
+    // (Skeptic should-fix from PR 71). Caller surfaces Does not fit.
+    if (allowed == null || allowed.isEmpty || !allowed.contains(plugHash)) {
       continue;
     }
     return e.key;
@@ -1628,9 +1630,16 @@ List<ApplyPlugStep> _planFreeCosmeticOrTuning({
     if (socketIndex == null) {
       if (freeKind == _FreePlugKind.tuning) continue;
       skip = doesNotFitPlugMessage(plugName);
-    } else if (live.ownedPlugHashes.isNotEmpty &&
-        !live.ownedPlugHashes.contains(plugHash)) {
-      skip = notUnlockedPlugMessage(plugName);
+    } else {
+      final alreadyEquipped =
+          live.equippedPlugBySocket[socketIndex] == plugHash;
+      // Fail closed: empty/unknown owned set is Not unlocked (Skeptic should-fix
+      // from PR 71). Already-equipped no-ops do not need an ownership proof.
+      if (!alreadyEquipped &&
+          (live.ownedPlugHashes.isEmpty ||
+              !live.ownedPlugHashes.contains(plugHash))) {
+        skip = notUnlockedPlugMessage(plugName);
+      }
     }
     if (skip != null) {
       out.add(

@@ -3537,6 +3537,141 @@ void main() {
       expect(plan.armorMods.single.itemInstanceId, 'helm-locked');
       expect(plan.armorMods.single.shouldCall, isFalse);
     });
+
+    test('empty ownedPlugHashes fail-closed Not unlocked for cosmetic', () {
+      const armorHash = 802;
+      const shaderHash = 902;
+      final allowed = buildApplyAllowedPlugHashesBySocket(
+        manifestPlugSetBySocket: const {
+          4: {shaderHash},
+        },
+        liveReusableBySocket: const {},
+        equippedBySocket: const {},
+        unlockedPlugHashes: const {shaderHash},
+      );
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Electro-Brass', hash: shaderHash),
+          ],
+        ),
+        manifest: ApplySocketManifestLookup(
+          itemDef: (h) => h == armorHash
+              ? ApplyManifestItemDef(
+                  hash: armorHash,
+                  name: 'Helmet',
+                  socketPlugCategoryHint: const {
+                    4: 'shader',
+                  },
+                  allowedPlugHashesBySocket: allowed,
+                )
+              : null,
+          plugDef: (h) => h == shaderHash
+              ? const ApplyManifestPlugDef(
+                  hash: shaderHash,
+                  name: 'Electro-Brass',
+                  plugCategoryIdentifier: 'shader',
+                )
+              : null,
+          resolveUniquePlugHashByName: (_) => null,
+        ),
+        instances: [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-unknown-own',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: const {},
+            armorModDataKnown: true,
+            allowedPlugHashesBySocket: allowed,
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helm',
+            itemHash: armorHash,
+            instanceId: 'helm-unknown-own',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      final emptyOwnStep = plan.armorMods.single;
+      expect(
+        emptyOwnStep.skipReason,
+        notUnlockedPlugMessage('Electro-Brass'),
+      );
+      expect(emptyOwnStep.shouldCall, isFalse);
+      expect(emptyOwnStep.itemInstanceId, 'helm-unknown-own');
+      expect(emptyOwnStep.plugItemHash, shaderHash);
+    });
+
+    test('null/empty allow list rejects category-hint socket (Does not fit)', () {
+      const armorHash = 803;
+      const shaderHash = 903;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [
+            ApplyNamedPlug(name: 'Hint Only Shader', hash: shaderHash),
+          ],
+        ),
+        manifest: ApplySocketManifestLookup(
+          itemDef: (h) => h == armorHash
+              ? const ApplyManifestItemDef(
+                  hash: armorHash,
+                  name: 'Helmet',
+                  socketPlugCategoryHint: {
+                    4: 'shader',
+                  },
+                  // No allowedPlugHashesBySocket — category hint alone must not win.
+                )
+              : null,
+          plugDef: (h) => h == shaderHash
+              ? const ApplyManifestPlugDef(
+                  hash: shaderHash,
+                  name: 'Hint Only Shader',
+                  plugCategoryIdentifier: 'shader',
+                )
+              : null,
+          resolveUniquePlugHashByName: (_) => null,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-hint',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            ownedPlugHashes: {shaderHash},
+            armorModDataKnown: true,
+            // Empty live allow list — fail closed.
+            allowedPlugHashesBySocket: {},
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-hint',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      final hintStep = plan.armorMods.single;
+      expect(
+        hintStep.skipReason,
+        doesNotFitPlugMessage('Hint Only Shader'),
+      );
+      expect(hintStep.shouldCall, isFalse);
+      expect(hintStep.plugItemHash, shaderHash);
+      expect(hintStep.label, contains('Hint Only Shader'));
+    });
   });
 
   group('armor energy: capacity, cost, replace frees, soft-proceed', () {
