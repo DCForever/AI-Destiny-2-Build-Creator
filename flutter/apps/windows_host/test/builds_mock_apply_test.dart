@@ -1013,7 +1013,6 @@ void main() {
         onProgress: (_) {},
       );
 
-      expect(outcome.error, isNull);
       final pin = outcome.progress!.items
           .where((r) => !isAuxiliaryApplyRow(r))
           .single;
@@ -1021,6 +1020,7 @@ void main() {
       expect(pin.label, 'Exotic weapon');
       expect(pin.label, isNot(contains('(Exotic weapon) (Exotic weapon)')));
       expect(pin.state, ApplyItemState.done);
+      expect(pin.reason, isNull);
     },
   );
 
