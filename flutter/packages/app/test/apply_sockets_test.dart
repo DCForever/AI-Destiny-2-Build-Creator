@@ -3954,5 +3954,97 @@ void main() {
         isNot(startsWith(kApplyPlugNotEnoughEnergyPrefix)),
       );
     });
+
+    // Restores the F4 pin: when capacity/usage are unknown, do not invent
+    // clears even if another known-cost mod is equipped and the wanted plug
+    // would exceed any real budget — soft-proceed with one insert only.
+    test('null capacity: no clears; one insert despite over-budget equipped', () {
+      const armorHash = 200;
+      const wanted = 341;
+      const equipped = 342;
+      final plan = planApplySockets(
+        characterId: target,
+        build: const ApplyBuildSocketInputs(
+          armorMods: [ApplyNamedPlug(name: 'Wanted Mod', hash: wanted)],
+        ),
+        manifest: ApplySocketManifestLookup(
+          itemDef: (_) => const ApplyManifestItemDef(
+            hash: armorHash,
+            name: 'Helmet',
+            socketCategories: [
+              ApplyManifestSocketCategory(
+                socketCategoryHash: 590099826,
+                socketIndexes: [0, 1],
+              ),
+            ],
+            allowedPlugHashesBySocket: {
+              0: {wanted},
+              1: {equipped},
+            },
+            emptyPlugHashBySocket: {1: 999},
+          ),
+          plugDef: (h) {
+            if (h == wanted) {
+              return const ApplyManifestPlugDef(
+                hash: wanted,
+                name: 'Wanted Mod',
+                plugCategoryIdentifier: 'enhancements.v2_head',
+                energyCost: 10,
+              );
+            }
+            if (h == equipped) {
+              return const ApplyManifestPlugDef(
+                hash: equipped,
+                name: 'Equipped Costly',
+                plugCategoryIdentifier: 'enhancements.v2_head',
+                energyCost: 5,
+              );
+            }
+            return null;
+          },
+          resolveUniquePlugHashByName: (_) => null,
+        ),
+        instances: const [
+          ApplyInstanceSocketState(
+            instanceId: 'helm-f4',
+            itemHash: armorHash,
+            bucketHash: helmetBucket,
+            characterId: target,
+            location: 'equipped',
+            // capacity + used null — soft-proceed; never clear for energy
+            ownedPlugHashes: {wanted, equipped},
+            armorModDataKnown: true,
+            equippedPlugBySocket: {1: equipped},
+            allowedPlugHashesBySocket: {
+              0: {wanted},
+              1: {equipped},
+            },
+            emptyPlugHashBySocket: {1: 999},
+            socketDataKnown: true,
+          ),
+        ],
+        equippedArmor: const [
+          ApplyArmorPin(
+            id: 'helmet',
+            label: 'Helmet',
+            itemHash: armorHash,
+            instanceId: 'helm-f4',
+            slot: 'helmet',
+          ),
+        ],
+      );
+      final clears = plan.armorMods
+          .where((s) => s.kind == ApplyPlugKind.armorModClear)
+          .toList();
+      final inserts = plan.armorMods
+          .where((s) => s.kind == ApplyPlugKind.armorMod && s.shouldCall)
+          .toList();
+      expect(clears, isEmpty, reason: 'null capacity must not invent clears');
+      expect(inserts, hasLength(1));
+      expect(inserts.single.plugItemHash, wanted);
+      expect(inserts.single.itemInstanceId, 'helm-f4');
+      expect(inserts.single.skipReason, isNull);
+      expect(inserts.single.socketIndex, 0);
+    });
   });
 }

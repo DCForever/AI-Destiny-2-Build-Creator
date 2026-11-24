@@ -1,25 +1,27 @@
 #!/usr/bin/env node
 /**
- * Ban paid InsertSocketPlug + dismantle/DeleteItem in flutter/packages lib.
+ * Ban paid InsertSocketPlug + dismantle/DeleteItem under flutter/ (packages+apps).
  * Self-tests: test/ci/check-bungie-writes.self-test.mjs
  */
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const BANNED_INSERT = /InsertSocketPlug(?!Free)/;
-export const BANNED_INSERT_METHOD = /insertSocketPlug(?!Free)/;
+/** Case-insensitive; Free suffix stays allowed. */
+export const BANNED_INSERT = /insertsocketplug(?!free)/i;
+/** Paid endpoint path (InsertSocketPlug/ without Free). */
+export const BANNED_PAID_ENDPOINT =
+  /Actions\/Items\/InsertSocketPlug(?!Free)\//i;
 export const BANNED_DISMANTLE_DELETE = [
-  /dismantleItem\b/,
-  /DismantleItem\b/,
-  /\/Destiny2\/Actions\/Items\/Dismantle\b/,
-  /DeleteItem\b/,
-  /\/Destiny2\/Actions\/Items\/DeleteItem\b/,
+  /dismantleitem\b/i,
+  /\/Destiny2\/Actions\/Items\/Dismantle\b/i,
+  /deleteitem\b/i,
+  /\/Destiny2\/Actions\/Items\/DeleteItem\b/i,
 ];
 
 export function isScannedDartPath(path) {
   const n = (path || "").replace(/\\/g, "/");
-  if (!n.endsWith(".dart") || !n.includes("flutter/packages/")) return false;
+  if (!n.endsWith(".dart") || !n.startsWith("flutter/")) return false;
   return !(n.includes("/test/") || n.endsWith("_test.dart"));
 }
 
@@ -28,8 +30,8 @@ export function findViolationsInText(text, filePath = "") {
   if (BANNED_INSERT.test(text)) {
     out.push({ path: filePath, rule: "InsertSocketPlug-not-Free" });
   }
-  if (BANNED_INSERT_METHOD.test(text)) {
-    out.push({ path: filePath, rule: "insertSocketPlug-not-Free" });
+  if (BANNED_PAID_ENDPOINT.test(text)) {
+    out.push({ path: filePath, rule: "paid-InsertSocketPlug-endpoint" });
   }
   if (BANNED_DISMANTLE_DELETE.some((re) => re.test(text))) {
     out.push({ path: filePath, rule: "dismantle-or-DeleteItem" });
@@ -49,7 +51,7 @@ function walk(dir, out = []) {
 }
 
 export function scanBungieWrites(repoRoot) {
-  const root = join(repoRoot, "flutter", "packages");
+  const root = join(repoRoot, "flutter");
   const findings = [];
   let scanned = 0;
   for (const abs of walk(root)) {
@@ -69,7 +71,7 @@ if (isMain) {
   const text = [
     "## Bungie write-surface scan",
     "",
-    `Scanned **${scanned}** Dart lib files under \`flutter/packages/\`.`,
+    `Scanned **${scanned}** non-test Dart files under \`flutter/\`.`,
     "",
     findings.length
       ? findings.map((f) => `- **${f.rule}** \`${f.path}\``).join("\n")
@@ -80,6 +82,10 @@ if (isMain) {
     writeFileSync(process.env.GITHUB_STEP_SUMMARY, text, { flag: "a" });
   }
   console.log(text);
+  if (scanned === 0) {
+    console.error("::error::Bungie write-surface scan found 0 files");
+    process.exit(1);
+  }
   if (findings.length) {
     console.error("::error::Bungie write-surface scan failed");
     process.exit(1);
