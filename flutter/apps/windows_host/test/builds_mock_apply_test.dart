@@ -104,7 +104,8 @@ void main() {
     );
   });
 
-  test('M2: unlocked indexes require 305 enabled+visible AND 310 plugs', () {
+  // CHANGED: plug-set sockets often have empty 310; unlock is 305-only now.
+  test('M2: unlocked indexes require 305 enabled+visible only', () {
     final live = const RawInventoryItem(
       instanceId: 'sub-1',
       itemHash: 100,
@@ -125,7 +126,7 @@ void main() {
           isEnabled: true,
           isVisible: true,
         ),
-        // 305 enabled but no 310 → not unlocked.
+        // 305 enabled+visible with empty 310 → unlocked (plug-set sockets).
         RawSocketCapture(
           socketIndex: 9,
           equippedPlugHash: 0,
@@ -143,9 +144,41 @@ void main() {
       ],
     );
     final unlocked = unlockedSocketIndexesFromCapture(live)!;
-    expect(unlocked, containsAll([7, 8]));
-    expect(unlocked.contains(9), isFalse);
+    expect(unlocked, containsAll([7, 8, 9]));
     expect(unlocked.contains(10), isFalse);
+  });
+
+  test('plug-set ∩ unlocked allows aspect when 310 is empty', () {
+    const aspectHash = 21;
+    const currentHash = 20;
+    final live = const RawInventoryItem(
+      instanceId: 'sub-1',
+      itemHash: 100,
+      bucketHash: kSubclassBucketHash,
+      location: 'equipped',
+      socketCapture: [
+        RawSocketCapture(
+          socketIndex: 5,
+          equippedPlugHash: currentHash,
+          // Empty 310 — Voidwalker-style plug-set socket.
+          isEnabled: true,
+          isVisible: true,
+        ),
+      ],
+    );
+    final allowed = buildAllowedPlugsForApplyInstance(
+      live: live,
+      itemDef: const ApplyManifestItemDef(
+        hash: 100,
+        name: 'Voidwalker',
+        allowedPlugHashesBySocket: {
+          5: {currentHash, aspectHash, 22},
+        },
+      ),
+      unlockedPlugSetPlugHashes: {aspectHash, currentHash},
+    );
+    expect(allowed[5], containsAll([aspectHash, currentHash]));
+    expect(allowed[5]!.contains(22), isFalse); // locked variant excluded
   });
 
   test('label includes class, light, and last 4 of character id', () {

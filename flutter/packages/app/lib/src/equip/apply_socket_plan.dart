@@ -24,6 +24,7 @@ const String kApplyPlugEnergyCostUnknownPrefix = 'Armor energy cost unknown: ';
 const String kApplyPlugUnresolvablePrefix = 'Could not resolve: ';
 const String kApplyPlugDoesNotFitPrefix = 'Does not fit: ';
 const String kApplyNoFragmentSocketPrefix = 'No fragment socket: ';
+const String kApplyAlreadySetMessage = 'Already set';
 const String kApplySubclassSocketsUnavailableMessage =
     'Subclass sockets unavailable';
 const String kApplySocketDataUnavailableMessage =
@@ -284,6 +285,7 @@ class ApplyManifestPlugDef {
     required this.name,
     required this.plugCategoryIdentifier,
     this.energyCost,
+    this.fragmentCapacity,
   });
 
   final int hash;
@@ -292,6 +294,9 @@ class ApplyManifestPlugDef {
 
   /// Null when the manifest does not know the cost — never treat as 0.
   final int? energyCost;
+
+  /// Aspect-only: fragment slots granted when this aspect is selected.
+  final int? fragmentCapacity;
 }
 
 /// Minimal item definition for socket-index lookup (fakeable).
@@ -360,8 +365,9 @@ class ApplyInstanceSocketState {
   /// [notUnlockedOrUnknownPlugMessage] (F3). Empty owned is UNKNOWN, not open.
   final bool subclassPlugOwnershipKnown;
 
-  /// Live unlocked socket indexes (305 enabled+visible AND 310 plugs) —
-  /// not "occupied". Null means use manifest indexes as-is.
+  /// Live unlocked socket indexes (305 enabled+visible) — not "occupied".
+  /// Null means use manifest indexes as-is. Fragment capacity may open more
+  /// indexes than this set when target aspects are planned.
   final Set<int>? unlockedSocketIndexes;
 
   /// False until live socket capture is present (defaults false — Skeptic).
@@ -374,11 +380,57 @@ class ApplySocketManifestLookup {
     required this.itemDef,
     required this.plugDef,
     required this.resolveUniquePlugHashByName,
+    this.resolvePlugHashesByName,
   });
 
   final ApplyManifestItemDef? Function(int itemHash) itemDef;
   final ApplyManifestPlugDef? Function(int plugHash) plugDef;
   final int? Function(String name) resolveUniquePlugHashByName;
+
+  /// All hashes sharing a display name (element / Prismatic variants).
+  final List<int> Function(String name)? resolvePlugHashesByName;
+}
+
+/// Per-socket allowed inserts: manifest plug-set ∩ unlocked, else live 310.
+///
+/// Plug-set sockets (subclass abilities/aspects, armor mods 0–3) often have an
+/// empty component-310 list; callers must supply the definition plug-set and
+/// the character/profile unlocked hashes (104/105) so the whitelist is not
+/// collapsed to the currently equipped plug alone.
+Map<int, Set<int>> buildApplyAllowedPlugHashesBySocket({
+  required Map<int, Set<int>> manifestPlugSetBySocket,
+  required Map<int, Set<int>> liveReusableBySocket,
+  required Map<int, int> equippedBySocket,
+  required Set<int> unlockedPlugHashes,
+}) {
+  final indexes = <int>{
+    ...manifestPlugSetBySocket.keys,
+    ...liveReusableBySocket.keys,
+    ...equippedBySocket.keys,
+  };
+  final out = <int, Set<int>>{};
+  for (final idx in indexes) {
+    final manifest = manifestPlugSetBySocket[idx] ?? const <int>{};
+    final live = liveReusableBySocket[idx] ?? const <int>{};
+    final equipped = equippedBySocket[idx] ?? 0;
+    if (manifest.isNotEmpty) {
+      final unlocked = <int>{
+        ...unlockedPlugHashes,
+        ...live,
+        if (equipped != 0) equipped,
+      };
+      final allowed = manifest.intersection(unlocked);
+      if (equipped != 0) allowed.add(equipped);
+      if (allowed.isNotEmpty) out[idx] = allowed;
+    } else {
+      final hashes = <int>{
+        ...live,
+        if (equipped != 0) equipped,
+      };
+      if (hashes.isNotEmpty) out[idx] = hashes;
+    }
+  }
+  return out;
 }
 
 /// Socket category hashes used for subclass plug ordering (DIM / enums).
@@ -747,10 +799,32 @@ int _kindOrder(ApplyPlugKind kind) {
 
 ({int? hash, String? skip}) _resolvePlugHash(
   ApplyNamedPlug plug,
-  ApplySocketManifestLookup manifest,
-) {
+  ApplySocketManifestLookup manifest, {
+  Set<int> ownedPlugHashes = const {},
+  bool ownershipKnown = false,
+}) {
   final named = plug.name.trim();
   final h = plug.hash;
+
+  // Prefer the unlocked element/Prismatic sibling when several hashes share
+  // a display name (Empowering Rift, Feed the Void, …).
+  final nameForVariants = named.isNotEmpty
+      ? named
+      : (h != null && h != 0 ? (manifest.plugDef(h)?.name ?? '') : '');
+  final variants = nameForVariants.isEmpty
+      ? const <int>[]
+      : (manifest.resolvePlugHashesByName?.call(nameForVariants) ??
+          const <int>[]);
+  if (variants.length > 1) {
+    final picked = _pickOwnedVariant(
+      variants: variants,
+      preferredHash: h,
+      ownedPlugHashes: ownedPlugHashes,
+      ownershipKnown: ownershipKnown,
+    );
+    if (picked != null) return (hash: picked, skip: null);
+  }
+
   if (h != null && h != 0) {
     final def = manifest.plugDef(h);
     if (def != null) return (hash: h, skip: null);
@@ -763,6 +837,31 @@ int _kindOrder(ApplyPlugKind kind) {
     return (hash: null, skip: unresolvablePlugMessage(named));
   }
   return (hash: resolved, skip: null);
+}
+
+int? _pickOwnedVariant({
+  required List<int> variants,
+  required int? preferredHash,
+  required Set<int> ownedPlugHashes,
+  required bool ownershipKnown,
+}) {
+  if (!ownershipKnown || ownedPlugHashes.isEmpty) {
+    if (preferredHash != null &&
+        preferredHash != 0 &&
+        variants.contains(preferredHash)) {
+      return preferredHash;
+    }
+    return null;
+  }
+  final owned = [
+    for (final v in variants)
+      if (ownedPlugHashes.contains(v)) v,
+  ];
+  if (owned.isEmpty) return null;
+  if (preferredHash != null && owned.contains(preferredHash)) {
+    return preferredHash;
+  }
+  return owned.first;
 }
 
 List<int> _indexesForKind(ApplyManifestItemDef itemDef, ApplyPlugKind kind) {
@@ -877,11 +976,9 @@ Set<int> _reserveWantedSockets({
   final reserved = <int>{};
   for (final row in resolved) {
     if (row.skip != null || row.hash == 0) continue;
-    final indexes = _unlockedIndexesForKind(
-      itemDef: itemDef,
-      instance: instance,
-      kind: row.kind,
-    );
+    // Use full kind indexes (not live-unlocked only) so an already-equipped
+    // fragment on a capacity-opened socket is reserved before free fills.
+    final indexes = _indexesForKind(itemDef, row.kind);
     for (final idx in indexes) {
       if (instance.equippedPlugBySocket[idx] == row.hash) {
         reserved.add(idx);
@@ -891,16 +988,72 @@ Set<int> _reserveWantedSockets({
   return reserved;
 }
 
+/// Fragment socket indexes sized from target aspects when capacity is known.
+///
+/// Falls back to the live unlocked fragment list when aspect capacity is
+/// unresolved (keeps Prismatic/F2 fail-closed behavior).
+List<int> _fragmentIndexesForPlan({
+  required ApplyManifestItemDef itemDef,
+  required ApplyInstanceSocketState instance,
+  required ApplySocketManifestLookup manifest,
+  required List<({ApplyPlugKind kind, int hash, String name, String? skip})>
+      resolved,
+}) {
+  final all = _indexesForKind(itemDef, ApplyPlugKind.fragment);
+  if (all.isEmpty) return const [];
+
+  final aspectHashes = <int>{
+    for (final row in resolved)
+      if (row.kind == ApplyPlugKind.aspect &&
+          row.skip == null &&
+          row.hash != 0)
+        row.hash,
+  };
+  if (aspectHashes.isEmpty) {
+    for (final idx
+        in _indexesForKind(itemDef, ApplyPlugKind.aspect)) {
+      final h = instance.equippedPlugBySocket[idx];
+      if (h != null && h != 0) aspectHashes.add(h);
+    }
+  }
+
+  var capacity = 0;
+  var capacityResolved = false;
+  for (final h in aspectHashes) {
+    final cap = manifest.plugDef(h)?.fragmentCapacity;
+    if (cap != null) {
+      capacity += cap;
+      capacityResolved = true;
+    }
+  }
+  if (capacityResolved) {
+    if (capacity <= 0) return const [];
+    return all.take(capacity).toList();
+  }
+  return _unlockedIndexesForKind(
+    itemDef: itemDef,
+    instance: instance,
+    kind: ApplyPlugKind.fragment,
+  );
+}
+
 List<ApplyPlugStep> _planSubclassPlugs({
   required List<ApplyNamedPlug> plugs,
   required ApplyInstanceSocketState instance,
   required ApplyManifestItemDef itemDef,
   required ApplySocketManifestLookup manifest,
 }) {
+  final ownershipKnown = instance.subclassPlugOwnershipKnown &&
+      instance.ownedPlugHashes.isNotEmpty;
   final resolved =
       <({ApplyPlugKind kind, int hash, String name, String? skip})>[];
   for (final plug in plugs) {
-    final r = _resolvePlugHash(plug, manifest);
+    final r = _resolvePlugHash(
+      plug,
+      manifest,
+      ownedPlugHashes: instance.ownedPlugHashes,
+      ownershipKnown: ownershipKnown,
+    );
     final name = plug.name.trim().isNotEmpty
         ? plug.name.trim()
         : (r.hash != null ? (manifest.plugDef(r.hash!)?.name ?? '') : '');
@@ -946,10 +1099,14 @@ List<ApplyPlugStep> _planSubclassPlugs({
     instance: instance,
     resolved: resolved,
   );
-  final fragmentIndexes = _unlockedIndexesForKind(
+  // Fragments after aspects: size slots from target aspect capacity so
+  // pre-Apply unlocked indexes (still empty until aspects insert) do not
+  // cut extras with "No fragment socket".
+  final fragmentIndexes = _fragmentIndexesForPlan(
     itemDef: itemDef,
     instance: instance,
-    kind: ApplyPlugKind.fragment,
+    manifest: manifest,
+    resolved: resolved,
   );
   var fragmentPlaced = 0;
   final steps = <ApplyPlugStep>[];
@@ -973,11 +1130,7 @@ List<ApplyPlugStep> _planSubclassPlugs({
     }
 
     final alreadyAt = () {
-      for (final idx in _unlockedIndexesForKind(
-        itemDef: itemDef,
-        instance: instance,
-        kind: row.kind,
-      )) {
+      for (final idx in _indexesForKind(itemDef, row.kind)) {
         if (instance.equippedPlugBySocket[idx] == row.hash) return idx;
       }
       return null;
@@ -985,8 +1138,6 @@ List<ApplyPlugStep> _planSubclassPlugs({
 
     // Ownership: empty/unknown owned set is UNKNOWN (F3), not fail-open.
     // Already-equipped no-ops do not require an ownership proof.
-    final ownershipKnown = instance.subclassPlugOwnershipKnown &&
-        instance.ownedPlugHashes.isNotEmpty;
     if (alreadyAt == null) {
       if (!ownershipKnown) {
         steps.add(
