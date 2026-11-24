@@ -122,9 +122,37 @@ void main() {
     });
 
     test('extracts Armor 3.0 core.gear_systems tuning mods', () async {
-      final records = await ModsExtractor().extract(loadFixtureRawTable);
-      final mods = records.cast<ModRecord>();
-      final tuning = mods.firstWhere((m) => m.name == '+Class / -Melee');
+      // Inject into the fixture table so we do not edit shared raw_tables.dart
+      // (size script treats fixtures/*.dart as production).
+      Future<Map<String, dynamic>> load(String name) async {
+        final table = await loadFixtureRawTable(name);
+        if (name != 'DestinyInventoryItemDefinition') return table;
+        return {
+          ...table,
+          '1510949672': {
+            'hash': 1510949672,
+            'displayProperties': {
+              'name': '+Class / -Melee',
+              'description': 'Armor 3.0 tuning mod.',
+            },
+            'itemType': 19,
+            'plug': {
+              'plugCategoryIdentifier':
+                  'core.gear_systems.armor_tiering.plugs.tuning.mods',
+            },
+            'investmentStats': [
+              {'statTypeHash': 1943323491, 'value': 5},
+              {'statTypeHash': 4244567218, 'value': -5},
+            ],
+          },
+        };
+      }
+
+      final records = await ModsExtractor().extract(load);
+      final tuning = records.cast<ModRecord>().firstWhere(
+            (m) => m.name == '+Class / -Melee',
+          );
+      expect(tuning.hash, 1510949672);
       expect(tuning.slotCategory, ModSlotCategory.tuning);
       expect(tuning.statModifiers['Class'], 5);
       expect(tuning.statModifiers['Melee'], -5);

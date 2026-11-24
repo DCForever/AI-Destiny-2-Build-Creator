@@ -576,11 +576,15 @@ ApplySocketPlan? socketPlanForApplySync({
         final ownershipKnown = (isSubclass || isArmor)
             ? owned.isNotEmpty
             : (fromCapture != null && fromCapture.isNotEmpty);
-        final allowed = _allowedPlugsBySocket(live);
         final itemDef = resolved.itemDef(row.itemHash);
         // M1: empty plugs ONLY from manifest singleInitialItemHash.
         final emptyPlugs = itemDef?.emptyPlugHashBySocket ?? const {};
         final unlocked = unlockedSocketIndexesFromCapture(live);
+        final allowed = buildAllowedPlugsForApplyInstance(
+          live: live,
+          itemDef: itemDef,
+          unlockedPlugSetPlugHashes: unlockedPlugSetPlugHashes,
+        );
         final capturePresent =
             live?.socketCapture != null && live!.socketCapture!.isNotEmpty;
         return ApplyInstanceSocketState(
@@ -683,18 +687,18 @@ Map<int, int>? _equippedPlugsKeyedBySocket(RawInventoryItem? live) {
   return fromCapture.isEmpty ? null : fromCapture;
 }
 
-/// Unlocked socket indexes require both 305 enabled+visible AND 310 plugs.
+/// Unlocked socket indexes from 305 enabled+visible only.
 ///
-/// A 310 list alone must not unlock a 305-disabled socket. Occupied ≠ unlocked
-/// — do not derive this from nonzero equippedPlugHash alone.
+/// Plug-set sockets (subclass abilities, armor mods) often have an empty 310
+/// list; requiring reusable plugs previously locked those sockets. Occupied ≠
+/// unlocked — do not derive this from nonzero equippedPlugHash alone. A 310
+/// list alone must not unlock a 305-disabled socket.
 Set<int>? unlockedSocketIndexesFromCapture(RawInventoryItem? live) {
   final capture = live?.socketCapture;
   if (capture == null || capture.isEmpty) return null;
   final out = <int>{};
   for (final sock in capture) {
-    final from305 = sock.isEnabled && sock.isVisible;
-    final from310 = sock.reusablePlugHashes.any((h) => h != 0);
-    if (from305 && from310) out.add(sock.socketIndex);
+    if (sock.isEnabled && sock.isVisible) out.add(sock.socketIndex);
   }
   return out.isEmpty ? null : out;
 }
@@ -714,19 +718,30 @@ Set<int>? _ownedPlugsFromCapture(RawInventoryItem? live) {
   return owned.isEmpty ? null : owned;
 }
 
-/// Per-socket reusable whitelist from capture (allowed inserts).
-Map<int, Set<int>> _allowedPlugsBySocket(RawInventoryItem? live) {
+/// Per-socket allowed inserts: definition plug-set ∩ unlocked (104/105/310).
+Map<int, Set<int>> buildAllowedPlugsForApplyInstance({
+  required RawInventoryItem? live,
+  required ApplyManifestItemDef? itemDef,
+  required Set<int> unlockedPlugSetPlugHashes,
+}) {
   final capture = live?.socketCapture;
-  if (capture == null || capture.isEmpty) return const {};
-  final out = <int, Set<int>>{};
-  for (final sock in capture) {
-    final hashes = <int>{
-      if (sock.equippedPlugHash != 0) sock.equippedPlugHash,
-      ...sock.reusablePlugHashes.where((h) => h != 0),
-    };
-    if (hashes.isNotEmpty) out[sock.socketIndex] = hashes;
+  final liveReusable = <int, Set<int>>{};
+  final equipped = <int, int>{};
+  if (capture != null) {
+    for (final sock in capture) {
+      final reusable = sock.reusablePlugHashes.where((h) => h != 0).toSet();
+      if (reusable.isNotEmpty) liveReusable[sock.socketIndex] = reusable;
+      if (sock.equippedPlugHash != 0) {
+        equipped[sock.socketIndex] = sock.equippedPlugHash;
+      }
+    }
   }
-  return out;
+  return buildApplyAllowedPlugHashesBySocket(
+    manifestPlugSetBySocket: itemDef?.allowedPlugHashesBySocket ?? const {},
+    liveReusableBySocket: liveReusable,
+    equippedBySocket: equipped,
+    unlockedPlugHashes: unlockedPlugSetPlugHashes,
+  );
 }
 
 /// Armor item def fallback. Socket indexes come from [socketIndexes] when the
@@ -802,6 +817,7 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
           hash: a.hash,
           name: a.name,
           plugCategoryIdentifier: 'warlock.shared.aspects',
+          fragmentCapacity: a.fragmentCapacity,
         ),
       );
     }
@@ -833,6 +849,7 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
     }
 
     // F2: subclass/armor socket indexes from DestinyInventoryItemDefinition.
+    // Plug-set sockets: reusable/randomized plug-set hashes → allowed whitelist.
     // Extra loadout plugs (tuning/shaders/ornaments) hydrate from raw when
     // missing from the mods store.
     final subclassDefs = <int, ApplyManifestItemDef>{};
@@ -844,6 +861,15 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
           version,
           'DestinyInventoryItemDefinition',
         );
+        RawTable plugSets = const {};
+        try {
+          plugSets = await refresh.service.loadRawTable(
+            version,
+            'DestinyPlugSetDefinition',
+          );
+        } catch (_) {
+          // Without plug sets, allowed lists stay empty → 310-only fallback.
+        }
         for (final hash in extraPlugHashes) {
           if (hash == 0 || plugsByHash.containsKey(hash)) continue;
           final raw = table['$hash'];
@@ -865,11 +891,15 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
             ),
           );
         }
-
         String? plugCat(int plugHash) {
           final known = plugsByHash[plugHash]?.plugCategoryIdentifier;
           if (known != null) return known;
           return _plugCategoryFromRawMap(table['$plugHash']);
+        }
+
+        Set<int> plugsFromSet(int? setHash) {
+          if (setHash == null || setHash == 0) return const {};
+          return _plugHashesFromPlugSetRaw(plugSets['$setHash']);
         }
 
         for (final hash in subclassItemHashes) {
@@ -879,6 +909,7 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
             name: catalogNames[hash] ?? 'Subclass',
             raw: raw,
             plugCategoryByHash: plugCat,
+            plugsFromSet: plugsFromSet,
           );
           if (def != null) subclassDefs[hash] = def;
         }
@@ -894,6 +925,7 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
                 raw: raw,
                 plugCategoryByHash: plugCat,
                 emptyPlugHashBySocket: empties,
+                plugsFromSet: plugsFromSet,
               ) ??
               conventionalArmorItemDef(
                 hash: hash,
@@ -928,10 +960,26 @@ Future<ApplySocketManifestLookup?> _buildSocketManifestLookup(
         if (list.length == 1) return list.first;
         return null;
       },
+      resolvePlugHashesByName: (name) =>
+          List<int>.from(hashesByName[name.trim().toLowerCase()] ?? const []),
     );
   } catch (_) {
     return null;
   }
+}
+
+/// Plug item hashes from a DestinyPlugSetDefinition raw map.
+Set<int> _plugHashesFromPlugSetRaw(Object? raw) {
+  if (raw is! Map) return const {};
+  final list = raw['reusablePlugItems'];
+  if (list is! List) return const {};
+  final out = <int>{};
+  for (final e in list) {
+    if (e is! Map) continue;
+    final hash = e['plugItemHash'];
+    if (hash is num && hash.toInt() != 0) out.add(hash.toInt());
+  }
+  return out;
 }
 
 /// Empty/clear plug hashes from DestinyInventoryItemDefinition socketEntries
@@ -964,6 +1012,7 @@ ApplyManifestItemDef? _itemDefFromRawMap({
   required Object? raw,
   required String? Function(int plugHash) plugCategoryByHash,
   Map<int, int> emptyPlugHashBySocket = const {},
+  Set<int> Function(int? setHash)? plugsFromSet,
 }) {
   if (raw is! Map) return null;
   final sockets = raw['sockets'];
@@ -992,15 +1041,26 @@ ApplyManifestItemDef? _itemDefFromRawMap({
   if (categories.isEmpty) return null;
 
   final hints = <int, String>{};
+  final allowedBySocket = <int, Set<int>>{};
   final entriesRaw = sockets['socketEntries'];
   if (entriesRaw is List) {
     for (var i = 0; i < entriesRaw.length; i++) {
       final entry = entriesRaw[i];
       if (entry is! Map) continue;
       final initial = entry['singleInitialItemHash'];
-      if (initial is! num || initial.toInt() == 0) continue;
-      final cat = plugCategoryByHash(initial.toInt());
-      if (cat != null && cat.isNotEmpty) hints[i] = cat;
+      if (initial is num && initial.toInt() != 0) {
+        final cat = plugCategoryByHash(initial.toInt());
+        if (cat != null && cat.isNotEmpty) hints[i] = cat;
+      }
+      if (plugsFromSet != null) {
+        final reusable = (entry['reusablePlugSetHash'] as num?)?.toInt();
+        final randomized = (entry['randomizedPlugSetHash'] as num?)?.toInt();
+        final plugs = <int>{
+          ...plugsFromSet(reusable),
+          ...plugsFromSet(randomized),
+        };
+        if (plugs.isNotEmpty) allowedBySocket[i] = plugs;
+      }
     }
   }
 
@@ -1010,6 +1070,7 @@ ApplyManifestItemDef? _itemDefFromRawMap({
     socketCategories: categories,
     socketPlugCategoryHint: hints,
     emptyPlugHashBySocket: emptyPlugHashBySocket,
+    allowedPlugHashesBySocket: allowedBySocket,
   );
 }
 

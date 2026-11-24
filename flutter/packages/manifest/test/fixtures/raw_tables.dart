@@ -397,17 +397,6 @@ final Map<String, dynamic> fixtureItemTable = {
     'itemType': 19,
     'plug': {'plugCategoryIdentifier': 'enhancements.tuning'},
   }),
-  '1026': _mkItem(1026, '+Class / -Melee', 'Armor 3.0 tuning mod.', {
-    'itemType': 19,
-    'plug': {
-      'plugCategoryIdentifier':
-          'core.gear_systems.armor_tiering.plugs.tuning.mods',
-    },
-    'investmentStats': [
-      {'statTypeHash': 1943323491, 'value': 5},
-      {'statTypeHash': 4244567218, 'value': -5},
-    ],
-  }),
   '1030': _mkItem(1030, 'Major Melee', '+10 Melee.', {
     'itemType': 19,
     'plug': {
